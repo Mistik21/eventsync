@@ -81,9 +81,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\kosta\\Desktop\\ФИИТ\\2 курс\\Проект\\eventsync\\eventsyn.csproj",
-      "projectName": "eventsyn",
-      "projectPath": "C:\\Users\\kosta\\Desktop\\ФИИТ\\2 курс\\Проект\\eventsync\\eventsyn.csproj",
+      "projectUniqueName": "C:\\Users\\kosta\\Desktop\\ФИИТ\\2 курс\\Проект\\eventsync\\eventsync.csproj",
+      "projectName": "eventsync",
+      "projectPath": "C:\\Users\\kosta\\Desktop\\ФИИТ\\2 курс\\Проект\\eventsync\\eventsync.csproj",
       "packagesPath": "C:\\Users\\kosta\\.nuget\\packages\\",
       "outputPath": "C:\\Users\\kosta\\Desktop\\ФИИТ\\2 курс\\Проект\\eventsync\\obj\\",
       "projectStyle": "PackageReference",
