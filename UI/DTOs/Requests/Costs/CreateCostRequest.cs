@@ -1,4 +1,4 @@
-namespace UI.DTOs.Requests.Costs;
+namespace eventsynс.UI.DTOs.Requests.Costs;
 
 public record CreateCostRequest(
     string Title,

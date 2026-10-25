@@ -1,4 +1,4 @@
-namespace UI.DTOs.Responses;
+namespace eventsynс.UI.DTOs.Responses;
 
 public record class UserResponse(
     Guid Id,

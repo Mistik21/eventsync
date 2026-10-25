@@ -1,7 +1,7 @@
+using eventsynс.UI.DTOs.Requests.Auth;
 using Microsoft.AspNetCore.Mvc;
-using UI.DTOs.Requests.Auth;
 
-namespace UI.Controllers;
+namespace eventsynс.UI.Controllers;
 
 [ApiController]
 [Route("api/auth")]

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace eventsync.UI.Controllers;
+namespace eventsynс.UI.Controllers;
 
 public class PagesController : Controller
 {

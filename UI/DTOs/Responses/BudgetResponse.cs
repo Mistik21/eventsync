@@ -1,4 +1,4 @@
-namespace UI.DTOs.Responses;
+namespace eventsynс.UI.DTOs.Responses;
 
 public class BudgetResponse(
     int Budget,

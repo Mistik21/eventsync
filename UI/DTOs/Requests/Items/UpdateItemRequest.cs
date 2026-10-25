@@ -1,4 +1,4 @@
-namespace eventsyn.UI.DTOs.Requests.Items;
+namespace eventsynс.UI.DTOs.Requests.Items;
 
 public record UpdateItemRequest(
     string Title,

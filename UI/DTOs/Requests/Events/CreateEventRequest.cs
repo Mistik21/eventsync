@@ -1,6 +1,6 @@
-using Domain;
+using eventsynс.Domain;
 
-namespace UI.DTOs.Requests.Events;
+namespace eventsynс.UI.DTOs.Requests.Events;
 
 public record CreateEventRequest(
     string Title,

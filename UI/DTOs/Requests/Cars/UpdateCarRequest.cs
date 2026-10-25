@@ -1,4 +1,4 @@
-namespace UI.DTOs.Requests.Cars;
+namespace eventsynс.UI.DTOs.Requests.Cars;
 
 public record UpdateCarRequest(
     string Description,

@@ -1,4 +1,4 @@
-namespace UI.DTOs.Requests.Activities;
+namespace eventsynс.UI.DTOs.Requests.Activities;
 
 public record CreateActivityRequest(
     string Title,

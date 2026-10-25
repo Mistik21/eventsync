@@ -1,6 +1,6 @@
 
 
-namespace Domain;
+namespace eventsynс.Domain;
 
 public class User
 {

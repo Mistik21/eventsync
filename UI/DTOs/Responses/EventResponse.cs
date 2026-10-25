@@ -1,6 +1,6 @@
-using Domain;
+using eventsynс.Domain;
 
-namespace UI.DTOs.Responses;
+namespace eventsynс.UI.DTOs.Responses;
 
 public record class EventResponse(
     Guid Id,

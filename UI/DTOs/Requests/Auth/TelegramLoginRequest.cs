@@ -1,4 +1,4 @@
-namespace UI.DTOs.Requests.Auth;
+namespace eventsynс.UI.DTOs.Requests.Auth;
 
 public record TelegramLoginRequest(
     string InitData
