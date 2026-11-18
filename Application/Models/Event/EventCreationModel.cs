@@ -1,4 +1,5 @@
 using eventsynс.Domain;
+using eventsynс.Domain.Entities;
 
 namespace eventsynс.Application.Models.Event;
 

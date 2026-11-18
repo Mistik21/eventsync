@@ -1,6 +1,4 @@
-using eventsynс.Domain;
-
-namespace eventsync.Application.Models;
+namespace eventsynс.Application.Models;
 
 public record BudgetData(
     int Budget,
@@ -8,5 +6,5 @@ public record BudgetData(
     int SpentAmount,
     int RemainingBudget,
     int MyDebt,
-    List<Cost> Costs
+    List<Domain.Entities.Cost> Costs
 );

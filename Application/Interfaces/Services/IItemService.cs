@@ -1,6 +1,7 @@
 using eventsynс.Application.Models;
 using eventsynс.Application.Models.Item;
 using eventsynс.Domain;
+using eventsynс.Domain.Entities;
 
 namespace eventsynс.Application.Interfaces.Services;
 
