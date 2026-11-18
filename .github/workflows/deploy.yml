@@ -27,5 +27,5 @@ jobs:
           folder-id: ${{ secrets.YC_FOLDER_ID }}
           container-name: myapp
           revision-image-url: cr.yandex/${{ secrets.YC_REGISTRY_ID }}/myapp:${{ github.sha }}
-          revision-memory: 512M
+          revision-memory: 512MB
           revision-cores: 1
