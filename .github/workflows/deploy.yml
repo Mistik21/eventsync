@@ -1,0 +1,31 @@
+name: Deploy to Yandex Cloud Serverless Containers
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Yandex Container Registry
+        uses: yc-actions/yc-cr-login@v3
+        with:
+          yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t cr.yandex/${{ secrets.YC_REGISTRY_ID }}/myapp:${{ github.sha }} .
+          docker push cr.yandex/${{ secrets.YC_REGISTRY_ID }}/myapp:${{ github.sha }}
+
+      - name: Deploy new revision
+        uses: yc-actions/yc-sls-container-deploy@v5
+        with:
+          yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
+          folder-id: ${{ secrets.YC_FOLDER_ID }}
+          container-name: myapp
+          revision-image-url: cr.yandex/${{ secrets.YC_REGISTRY_ID }}/myapp:${{ github.sha }}
+          revision-memory: 512M
+          revision-cores: 1
