@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     Args = args,
     WebRootPath = "UI/wwwroot"
 });
+builder.WebHost.UseSetting("DetailedErrors", "true");
 
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 // Add services to the container.
@@ -54,6 +55,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseDeveloperExceptionPage();
+
 }
 
 app.UseHttpsRedirection();
