@@ -4,12 +4,12 @@ EXPOSE 80
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
-COPY ["YourProject.csproj", "./"]
-RUN dotnet restore "YourProject.csproj"
+COPY ["eventsync.csproj", "./"]
+RUN dotnet restore "eventsync.csproj"
 COPY . .
-RUN dotnet publish "YourProject.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "eventsync.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "YourProject.dll"]
+ENTRYPOINT ["dotnet", "eventsync.dll"]
