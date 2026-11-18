@@ -5,11 +5,14 @@ using Microsoft.EntityFrameworkCore;
 using eventsynс.Domain.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "80";
+
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+var webRoot = Path.Combine(Directory.GetCurrentDirectory(), "UI", "wwwroot");
+
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
     Args = args,
-    WebRootPath = "UI/wwwroot"
+    WebRootPath = webRoot
 });
 builder.WebHost.UseSetting("DetailedErrors", "true");
 
