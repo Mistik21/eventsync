@@ -5,12 +5,14 @@ using Microsoft.EntityFrameworkCore;
 using eventsynс.Domain.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "80";
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
     Args = args,
     WebRootPath = "UI/wwwroot"
 });
 
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 // Add services to the container.
 
 builder.Services.AddScoped<IAuthService, AuthService>();
