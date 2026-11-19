@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eventsynс.UI.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/events")]
 public class EventsController : ControllerBase

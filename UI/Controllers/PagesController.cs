@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eventsynс.UI.Controllers;
 
+[Authorize]
 public class PagesController : Controller
 {
+    [AllowAnonymous]
     [HttpGet("/")]
     public IActionResult Index() =>
         File("~/html/index.html", "text/html");

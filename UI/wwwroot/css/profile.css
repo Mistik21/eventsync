@@ -1,0 +1,116 @@
+.profile-screen {
+    width: 100%;
+    max-width: 402px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin-inline: auto;
+    padding: max(22px, env(safe-area-inset-top)) 18px
+             max(34px, env(safe-area-inset-bottom));
+}
+
+.profile-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.profile-header h1 {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.2;
+}
+
+.profile-home {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 12px;
+    border-radius: 10px;
+    background: var(--purple-light);
+    color: #6231a6;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.profile-home:hover {
+    background: #e9dffc;
+}
+
+.profile-home:focus-visible {
+    outline: 2px solid #7c3ed7;
+    outline-offset: 3px;
+}
+
+.profile-card,
+.profile-stat,
+.profile-status {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: 0 2px 3px rgb(23 32 51 / 5%);
+}
+
+.profile-card {
+    display: grid;
+    justify-items: center;
+    gap: 16px;
+    padding: 30px 20px;
+    border-radius: 20px;
+    text-align: center;
+}
+
+.profile-avatar {
+    display: grid;
+    width: 80px;
+    height: 80px;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--purple-light);
+    color: #6231a6;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.profile-card h2 {
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.profile-stat {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 12px 0 0;
+    padding: 16px;
+    border-radius: 14px;
+}
+
+.profile-stat dt {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.profile-stat dd {
+    margin: 0;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: var(--purple-light);
+    color: #6231a6;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.profile-status {
+    margin: 0;
+    padding: 18px;
+    border-radius: 14px;
+    color: var(--muted);
+    line-height: 1.5;
+}

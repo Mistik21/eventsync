@@ -20,11 +20,11 @@ public class AuthController : ControllerBase
         this.authService = authService; 
     } 
     
-    [Authorize]
     [HttpGet("session")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public IActionResult GetSession() => NoContent();
 
+    [AllowAnonymous]
     [HttpPost("telegram")]
     public async Task<IActionResult> TelegramLogin([FromBody] TelegramLoginRequest request)
     {

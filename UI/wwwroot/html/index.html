@@ -7,7 +7,7 @@
     <title>Мои события · EventSync</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
-    <script src="/js/app.js" defer></script>
+    <script type="module" src="/js/app.js"></script>
 </head>
 <body>
     <main class="events-screen">
@@ -21,7 +21,7 @@
                 </svg>
             </span>
             <h1>Мои события</h1>
-            <button class="profile-badge" type="button" aria-label="Профиль" disabled>АГ</button>
+            <a class="profile-badge" role="link" aria-label="Открыть профиль" aria-disabled="true">…</a>
         </header>
 
         <ul class="event-groups" aria-label="Группы событий">
