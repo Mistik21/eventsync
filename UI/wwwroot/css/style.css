@@ -323,7 +323,7 @@ input:disabled {
     min-width: 0;
 }
 
-.google-maps-attribution {
+.map-attribution {
     color: #5e5e5e;
     font-family: Roboto, sans-serif;
     font-size: 12px;

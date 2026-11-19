@@ -1,4 +1,4 @@
-import { formatCoordinates, loadGoogleMaps, lookupGoogleAddress } from "./google-maps.js";
+import { formatCoordinates, loadMapGl, lookupAddress } from "./two-gis.js";
 
 export function setupMeetingLocation(field) {
     const toggle = field.querySelector(".meeting-map-toggle");
@@ -9,7 +9,7 @@ export function setupMeetingLocation(field) {
     const center = field.querySelector(".meeting-map-center");
     const summary = field.querySelector(".meeting-address");
     const address = summary.querySelector(".meeting-address-text");
-    const attribution = summary.querySelector(".google-maps-attribution");
+    const attribution = summary.querySelector(".map-attribution");
     const status = field.querySelector(".meeting-location-status");
     const fallback = field.querySelector(".meeting-address-fallback");
     const manualAddress = fallback.querySelector("input");
@@ -27,69 +27,46 @@ export function setupMeetingLocation(field) {
         panel.hidden = !open;
         summary.hidden = open || !selected;
         toggle.setAttribute("aria-expanded", String(open));
-        toggleLabel.textContent = open ? "Закрыть карту" : selected ? "Изменить точку" : "Выбрать на Google Maps";
+        toggleLabel.textContent = open ? "Закрыть карту" : selected ? "Изменить точку" : "Выбрать на карте 2ГИС";
     }
 
     function useManualAddress() {
         showPanel(false);
+        map?.destroy();
+        map = undefined;
+        marker = undefined;
         summary.hidden = true;
         toggle.hidden = true;
         fallback.hidden = false;
-        showStatus("Google Maps сейчас недоступны. Введите адрес вручную.");
+        showStatus("Карта 2ГИС сейчас недоступна. Введите адрес вручную.");
     }
 
     function setDraft(point) {
         draft = point;
-        marker.draw();
+        if (point) {
+            marker.setCoordinates([point.lng, point.lat]);
+            marker.show();
+        } else {
+            marker.hide();
+        }
         confirm.disabled = !draft;
     }
 
     async function initializeMap() {
-        const maps = await loadGoogleMaps();
-        const { Map, OverlayView } = await maps.importLibrary("maps");
-        if (!fallback.hidden) {
-            return;
-        }
-        map = new Map(mapElement, {
-            center: { lat: 56.8389, lng: 60.6057 },
+        const { mapgl, apiKey } = await loadMapGl();
+        const initialCenter = [60.6057, 56.8389];
+        map = new mapgl.Map(mapElement, {
+            key: apiKey,
+            center: initialCenter,
             zoom: 12,
-            gestureHandling: "cooperative",
-            clickableIcons: false,
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false,
+            lang: "ru",
+            disableZoomOnScroll: true,
+            enableTrackResize: true,
         });
-        const pin = document.createElement("span");
-        pin.className = "meeting-map-pin";
-        pin.setAttribute("aria-hidden", "true");
-
-        class MeetingPin extends OverlayView {
-            onAdd() {
-                this.getPanes().overlayLayer.append(pin);
-            }
-            draw() {
-                const position = draft && this.getProjection()?.fromLatLngToDivPixel(draft);
-                pin.hidden = !position;
-                if (position) {
-                    pin.style.left = `${position.x}px`;
-                    pin.style.top = `${position.y}px`;
-                }
-            }
-            onRemove() {
-                pin.remove();
-            }
-        }
-
-        marker = new MeetingPin();
-        marker.setMap(map);
-        map.addListener("click", event => {
-            if (event.latLng) {
-                setDraft(event.latLng);
-            }
-        });
+        marker = new mapgl.Marker(map, { coordinates: initialCenter, interactive: false });
+        map.on("click", ({ lngLat: [lng, lat] }) => setDraft({ lat, lng }));
+        map.once("styleloaderror", useManualAddress);
     }
-
-    window.addEventListener("google-maps-unavailable", useManualAddress);
 
     toggle.addEventListener("click", async () => {
         if (!panel.hidden) {
@@ -116,14 +93,18 @@ export function setupMeetingLocation(field) {
             }
         }
 
+        map.invalidateSize();
         setDraft(selected);
         if (selected) {
-            map.setCenter(selected);
+            map.setCenter([selected.lng, selected.lat]);
         }
         showStatus("Нажмите на карту, чтобы поставить метку.");
     });
 
-    center.addEventListener("click", () => setDraft(map.getCenter()));
+    center.addEventListener("click", () => {
+        const [lng, lat] = map.getCenter();
+        setDraft({ lat, lng });
+    });
 
     confirm.addEventListener("click", async () => {
         const point = draft;
@@ -131,7 +112,7 @@ export function setupMeetingLocation(field) {
             return;
         }
         selected = point;
-        address.textContent = formatCoordinates(point.toJSON());
+        address.textContent = formatCoordinates(point);
         attribution.hidden = true;
         showPanel(false);
         toggle.focus();
@@ -139,9 +120,12 @@ export function setupMeetingLocation(field) {
 
         let formattedAddress;
         try {
-            formattedAddress = await lookupGoogleAddress(point);
+            formattedAddress = await lookupAddress(point);
         } catch {
-            formattedAddress = "";
+            if (selected === point && panel.hidden && fallback.hidden) {
+                showStatus("Не удалось определить адрес. Будет сохранена выбранная точка.");
+            }
+            return;
         }
         if (selected !== point) {
             return;
@@ -159,13 +143,13 @@ export function setupMeetingLocation(field) {
         read() {
             if (!fallback.hidden) {
                 const value = manualAddress.value.trim();
-                return value ? { address: value, coordinates: selected ? formatCoordinates(selected.toJSON()) : "" } : null;
+                return value ? { address: value, coordinates: selected ? formatCoordinates(selected) : "" } : null;
             }
             if (!selected || !panel.hidden) {
                 return null;
             }
             // Only the point placed by the user is persisted. Each viewer gets a fresh address lookup.
-            return { address: "", coordinates: formatCoordinates(selected.toJSON()) };
+            return { address: "", coordinates: formatCoordinates(selected) };
         },
         focus() {
             if (!fallback.hidden) {

@@ -287,18 +287,6 @@
     color: #fff;
 }
 
-.meeting-map-pin {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    transform: translate(-50%, -120%) rotate(-45deg);
-    border: 2px solid white;
-    border-radius: 50% 50% 50% 0;
-    background: #7c3ed7;
-    box-shadow: 0 2px 5px rgb(23 32 51 / 34%);
-    pointer-events: none;
-}
-
 .meeting-address-fallback {
     display: grid;
     gap: 6px;

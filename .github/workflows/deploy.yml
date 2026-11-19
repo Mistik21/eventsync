@@ -33,7 +33,7 @@ jobs:
           revision-network-id: enphqfrmf1asvafuao75
           revision-env: |
             ASPNETCORE_ENVIRONMENT=Development
-            ${{ secrets.GOOGLE_MAPS_BROWSER_KEY && format('GoogleMaps__ApiKey={0}', secrets.GOOGLE_MAPS_BROWSER_KEY) || '' }}
+            ${{ secrets.DGIS_API_KEY && format('TwoGis__ApiKey={0}', secrets.DGIS_API_KEY) || '' }}
           revision-secrets: |
             ConnectionStrings__DefaultConnection=e6q5g00uaq06cn37ojug/e6qo494pb2964cb94cfq/db-connection-string
             Telegram__BotToken=e6q5g00uaq06cn37ojug/e6qo494pb2964cb94cfq/telegram-bot-token

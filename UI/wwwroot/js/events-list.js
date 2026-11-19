@@ -1,5 +1,5 @@
 import { fetchApi } from "./session.js";
-import { formatCoordinates, lookupGoogleAddress, parseCoordinates } from "./google-maps.js";
+import { formatCoordinates, lookupAddress, parseCoordinates } from "./two-gis.js";
 
 const dateFormat = new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "long",
@@ -23,10 +23,10 @@ function canDisplayCover(value) {
 
 function displayLocation(card, event) {
     const address = card.querySelector(".event-card-address");
-    const attribution = card.querySelector(".google-maps-attribution");
-    address.textContent = event.eventLocation.address || event.googleAddress ||
+    const attribution = card.querySelector(".map-attribution");
+    address.textContent = event.eventLocation.address || event.resolvedAddress ||
         (event.point ? formatCoordinates(event.point) : "Место не указано");
-    attribution.hidden = !event.googleAddress;
+    attribution.hidden = !event.resolvedAddress;
 }
 
 function renderCard(template, event) {
@@ -75,9 +75,9 @@ function showEvents(events) {
             }
             addressObserver.unobserve(target);
             const event = observedEvents.get(target);
-            event.addressLookup ??= lookupGoogleAddress(event.point).catch(() => "");
+            event.addressLookup ??= lookupAddress(event.point).catch(() => "");
             void event.addressLookup.then(address => {
-                event.googleAddress = address;
+                event.resolvedAddress = address;
                 displayLocation(target, event);
             });
         }
@@ -97,7 +97,7 @@ function showEvents(events) {
         groups[1].textContent = `Я организую · ${collections.organizing.length}`;
 
         const visible = collections[selected].filter(event =>
-            [event.title, event.eventLocation.address, event.googleAddress ?? ""]
+            [event.title, event.eventLocation.address, event.resolvedAddress ?? ""]
                 .some(value => value.toLocaleLowerCase("ru").includes(query)));
         const direction = order.value === "ascending" ? 1 : -1;
         visible.sort((first, second) => direction * (first.start - second.start));
@@ -105,7 +105,7 @@ function showEvents(events) {
         addressObserver.disconnect();
         list.replaceChildren(...visible.map(event => {
             const card = renderCard(template, event);
-            if (event.point && event.googleAddress === undefined) {
+            if (event.point && event.resolvedAddress === undefined) {
                 observedEvents.set(card.firstElementChild, event);
                 addressObserver.observe(card.firstElementChild);
             }
