@@ -1,4 +1,4 @@
-import { fetchApi } from "./session.js";
+import { fetchApi, getSessionErrorMessage } from "./session.js";
 import { setupMeetingLocation } from "./meeting-location.js";
 
 const form = document.querySelector(".create-form");
@@ -121,8 +121,12 @@ form.addEventListener("submit", async event => {
                 mainImageUrl,
             }),
         });
-        if (response.status === 401 || response.status === 403) {
-            setStatus("Не удалось восстановить сессию. Откройте приложение заново в Telegram.");
+        if (response.status === 401) {
+            setStatus(getSessionErrorMessage());
+            return;
+        }
+        if (response.status === 403) {
+            setStatus("Нет доступа к созданию события.");
             return;
         }
         if (!response.ok) {

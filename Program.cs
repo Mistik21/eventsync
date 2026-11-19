@@ -3,6 +3,8 @@ using eventsynс.Application.Interfaces.Services;
 using eventsynс.Application.Services;
 using Microsoft.EntityFrameworkCore;
 using eventsynс.Domain.Repositories;
+using eventsynс.UI.Auth;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 
@@ -28,7 +30,14 @@ builder.Services.AddScoped<ITelegramAuthValidator, TelegramAuthValidatorService>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication("EventSync")
+    .AddPolicyScheme("EventSync", null, options =>
+    {
+        options.ForwardDefaultSelector = context => context.Request.Headers.ContainsKey(TelegramSessionHandler.HeaderName)
+            ? TelegramSessionHandler.SchemeName
+            : CookieAuthenticationDefaults.AuthenticationScheme;
+    })
+    .AddScheme<AuthenticationSchemeOptions, TelegramSessionHandler>(TelegramSessionHandler.SchemeName, null)
     .AddCookie(options =>
     {
         options.Cookie.HttpOnly = true;

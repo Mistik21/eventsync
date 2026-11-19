@@ -1,12 +1,12 @@
 let renewal;
-let sessionVersion = 0;
+let verifiedInitData;
 
 window.Telegram?.WebApp?.ready();
 
 async function signInWithTelegram() {
     const initData = window.Telegram?.WebApp?.initData;
     if (!initData) {
-        return false;
+        return;
     }
 
     const response = await fetch("/api/auth/telegram", {
@@ -16,14 +16,14 @@ async function signInWithTelegram() {
     });
 
     if (response.status === 401) {
-        return false;
+        return;
     }
     if (!response.ok) {
         throw new Error("Не удалось войти через Telegram.");
     }
 
-    sessionVersion++;
-    return true;
+    verifiedInitData = initData;
+    return initData;
 }
 
 function renewSession() {
@@ -35,16 +35,28 @@ function renewSession() {
 
 export async function fetchApi(input, options) {
     const request = new Request(input, options);
-    const version = sessionVersion;
     const response = await fetch(request.clone());
 
     if (response.status !== 401) {
         return response;
     }
 
-    if (version === sessionVersion && !(await renewSession())) {
+    const url = new URL(request.url);
+    if (url.origin !== window.location.origin || !url.pathname.startsWith("/api/")) {
         return response;
     }
 
-    return fetch(request);
+    const initData = verifiedInitData ?? await renewSession();
+    if (!initData) {
+        return response;
+    }
+
+    request.headers.set("X-EventSync-Telegram-Init-Data", initData);
+    return fetch(request, { redirect: "error" });
+}
+
+export function getSessionErrorMessage() {
+    return window.Telegram?.WebApp?.initData
+        ? "Не удалось подтвердить вход через Telegram. Попробуйте обновить страницу."
+        : "Откройте EventSync кнопкой запуска мини-приложения в боте Telegram.";
 }

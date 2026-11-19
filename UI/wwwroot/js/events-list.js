@@ -1,4 +1,4 @@
-import { fetchApi } from "./session.js";
+import { fetchApi, getSessionErrorMessage } from "./session.js";
 import { formatCoordinates, lookupAddress, parseCoordinates } from "./two-gis.js";
 
 const dateFormat = new Intl.DateTimeFormat("ru-RU", {
@@ -139,7 +139,7 @@ export async function loadMyEvents() {
     try {
         const response = await fetchApi("/api/events", { cache: "no-store" });
         if (response.status === 401) {
-            status.textContent = "Для входа откройте приложение заново в Telegram.";
+            status.textContent = getSessionErrorMessage();
             return;
         }
         if (!response.ok) {

@@ -1,4 +1,5 @@
 import { fetchCurrentUser, getInitials } from "./current-user.js";
+import { getSessionErrorMessage } from "./session.js";
 
 async function loadProfile() {
     const status = document.querySelector("#profile-status");
@@ -6,7 +7,7 @@ async function loadProfile() {
     try {
         const response = await fetchCurrentUser();
         if (response.status === 401) {
-            status.textContent = "Не удалось восстановить сессию. Откройте приложение заново в Telegram.";
+            status.textContent = getSessionErrorMessage();
             return;
         }
         if (response.status === 404) {
