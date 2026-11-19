@@ -32,7 +32,11 @@
     color: #7c3ed7;
 }
 
-.create-screen svg {
+.create-back svg,
+.cover-label svg,
+.cover-remove svg,
+.create-input-icon > svg,
+.meeting-map-toggle > svg {
     width: 20px;
     height: 20px;
 }
@@ -137,13 +141,15 @@
     gap: 6px;
 }
 
-.create-field label {
+.create-field label,
+.create-field-label {
     color: #475569;
     font-size: 13px;
     font-weight: 500;
 }
 
-.create-field label span {
+.create-field label span,
+.create-field-label span {
     color: #b3454a;
 }
 
@@ -208,44 +214,94 @@
     pointer-events: none;
 }
 
-.event-coordinates {
-    padding: 0 12px;
-    border-radius: 12px;
-    background: #d1e1c9;
-    color: #34563c;
-}
-
-.event-coordinates > summary {
-    display: grid;
-    min-height: 107px;
-    place-content: center;
-    justify-items: center;
-    gap: 5px;
-    font-size: 12px;
+.meeting-map-toggle,
+.meeting-map-actions button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    gap: 7px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--surface);
+    color: #7c3ed7;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    list-style: none;
 }
 
-.event-coordinates > summary::-webkit-details-marker {
-    display: none;
+.meeting-map-toggle {
+    background: var(--purple-light);
 }
 
-.event-coordinates > summary svg {
-    width: 33px;
-    height: 33px;
+.meeting-map-confirm:disabled,
+.meeting-map-center:disabled,
+.meeting-map-toggle:disabled {
+    opacity: 0.55;
+    cursor: default;
 }
 
-.event-coordinates[open] {
-    padding-bottom: 12px;
+.meeting-location-status {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.4;
 }
 
-.event-coordinates[open] > summary {
-    min-height: 70px;
+.meeting-address {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: #f7f8fa;
 }
 
-.event-coordinates input {
-    margin-top: 6px;
+.meeting-address-text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.meeting-map {
+    height: 265px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #e9edef;
+}
+
+.meeting-map-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.meeting-map-actions .meeting-map-confirm {
+    border-color: var(--purple);
+    background: #8651f2;
+    color: #fff;
+}
+
+.meeting-map-pin {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    transform: translate(-50%, -120%) rotate(-45deg);
+    border: 2px solid white;
+    border-radius: 50% 50% 50% 0;
+    background: #7c3ed7;
+    box-shadow: 0 2px 5px rgb(23 32 51 / 34%);
+    pointer-events: none;
+}
+
+.meeting-address-fallback {
+    display: grid;
+    gap: 6px;
 }
 
 .create-status {

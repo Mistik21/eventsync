@@ -1,4 +1,5 @@
 import { fetchApi } from "./session.js";
+import { setupMeetingLocation } from "./meeting-location.js";
 
 const form = document.querySelector(".create-form");
 const fields = form.querySelector("fieldset");
@@ -9,7 +10,7 @@ const coverPicker = form.querySelector(".cover-picker");
 const coverPreview = form.querySelector(".cover-preview");
 const coverCaption = form.querySelector(".cover-caption");
 const coverRemove = form.querySelector(".cover-remove");
-const location = form.querySelector(".event-coordinates");
+const meetingLocation = setupMeetingLocation(form.querySelector(".meeting-location"));
 let previewUrl;
 
 function setStatus(message = "", isError = true) {
@@ -78,19 +79,6 @@ async function encodeCover() {
     }
 }
 
-function readCoordinates(value) {
-    if (!value.trim()) {
-        return "";
-    }
-    const parts = value.split(",").map(part => part.trim());
-    const [latitude, longitude] = parts.map(Number);
-    if (parts.length !== 2 || parts.some(part => !/^[+-]?\d+(\.\d+)?$/.test(part)) ||
-        Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
-        throw new Error("Введите широту и долготу через запятую, например 56.8389, 60.6057.");
-    }
-    return `${latitude}, ${longitude}`;
-}
-
 form.addEventListener("submit", async event => {
     event.preventDefault();
     if (submit.disabled) {
@@ -100,20 +88,16 @@ form.addEventListener("submit", async event => {
     const values = new FormData(form);
     const title = values.get("title").trim();
     const description = values.get("description").trim();
-    const address = values.get("address").trim();
     const start = new Date(values.get("eventStartTime"));
-    if (!title || !description || !address || !Number.isFinite(start.getTime())) {
-        setStatus("Заполните название, описание, дату и место встречи.");
+    if (!title || !description || !Number.isFinite(start.getTime())) {
+        setStatus("Заполните название, описание и дату.");
         return;
     }
 
-    let coordinates;
-    try {
-        coordinates = readCoordinates(values.get("coordinates"));
-    } catch (error) {
-        location.open = true;
-        form.querySelector("#event-coordinates").focus();
-        setStatus(error.message);
+    const eventLocation = meetingLocation.read();
+    if (!eventLocation) {
+        setStatus("Укажите место встречи.");
+        meetingLocation.focus();
         return;
     }
 
@@ -132,7 +116,7 @@ form.addEventListener("submit", async event => {
                 title,
                 description,
                 eventStartTime: start.toISOString(),
-                eventLocation: { address, coordinates },
+                eventLocation,
                 budget: Number(values.get("budget")),
                 mainImageUrl,
             }),

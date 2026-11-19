@@ -1,4 +1,5 @@
 import { fetchApi } from "./session.js";
+import { formatCoordinates, lookupGoogleAddress, parseCoordinates } from "./google-maps.js";
 
 const dateFormat = new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "long",
@@ -20,6 +21,14 @@ function canDisplayCover(value) {
     }
 }
 
+function displayLocation(card, event) {
+    const address = card.querySelector(".event-card-address");
+    const attribution = card.querySelector(".google-maps-attribution");
+    address.textContent = event.eventLocation.address || event.googleAddress ||
+        (event.point ? formatCoordinates(event.point) : "Место не указано");
+    attribution.hidden = !event.googleAddress;
+}
+
 function renderCard(template, event) {
     const card = template.content.cloneNode(true);
     const cover = card.querySelector(".event-card-cover");
@@ -38,7 +47,7 @@ function renderCard(template, event) {
     date.dateTime = event.eventStartTime;
     date.textContent = dateFormat.format(event.start);
 
-    card.querySelector(".event-card-address").textContent = event.eventLocation.address || "Место не указано";
+    displayLocation(card, event);
     card.querySelector(".event-card-description").textContent = event.description;
     return card;
 }
@@ -58,6 +67,21 @@ function showEvents(events) {
         organizing: "Нет событий, которые вы организуете",
         archive: "В архиве пока пусто",
     };
+    const observedEvents = new WeakMap();
+    const addressObserver = new IntersectionObserver(entries => {
+        for (const { target, isIntersecting } of entries) {
+            if (!isIntersecting || !target.isConnected) {
+                continue;
+            }
+            addressObserver.unobserve(target);
+            const event = observedEvents.get(target);
+            event.addressLookup ??= lookupGoogleAddress(event.point).catch(() => "");
+            void event.addressLookup.then(address => {
+                event.googleAddress = address;
+                displayLocation(target, event);
+            });
+        }
+    });
     let selected = "active";
 
     function render() {
@@ -73,11 +97,20 @@ function showEvents(events) {
         groups[1].textContent = `Я организую · ${collections.organizing.length}`;
 
         const visible = collections[selected].filter(event =>
-            [event.title, event.eventLocation.address].some(value => value.toLocaleLowerCase("ru").includes(query)));
+            [event.title, event.eventLocation.address, event.googleAddress ?? ""]
+                .some(value => value.toLocaleLowerCase("ru").includes(query)));
         const direction = order.value === "ascending" ? 1 : -1;
         visible.sort((first, second) => direction * (first.start - second.start));
 
-        list.replaceChildren(...visible.map(event => renderCard(template, event)));
+        addressObserver.disconnect();
+        list.replaceChildren(...visible.map(event => {
+            const card = renderCard(template, event);
+            if (event.point && event.googleAddress === undefined) {
+                observedEvents.set(card.firstElementChild, event);
+                addressObserver.observe(card.firstElementChild);
+            }
+            return card;
+        }));
         list.hidden = visible.length === 0;
         empty.hidden = !list.hidden;
         emptyHint.hidden = events.length > 0 || Boolean(query);
@@ -115,7 +148,11 @@ export async function loadMyEvents() {
             throw new Error("Не удалось получить события.");
         }
         const events = await response.json();
-        showEvents(events.map(event => ({ ...event, start: new Date(event.eventStartTime) })));
+        showEvents(events.map(event => ({
+            ...event,
+            start: new Date(event.eventStartTime),
+            point: event.eventLocation.address ? null : parseCoordinates(event.eventLocation.coordinates),
+        })));
         status.hidden = true;
     } catch {
         status.textContent = "Не удалось загрузить события. Обновите страницу.";

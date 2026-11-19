@@ -317,6 +317,20 @@ input:disabled {
     overflow-wrap: anywhere;
 }
 
+.event-card-location {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.google-maps-attribution {
+    color: #5e5e5e;
+    font-family: Roboto, sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
 .event-card-chevron {
     margin-inline-start: auto;
 }
