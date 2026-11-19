@@ -6,7 +6,7 @@ async function loadProfile() {
     try {
         const response = await fetchCurrentUser();
         if (response.status === 401) {
-            status.textContent = "Сессия завершилась. Вернитесь на главную, чтобы войти.";
+            status.textContent = "Не удалось восстановить сессию. Откройте приложение заново в Telegram.";
             return;
         }
         if (response.status === 404) {

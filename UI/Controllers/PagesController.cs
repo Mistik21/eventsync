@@ -3,10 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace eventsynс.UI.Controllers;
 
-[Authorize]
+[AllowAnonymous]
 public class PagesController : Controller
 {
-    [AllowAnonymous]
     [HttpGet("/")]
     public IActionResult Index() =>
         File("~/html/index.html", "text/html");
@@ -33,7 +32,7 @@ public class PagesController : Controller
 
     [HttpGet("/event/{id:guid}/items")]
     public IActionResult Items(Guid id) =>
-        File("~я/html/items.html", "text/html");
+        File("~/html/items.html", "text/html");
 
     [HttpGet("/event/{id:guid}/budget")]
     public IActionResult Budget(Guid id) =>

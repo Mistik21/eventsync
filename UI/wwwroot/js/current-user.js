@@ -1,5 +1,7 @@
+import { fetchApi } from "./session.js";
+
 export function fetchCurrentUser() {
-    return fetch("/api/users/me", { cache: "no-store" });
+    return fetchApi("/api/users/me", { cache: "no-store" });
 }
 
 export function getInitials(name) {
