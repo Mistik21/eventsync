@@ -1,3 +1,8 @@
+using System.Security.Claims;
+using eventsynс.Application.Interfaces.Services;
+using eventsynс.Application.Models.Event;
+using eventsynс.Domain.Entities;
+using eventsynс.UI.DTOs.Requests.Events;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +13,13 @@ namespace eventsynс.UI.Controllers;
 [Route("api/events")]
 public class EventsController : ControllerBase
 {
+    private readonly IEventService eventService;
+
+    public EventsController(IEventService eventService)
+    {
+        this.eventService = eventService;
+    }
+
     [HttpGet]
     public IActionResult GetMyEvents() => Ok();
 
@@ -15,7 +27,30 @@ public class EventsController : ControllerBase
     public IActionResult GetEvent(Guid id) => Ok();
 
     [HttpPost]
-    public IActionResult CreateEvent() => Ok();
+    public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest request)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await eventService.CreateEventAsync(new EventCreationModel(
+                request.Title,
+                request.Description,
+                request.EventStartTime,
+                new Location(request.EventLocation.Address, request.EventLocation.Coordinates),
+                request.Budget,
+                request.MainImageUrl
+                ), currentUserId);
+        }
+        catch (Exception)
+        {
+            return BadRequest();
+        }
+        return Ok();
+    }
 
     [HttpPatch("{id:guid}")]
     public IActionResult UpdateEvent(Guid id) => Ok();

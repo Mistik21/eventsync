@@ -31,6 +31,13 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
 
         builder.Property(e => e.CollectionStatus)
             .IsRequired();
+
+        builder.OwnsOne(e => e.EventLocation, location =>
+        {
+            location.Property(value => value.Address).IsRequired();
+            location.Property(value => value.Coordinates).IsRequired();
+        });
+        builder.Navigation(e => e.EventLocation).IsRequired();
         
         builder.HasOne<User>()
             .WithMany()

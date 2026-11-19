@@ -7,7 +7,7 @@ public class Event
     public string Description {get;}
     public string MainImageUrl { get;  }
     public DateTime EventStartTime {get; }
-    public Location EventLocation {get;}
+    public Location EventLocation { get; private set; } = null!;
     public CollectionStatus CollectionStatus { get; }
     public int CollectedBudget { get; }
     public int Budget {get; }
@@ -20,6 +20,37 @@ public class Event
     public string[] ImageEventUrl { get;  }
     public IReadOnlyList<Cost> Expenses {get; }
 
+    public Event(
+        Guid id,
+        string title,
+        string description,
+        string? mainImageUrl,
+        DateTime eventStartTime,
+        Location eventLocation,
+        int budget,
+        Guid organizer)
+        : this(id, title, description, mainImageUrl, eventStartTime, budget, organizer)
+    {
+        EventLocation = eventLocation;
+    }
+
+    private Event(
+        Guid id,
+        string title,
+        string description,
+        string? mainImageUrl,
+        DateTime eventStartTime,
+        int budget,
+        Guid organizer)
+    {
+        Id = id;
+        Title = title;
+        Description = description;
+        MainImageUrl = mainImageUrl;
+        EventStartTime = eventStartTime;
+        Budget = budget;
+        Organizer = organizer;
+    }
     public void ChangeTitle(string title)
     {
         Title = title; 

@@ -10,7 +10,7 @@ public interface IEventService
     Task<List<Event>> GetMyEventsAsync(Guid currentUserId);
     Task<Event> GetEventAsync(Guid eventId, Guid currentUserId);
 
-    Task<Guid> CreateEventAsync(EventCreationModel data, Guid currentUserId);
+    Task CreateEventAsync(EventCreationModel data, Guid currentUserId);
     Task UpdateEventAsync(Guid eventId, EventUpdateModel data, Guid currentUserId);
     Task DeleteEventAsync(Guid eventId, Guid currentUserId);
 

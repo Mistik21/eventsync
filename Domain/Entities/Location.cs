@@ -6,4 +6,10 @@ public class Location
     public string Coordinates {get; }
     
     private Location() { }
+
+    public Location(string address, string coordinates)
+    {
+        Address = address;
+        Coordinates = coordinates;
+    }
 }

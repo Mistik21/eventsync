@@ -365,6 +365,30 @@ namespace eventsynс.PostgresMigrations
                         .HasForeignKey("Organizer")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.OwnsOne("eventsynс.Domain.Entities.Location", "EventLocation", b1 =>
+                        {
+                            b1.Property<Guid>("EventId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Address")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Coordinates")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.HasKey("EventId");
+
+                            b1.ToTable("Events");
+
+                            b1.WithOwner()
+                                .HasForeignKey("EventId");
+                        });
+
+                    b.Navigation("EventLocation")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("eventsynс.Domain.Entities.Item", b =>

@@ -16,4 +16,14 @@ public class EventRepository : IEventRepository
     {
         return await db.Events.CountAsync(e => e.Organizer == organizerId);
     }
+
+    public void Add(Event @event)
+    {
+        db.Events.Add(@event);
+    }
+    
+    public async Task<int> SavedAsync()
+    {
+        return await db.SaveChangesAsync();
+    }
 }
