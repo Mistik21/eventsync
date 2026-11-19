@@ -12,23 +12,36 @@
 <body>
     <main class="profile-screen">
         <header class="profile-header">
+            <a class="profile-home" href="/" aria-label="Вернуться к моим событиям">
+                <span aria-hidden="true">←</span>
+            </a>
             <h1>Профиль</h1>
-            <a class="profile-home" href="/">Мои события</a>
         </header>
 
         <p id="profile-status" class="profile-status" role="status">Загружаем профиль…</p>
 
-        <section id="profile-details" aria-labelledby="profile-name" hidden>
-            <div class="profile-card">
+        <div id="profile-details" hidden>
+            <section class="profile-card" aria-labelledby="profile-name">
                 <div id="profile-avatar" class="profile-avatar" aria-hidden="true"></div>
                 <h2 id="profile-name"></h2>
-            </div>
+            </section>
 
-            <dl class="profile-stat">
-                <dt>Посещённые события</dt>
-                <dd id="profile-attended-count"></dd>
+            <dl class="profile-stats" aria-label="Статистика мероприятий">
+                <div class="profile-stat">
+                    <dt>Посещено</dt>
+                    <dd id="profile-attended-count"></dd>
+                </div>
+                <div class="profile-stat">
+                    <dt>Организовано</dt>
+                    <dd aria-label="Нет данных">—</dd>
+                </div>
             </dl>
-        </section>
+
+            <section class="profile-history" aria-labelledby="profile-history-title">
+                <h2 id="profile-history-title">История мероприятий</h2>
+                <p>История пока недоступна.</p>
+            </section>
+        </div>
     </main>
 </body>
 </html>
