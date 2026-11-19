@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 
 namespace eventsynс.UI.Controllers;
 
@@ -19,6 +20,11 @@ public class AuthController : ControllerBase
         this.authService = authService; 
     } 
     
+    [Authorize]
+    [HttpGet("session")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public IActionResult GetSession() => NoContent();
+
     [HttpPost("telegram")]
     public async Task<IActionResult> TelegramLogin([FromBody] TelegramLoginRequest request)
     {

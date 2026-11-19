@@ -1,18 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f8f8f7">
+    <title>Мои события · EventSync</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <script src="/js/app.js" defer></script>
 </head>
 <body>
-    <span>Тестовый запуск всё ОК</span>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <main class="events-screen">
+        <header class="events-header">
+            <span class="events-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 3v4m8-4v4M4 10h16m0 2V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5"/>
+                    <circle cx="17" cy="17" r="4"/>
+                    <path d="M17 15v2l1 1"/>
+                </svg>
+            </span>
+            <h1>Мои события</h1>
+            <button class="profile-badge" type="button" aria-label="Профиль" disabled>АГ</button>
+        </header>
 
-    <script>
-        const tg = window.Telegram.WebApp;
+        <ul class="event-groups" aria-label="Группы событий">
+            <li class="event-group event-group--active">Активные · 0</li>
+            <li class="event-group event-group--organizing">Я организую</li>
+            <li class="event-group">Архив</li>
+        </ul>
 
-        tg.ready();
-        tg.expand();
-    </script>
+        <div class="event-search">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" aria-hidden="true">
+                <circle cx="10.5" cy="10.5" r="6.5"/>
+                <path d="m16 16 4 4"/>
+            </svg>
+            <input type="search" aria-label="Найти событие" placeholder="Найти событие" disabled>
+            <button class="filter-button" type="button" aria-label="Фильтры" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                     stroke-linecap="round" aria-hidden="true">
+                    <path d="M4 6h6m4 0h6m-6-2v4M4 12h3m4 0h9m-13-2v4M4 18h9m4 0h3m-7-2v4"/>
+                </svg>
+            </button>
+        </div>
+
+        <section class="empty-events" aria-labelledby="empty-events-title">
+            <h2 id="empty-events-title">Событий пока нет</h2>
+            <p>Создайте новое или присоединитесь по коду</p>
+        </section>
+        <p class="auth-error" role="status" hidden></p>
+
+        <div class="event-actions">
+            <button class="event-action event-action--create" type="button" aria-label="Создать событие" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" aria-hidden="true">
+                    <path d="M12 4v16M4 12h16"/>
+                </svg>
+            </button>
+            <button class="event-action event-action--join" type="button" aria-label="Присоединиться по коду" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 3h5a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-5M3 12h12m-5-5 5 5-5 5"/>
+                </svg>
+            </button>
+        </div>
+    </main>
 </body>
 </html>
