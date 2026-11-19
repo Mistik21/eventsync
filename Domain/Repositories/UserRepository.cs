@@ -11,20 +11,20 @@ public class UserRepository : IUserRepository
     {
         this.db = db;
     }
-    
+
     public async Task<User?> GetByIdAsync(Guid id)
     {
         return await db.Users.FindAsync(id);
-    }
-    
-    public async Task<int> SavedAsync()
-    {
-        return await db.SaveChangesAsync();
     }
 
     public async Task<User?> GetByTelegramIdAsync(long telegramId)
     {
         return await db.Users.FirstOrDefaultAsync(u => u.TelegramID == telegramId);
+    }
+
+    public async Task<int> SavedAsync()
+    {
+        return await db.SaveChangesAsync();
     }
 
     public void Add(User user)

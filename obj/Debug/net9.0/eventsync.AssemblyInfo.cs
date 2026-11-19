@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("eventsync")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3b940279fed2638d06bafb527952847a3d9352e8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0373bb972564b2eb604aa27b922f950fef92e6f4")]
 [assembly: System.Reflection.AssemblyProductAttribute("eventsync")]
 [assembly: System.Reflection.AssemblyTitleAttribute("eventsync")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

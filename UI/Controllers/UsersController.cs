@@ -22,7 +22,10 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetMyProfile()
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
             return Unauthorized();
+        }
+
         var user = await userService.GetMyProfileAsync(userId);
         if (user == null)
         {

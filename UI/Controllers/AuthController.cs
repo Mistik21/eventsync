@@ -9,17 +9,17 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace eventsynс.UI.Controllers;
 
-[ApiController] 
-[Route("api/auth")] 
-public class AuthController : ControllerBase 
-{ 
-    private readonly IAuthService authService; 
- 
-    public AuthController(IAuthService authService) 
-    { 
-        this.authService = authService; 
-    } 
-    
+[ApiController]
+[Route("api/auth")]
+public class AuthController : ControllerBase
+{
+    private readonly IAuthService authService;
+
+    public AuthController(IAuthService authService)
+    {
+        this.authService = authService;
+    }
+
     [HttpGet("session")]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public IActionResult GetSession() => NoContent();
@@ -48,11 +48,11 @@ public class AuthController : ControllerBase
                 user.Id,
                 user.Name,
                 user.AttendedEventCount
-                ));
+            ));
         }
-        catch (UnauthorizedAccessException) 
-        { 
-            return Unauthorized("Не удалось проверить данные Telegram."); 
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized("Не удалось проверить данные Telegram.");
         }
     }
 }

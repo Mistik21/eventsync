@@ -15,7 +15,7 @@ public class TelegramAuthValidatorService : ITelegramAuthValidator
     public TelegramAuthValidatorService(IConfiguration configuration)
     {
         botToken = configuration["Telegram:BotToken"]
-            ?? throw new InvalidOperationException("Не настроен Telegram:BotToken.");
+                   ?? throw new InvalidOperationException("Не настроен Telegram:BotToken.");
 
         if (string.IsNullOrWhiteSpace(botToken))
             throw new InvalidOperationException("Не настроен Telegram:BotToken.");
