@@ -37,7 +37,7 @@ public class EventsController : ControllerBase
             e.MainImageUrl,
             e.EventStartTime,
             new LocationResponse(e.EventLocation.Address, e.EventLocation.Coordinates),
-            e.Organizer == currentUserId)).ToList();
+            e.IsOrganizer(currentUserId))).ToList();
     }
 
     [HttpGet("{id:guid}")]

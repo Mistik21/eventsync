@@ -1,4 +1,5 @@
 import { fetchCurrentUser, getInitials } from "./current-user.js";
+import { loadMyEvents } from "./events-list.js";
 
 window.Telegram?.WebApp?.expand();
 
@@ -9,8 +10,6 @@ async function loadProfileBadge() {
     try {
         const response = await fetchCurrentUser();
         if (response.status === 401) {
-            message.textContent = "Для входа откройте приложение заново в Telegram.";
-            message.hidden = false;
             return;
         }
         if (!response.ok) {
@@ -28,3 +27,4 @@ async function loadProfileBadge() {
 }
 
 void loadProfileBadge();
+void loadMyEvents();

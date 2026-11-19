@@ -91,7 +91,7 @@ public class Event
 
     public bool IsOrganizer(Guid userId)
     {
-        return true;
+        return userId==Organizer;
     }
     public void AddDebtToAll(int amount){}
     public void AddCost(Cost cost){}

@@ -25,9 +25,9 @@
         </header>
 
         <ul class="event-groups" aria-label="Группы событий">
-            <li class="event-group event-group--active">Активные · 0</li>
-            <li class="event-group event-group--organizing">Я организую</li>
-            <li class="event-group">Архив</li>
+            <li><button class="event-group event-group--active" type="button" data-group="active" aria-pressed="true">Активные</button></li>
+            <li><button class="event-group event-group--organizing" type="button" data-group="organizing" aria-pressed="false">Я организую</button></li>
+            <li><button class="event-group" type="button" data-group="archive" aria-pressed="false">Архив</button></li>
         </ul>
 
         <div class="event-search">
@@ -37,28 +37,39 @@
                 <path d="m16 16 4 4"/>
             </svg>
             <input type="search" aria-label="Найти событие" placeholder="Найти событие" disabled>
-            <button class="filter-button" type="button" aria-label="Фильтры" disabled>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-                     stroke-linecap="round" aria-hidden="true">
-                    <path d="M4 6h6m4 0h6m-6-2v4M4 12h3m4 0h9m-13-2v4M4 18h9m4 0h3m-7-2v4"/>
-                </svg>
-            </button>
+            <details class="event-filter" hidden>
+                <summary class="filter-button" aria-label="Порядок событий">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                         stroke-linecap="round" aria-hidden="true">
+                        <path d="M4 6h6m4 0h6m-6-2v4M4 12h3m4 0h9m-13-2v4M4 18h9m4 0h3m-7-2v4"/>
+                    </svg>
+                </summary>
+                <div class="event-filter-options">
+                    <label for="event-order">По дате начала</label>
+                    <select id="event-order">
+                        <option value="ascending">По возрастанию</option>
+                        <option value="descending">По убыванию</option>
+                    </select>
+                </div>
+            </details>
         </div>
 
-        <section class="empty-events" aria-labelledby="empty-events-title">
+        <p class="events-status" role="status">Загружаем события…</p>
+        <section class="event-list" aria-label="Мои события" hidden></section>
+        <section class="empty-events" aria-labelledby="empty-events-title" hidden>
             <h2 id="empty-events-title">Событий пока нет</h2>
             <p>Создайте новое или присоединитесь по коду</p>
         </section>
         <p class="auth-error" role="status" hidden></p>
 
         <div class="event-actions">
-            <button class="event-action event-action--create" type="button" aria-label="Создать событие" disabled>
+            <a class="event-action event-action--create" href="/createEvent" aria-label="Создать событие">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
                      stroke-linecap="round" aria-hidden="true">
                     <path d="M12 4v16M4 12h16"/>
                 </svg>
-            </button>
-            <button class="event-action event-action--join" type="button" aria-label="Присоединиться по коду" disabled>
+            </a>
+            <button class="event-action event-action--join" type="button" aria-label="Присоединиться по коду" disabled hidden>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
                      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M15 3h5a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-5M3 12h12m-5-5 5 5-5 5"/>
@@ -66,5 +77,30 @@
             </button>
         </div>
     </main>
+
+    <template id="event-card-template">
+        <details class="event-card">
+            <summary class="event-card-summary">
+                <img class="event-card-cover" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" hidden>
+                <div class="event-card-heading">
+                    <h2 class="event-card-title"></h2>
+                    <span class="event-card-role"></span>
+                </div>
+                <time class="event-card-date"></time>
+                <div class="event-card-footer">
+                    <svg class="event-card-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="1.8" aria-hidden="true">
+                        <path d="M19 10c0 5-7 10-7 10s-7-5-7-10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/>
+                    </svg>
+                    <span class="event-card-address"></span>
+                    <svg class="event-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="m9 6 6 6-6 6"/>
+                    </svg>
+                </div>
+            </summary>
+            <p class="event-card-description"></p>
+        </details>
+    </template>
 </body>
 </html>

@@ -1,0 +1,123 @@
+import { fetchApi } from "./session.js";
+
+const dateFormat = new Intl.DateTimeFormat("ru-RU", {
+    dateStyle: "long",
+    timeStyle: "short",
+});
+
+function canDisplayCover(value) {
+    if (!value) {
+        return false;
+    }
+    if (/^data:image\/(jpeg|png|webp|gif|avif);base64,/i.test(value)) {
+        return true;
+    }
+    try {
+        const { protocol } = new URL(value, window.location.href);
+        return protocol === "https:" || protocol === "http:";
+    } catch {
+        return false;
+    }
+}
+
+function renderCard(template, event) {
+    const card = template.content.cloneNode(true);
+    const cover = card.querySelector(".event-card-cover");
+    if (canDisplayCover(event.mainImageUrl)) {
+        cover.addEventListener("error", () => { cover.hidden = true; }, { once: true });
+        cover.src = event.mainImageUrl;
+        cover.hidden = false;
+    }
+
+    card.querySelector(".event-card-title").textContent = event.title;
+    const role = card.querySelector(".event-card-role");
+    role.textContent = event.isOrganizer ? "Вы организатор" : "Вы участник";
+    role.classList.toggle("event-card-role--organizer", event.isOrganizer);
+
+    const date = card.querySelector(".event-card-date");
+    date.dateTime = event.eventStartTime;
+    date.textContent = dateFormat.format(event.start);
+
+    card.querySelector(".event-card-address").textContent = event.eventLocation.address || "Место не указано";
+    card.querySelector(".event-card-description").textContent = event.description;
+    return card;
+}
+
+function showEvents(events) {
+    const groups = [...document.querySelectorAll("[data-group]")];
+    const list = document.querySelector(".event-list");
+    const empty = document.querySelector(".empty-events");
+    const emptyTitle = empty.querySelector("h2");
+    const emptyHint = empty.querySelector("p");
+    const search = document.querySelector(".event-search input");
+    const filter = document.querySelector(".event-filter");
+    const order = document.querySelector("#event-order");
+    const template = document.querySelector("#event-card-template");
+    const emptyTitles = {
+        active: "Нет активных событий",
+        organizing: "Нет событий, которые вы организуете",
+        archive: "В архиве пока пусто",
+    };
+    let selected = "active";
+
+    function render() {
+        const now = Date.now();
+        const query = search.value.trim().toLocaleLowerCase("ru");
+        const active = events.filter(event => event.start >= now);
+        const collections = {
+            active,
+            organizing: active.filter(event => event.isOrganizer),
+            archive: events.filter(event => event.start < now),
+        };
+        groups[0].textContent = `Активные · ${collections.active.length}`;
+        groups[1].textContent = `Я организую · ${collections.organizing.length}`;
+
+        const visible = collections[selected].filter(event =>
+            [event.title, event.eventLocation.address].some(value => value.toLocaleLowerCase("ru").includes(query)));
+        const direction = order.value === "ascending" ? 1 : -1;
+        visible.sort((first, second) => direction * (first.start - second.start));
+
+        list.replaceChildren(...visible.map(event => renderCard(template, event)));
+        list.hidden = visible.length === 0;
+        empty.hidden = !list.hidden;
+        emptyHint.hidden = events.length > 0 || Boolean(query);
+        emptyTitle.textContent = query
+            ? "Событий не найдено"
+            : events.length ? emptyTitles[selected] : "Событий пока нет";
+    }
+
+    groups.forEach(button => button.addEventListener("click", () => {
+        selected = button.dataset.group;
+        groups.forEach(group => group.setAttribute("aria-pressed", String(group === button)));
+        order.value = selected === "archive" ? "descending" : "ascending";
+        render();
+    }));
+    search.addEventListener("input", render);
+    order.addEventListener("change", () => {
+        filter.open = false;
+        render();
+    });
+    search.disabled = false;
+    filter.hidden = false;
+    document.querySelector(".event-action--join").hidden = events.length > 0;
+    render();
+}
+
+export async function loadMyEvents() {
+    const status = document.querySelector(".events-status");
+    try {
+        const response = await fetchApi("/api/events", { cache: "no-store" });
+        if (response.status === 401) {
+            status.textContent = "Для входа откройте приложение заново в Telegram.";
+            return;
+        }
+        if (!response.ok) {
+            throw new Error("Не удалось получить события.");
+        }
+        const events = await response.json();
+        showEvents(events.map(event => ({ ...event, start: new Date(event.eventStartTime) })));
+        status.hidden = true;
+    } catch {
+        status.textContent = "Не удалось загрузить события. Обновите страницу.";
+    }
+}
