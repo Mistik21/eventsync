@@ -23,10 +23,8 @@ function canDisplayCover(value) {
 
 function displayLocation(card, event) {
     const address = card.querySelector(".event-card-address");
-    const attribution = card.querySelector(".map-attribution");
     address.textContent = event.eventLocation.address || event.resolvedAddress ||
         (event.point ? formatCoordinates(event.point) : "Место не указано");
-    attribution.hidden = !event.resolvedAddress;
 }
 
 function renderCard(template, event) {

@@ -6,7 +6,6 @@ export function setupMeetingLocation(field) {
     const panel = field.querySelector(".meeting-map-panel");
     const mapElement = field.querySelector(".meeting-map");
     const confirm = field.querySelector(".meeting-map-confirm");
-    const center = field.querySelector(".meeting-map-center");
     const summary = field.querySelector(".meeting-address");
     const address = summary.querySelector(".meeting-address-text");
     const attribution = summary.querySelector(".map-attribution");
@@ -78,7 +77,6 @@ export function setupMeetingLocation(field) {
         showPanel(true);
         if (!map) {
             toggle.disabled = true;
-            center.disabled = true;
             showStatus("Загружаем карту…");
             try {
                 await initializeMap();
@@ -86,7 +84,6 @@ export function setupMeetingLocation(field) {
                 useManualAddress();
             } finally {
                 toggle.disabled = false;
-                center.disabled = false;
             }
             if (!fallback.hidden) {
                 return;
@@ -99,11 +96,6 @@ export function setupMeetingLocation(field) {
             map.setCenter([selected.lng, selected.lat]);
         }
         showStatus("Нажмите на карту, чтобы поставить метку.");
-    });
-
-    center.addEventListener("click", () => {
-        const [lng, lat] = map.getCenter();
-        setDraft({ lat, lng });
     });
 
     confirm.addEventListener("click", async () => {
@@ -155,7 +147,7 @@ export function setupMeetingLocation(field) {
             if (!fallback.hidden) {
                 manualAddress.focus();
             } else if (!panel.hidden) {
-                (confirm.disabled ? center : confirm).focus();
+                (confirm.disabled ? mapElement : confirm).focus();
             } else {
                 toggle.focus();
             }

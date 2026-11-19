@@ -215,7 +215,7 @@
 }
 
 .meeting-map-toggle,
-.meeting-map-actions button {
+.meeting-map-confirm {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -236,7 +236,6 @@
 }
 
 .meeting-map-confirm:disabled,
-.meeting-map-center:disabled,
 .meeting-map-toggle:disabled {
     opacity: 0.55;
     cursor: default;
@@ -273,15 +272,9 @@
     background: #e9edef;
 }
 
-.meeting-map-actions {
-    display: flex;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 8px;
+.meeting-map-confirm {
     margin-top: 8px;
-}
-
-.meeting-map-actions .meeting-map-confirm {
+    margin-inline-start: auto;
     border-color: var(--purple);
     background: #8651f2;
     color: #fff;
