@@ -29,6 +29,7 @@ public class UsersController : ControllerBase
             return NotFound();
         }
 
-        return Ok(new UserResponse(user.Id, user.Name, user.AttendedEventCount));
+        return Ok(new UserResponse(user.Id, user.Name, user.AttendedEventCount,
+            await userService.GetCountByOrganizerAsync(userId)));
     }
 }

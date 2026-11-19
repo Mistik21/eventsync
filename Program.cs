@@ -19,6 +19,7 @@ builder.WebHost.UseSetting("DetailedErrors", "true");
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 // Add services to the container.
 
+builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITelegramAuthValidator, TelegramAuthValidatorService>();

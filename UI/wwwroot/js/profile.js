@@ -17,10 +17,11 @@ async function loadProfile() {
             throw new Error("Не удалось загрузить профиль.");
         }
 
-        const { name, attendedEventCount } = await response.json();
+        const { name, attendedEventCount, attendedOrganizerCount } = await response.json();
         document.querySelector("#profile-avatar").textContent = getInitials(name);
         document.querySelector("#profile-name").textContent = name;
         document.querySelector("#profile-attended-count").textContent = attendedEventCount;
+        document.querySelector("#profile-organized-count").textContent = attendedOrganizerCount ?? "—";
         document.querySelector("#profile-details").hidden = false;
         status.hidden = true;
     } catch {
