@@ -3,6 +3,7 @@ using eventsynс.Application.Interfaces.Services;
 using eventsynс.Application.Models.Event;
 using eventsynс.Domain.Entities;
 using eventsynс.UI.DTOs.Requests.Events;
+using eventsynс.UI.DTOs.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,7 +22,23 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult GetMyEvents() => Ok();
+    public async Task<ActionResult<List<EventListItemResponse>>> GetMyEvents()
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var events = await eventService.GetMyEventsAsync(currentUserId);
+        return events.Select(e => new EventListItemResponse(
+            e.Id,
+            e.Title,
+            e.Description,
+            e.MainImageUrl,
+            e.EventStartTime,
+            new LocationResponse(e.EventLocation.Address, e.EventLocation.Coordinates),
+            e.Organizer == currentUserId)).ToList();
+    }
 
     [HttpGet("{id:guid}")]
     public IActionResult GetEvent(Guid id) => Ok();

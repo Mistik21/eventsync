@@ -12,7 +12,7 @@ public class Event
     public int CollectedBudget { get; }
     public int Budget {get; }
     public IReadOnlyDictionary<Guid, int> Debts {get; }
-    public IReadOnlyList<User> Participants {get; }
+    public IReadOnlyList<User> Participants { get; private set; } = new List<User>();
     public Guid Organizer {get; }
     public IReadOnlyList<Item> Items {get; }
     public IReadOnlyList<Activity> Activities {get; }
@@ -63,7 +63,11 @@ public class Event
     public void OpenCollection(){}
     public void AddImage(string imageUrl){}
     public void RemoveImage(string imageUrl){}
-    public void AddParticipant(User user){}
+
+    public void AddParticipant(User user)
+    {
+        Participants = Participants.Append(user).ToList();
+    }
     public void PayDebt(Guid userId){}
     public void RemoveParticipant(Guid userId){}
 

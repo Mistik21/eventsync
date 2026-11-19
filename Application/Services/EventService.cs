@@ -16,9 +16,9 @@ public class EventService:IEventService
         this.eventRepository = eventRepository;
     }
     
-    public Task<List<Event>> GetMyEventsAsync(Guid currentUserId)
+    public async Task<List<Event>> GetMyEventsAsync(Guid currentUserId)
     {
-        throw new NotImplementedException();
+        return await eventRepository.ListForOrganizerOrParticipantAsync(currentUserId);
     }
 
     public Task<Event> GetEventAsync(Guid eventId, Guid currentUserId)
@@ -37,8 +37,12 @@ public class EventService:IEventService
             data.EventLocation,
             data.Budget,
             currentUserId);
+        var user = await userRepository.GetByIdAsync(currentUserId);
+        eventNew.AddParticipant(user);
         eventRepository.Add(eventNew);
         await eventRepository.SavedAsync();
+        user.IncrementAttendedEventCount();
+        await userRepository.SavedAsync();
     }
 
     public Task UpdateEventAsync(Guid eventId, EventUpdateModel data, Guid currentUserId)

@@ -5,7 +5,7 @@ public class User
     public Guid Id { get; }
     public long TelegramID { get; }
     public string Name { get; private set; }
-    public int AttendedEventCount { get; }
+    public int AttendedEventCount { get; private set; }
 
     private User()
     {
@@ -25,6 +25,7 @@ public class User
 
     public void IncrementAttendedEventCount()
     {
+        AttendedEventCount++;
     }
 
     public bool IsTelegramUser(long telegramId)
