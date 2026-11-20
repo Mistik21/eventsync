@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Присоединиться · EventSync</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/join-event.css">
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <script type="module" src="/js/join-event.js"></script>
+</head>
+<body>
+    <main class="join-screen">
+        <header class="join-header">
+            <a href="/" aria-label="К списку событий">←</a>
+            <div>
+                <h1>Присоединиться</h1>
+                <p>По приглашению друзей</p>
+            </div>
+        </header>
+        <form id="join-form">
+            <label for="join-code">Код приглашения</label>
+            <div class="join-code-field">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                    <path d="M10 13a4 4 0 0 0 6 0l4-4a4 4 0 0 0-6-6l-2 2m2 6a4 4 0 0 0-6 0l-4 4a4 4 0 0 0 6 6l2-2"/>
+                </svg>
+                <input id="join-code" type="text" placeholder="Вставьте код события" autocomplete="off"
+                       autocapitalize="off" spellcheck="false" required aria-describedby="join-status">
+            </div>
+            <p id="join-status" class="join-status" role="status" hidden></p>
+            <article id="join-preview" class="join-preview" hidden>
+                <img id="join-cover" alt="" referrerpolicy="no-referrer" hidden>
+                <span id="join-role" class="join-role">Вы приглашены</span>
+                <h2 id="join-title"></h2>
+                <time id="join-date"></time>
+                <p id="join-organizer" hidden></p>
+                <p class="join-location"><span aria-hidden="true">⌖</span> <span id="join-location"></span></p>
+                <button id="join-submit" type="submit">Присоединиться</button>
+            </article>
+        </form>
+    </main>
+</body>
+</html>

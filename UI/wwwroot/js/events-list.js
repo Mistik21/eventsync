@@ -131,7 +131,6 @@ function showEvents(events) {
     });
     search.disabled = false;
     filter.hidden = false;
-    document.querySelector(".event-action--join").hidden = events.length > 0;
     render();
 }
 
