@@ -127,6 +127,25 @@
 [data-section="items"] { --tile-background: #ebfcf5; --tile-border: #d3ebe0; --tile-icon: #167b56; }
 [data-section="photos"] { --tile-background: #fff0f7; --tile-border: #f4dbe8; --tile-icon: #b43171; }
 
+.event-membership-action {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 24px;
+    padding: 10px 14px;
+    border: 1px solid #f0d3d3;
+    border-radius: 12px;
+    color: #a33e3e;
+    background: #fff2f2;
+    font-weight: 600;
+}
+
+.event-membership-hint {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+}
+
 .event-dialog {
     width: min(calc(100% - 24px), 416px);
     max-height: 85dvh;

@@ -1,6 +1,6 @@
 import { canDisplayCover } from "./events-list.js";
 import { fetchApi, getSessionErrorMessage } from "./session.js";
-import { formatCoordinates, loadMapGl, parseCoordinates } from "./two-gis.js";
+import { loadMapGl, lookupAddress, parseCoordinates } from "./two-gis.js";
 
 const find = id => document.getElementById(id);
 const dialog = document.querySelector(".event-dialog");
@@ -60,37 +60,47 @@ function renderEvent(event) {
     const count = event.participantsCount;
     find("event-participants").textContent = `${count} ${participantLabels[participantFormat.select(count)] ?? "участника"}`;
     const point = parseCoordinates(event.eventLocation?.coordinates);
-    find("event-address").textContent = event.eventLocation?.address || (point ? formatCoordinates(point) : "Место не указано");
-    find("event-menu").hidden = !event.isOrganizer && !event.isParticipant;
+    const address = find("event-address");
+    const savedAddress = event.eventLocation?.address?.trim();
+    address.textContent = savedAddress || (point ? "Определяем адрес…" : "Место не указано");
+    find("event-menu").hidden = !event.isOrganizer;
+    const membershipAction = find("event-membership-action");
+    membershipAction.textContent = event.isOrganizer ? "Удалить событие" : "Покинуть событие";
+    membershipAction.hidden = !event.isOrganizer && !event.isParticipant;
+    find("event-membership-hint").hidden = membershipAction.hidden;
     find("event-content").hidden = false;
     status.hidden = true;
     if (point) {
         void renderMap(point);
+        if (!savedAddress) {
+            void lookupAddress(point).catch(() => "").then(resolvedAddress => {
+                address.textContent = resolvedAddress || "Не удалось определить адрес";
+                const detailsAddress = find("event-info-address");
+                if (detailsAddress) {
+                    detailsAddress.textContent = address.textContent;
+                }
+            });
+        }
     }
 }
 
 find("event-info").addEventListener("click", () => {
+    const address = paragraph(find("event-address").textContent);
+    address.id = "event-info-address";
     openPanel("Информация",
         paragraph(find("event-date").textContent),
         paragraph(eventDetails.description || "Описание пока не добавлено"),
-        paragraph(find("event-address").textContent),
+        address,
         paragraph(find("event-participants").textContent));
 });
 
 find("event-menu").addEventListener("click", () => {
-    const labels = eventDetails.isOrganizer
-        ? ["Редактировать событие", "Удалить событие"]
-        : ["Покинуть событие"];
-    const actions = labels.map(label => {
-        const button = document.createElement("button");
-        button.className = "event-dialog-action";
-        button.type = "button";
-        button.textContent = label;
-        button.disabled = true;
-        return button;
-    });
-    openPanel(eventDetails.isOrganizer ? "Управление событием" : "Участие в событии",
-        ...actions, paragraph("Эти действия пока недоступны."));
+    const edit = document.createElement("button");
+    edit.className = "event-dialog-action";
+    edit.type = "button";
+    edit.textContent = "Редактировать событие";
+    edit.disabled = true;
+    openPanel("Управление событием", edit, paragraph("Редактирование пока недоступно."));
 });
 
 document.querySelector(".event-sections").addEventListener("click", ({ target }) => {

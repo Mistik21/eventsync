@@ -1,5 +1,5 @@
 import { fetchApi, getSessionErrorMessage } from "./session.js";
-import { formatCoordinates, lookupAddress, parseCoordinates } from "./two-gis.js";
+import { lookupAddress, parseCoordinates } from "./two-gis.js";
 
 const dateFormat = new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "long",
@@ -23,8 +23,9 @@ export function canDisplayCover(value) {
 
 function displayLocation(card, event) {
     const address = card.querySelector(".event-card-address");
-    address.textContent = event.eventLocation.address || event.resolvedAddress ||
-        (event.point ? formatCoordinates(event.point) : "Место не указано");
+    address.textContent = event.eventLocation.address?.trim() || event.resolvedAddress ||
+        (event.point ? (event.resolvedAddress === undefined ? "Определяем адрес…" : "Не удалось определить адрес")
+            : "Место не указано");
 }
 
 function renderCard(template, event) {
@@ -149,7 +150,7 @@ export async function loadMyEvents() {
         showEvents(events.map(event => ({
             ...event,
             start: new Date(event.eventStartTime),
-            point: event.eventLocation.address ? null : parseCoordinates(event.eventLocation.coordinates),
+            point: event.eventLocation.address?.trim() ? null : parseCoordinates(event.eventLocation.coordinates),
         })));
         status.hidden = true;
     } catch {

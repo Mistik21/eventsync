@@ -94,8 +94,8 @@ form.addEventListener("submit", async event => {
         return;
     }
 
-    const eventLocation = meetingLocation.read();
-    if (!eventLocation) {
+    const location = meetingLocation.read();
+    if (!location) {
         setStatus("Укажите место встречи.");
         meetingLocation.focus();
         return;
@@ -108,7 +108,7 @@ form.addEventListener("submit", async event => {
     let saved = false;
 
     try {
-        const mainImageUrl = await encodeCover();
+        const [eventLocation, mainImageUrl] = await Promise.all([location, encodeCover()]);
         const response = await fetchApi("/api/events", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

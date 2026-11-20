@@ -16,6 +16,7 @@ export function setupMeetingLocation(field) {
     let marker;
     let draft;
     let selected;
+    let selectedAddress;
 
     function showStatus(message = "") {
         status.textContent = message;
@@ -110,16 +111,10 @@ export function setupMeetingLocation(field) {
         toggle.focus();
         showStatus("Определяем адрес…");
 
-        let formattedAddress;
-        try {
-            formattedAddress = await lookupAddress(point);
-        } catch {
-            if (selected === point && panel.hidden && fallback.hidden) {
-                showStatus("Не удалось определить адрес. Будет сохранена выбранная точка.");
-            }
-            return;
-        }
-        if (selected !== point) {
+        const lookup = lookupAddress(point).then(value => value.trim()).catch(() => "");
+        selectedAddress = lookup;
+        const formattedAddress = await lookup;
+        if (selectedAddress !== lookup || !fallback.hidden) {
             return;
         }
         if (formattedAddress) {
@@ -135,13 +130,13 @@ export function setupMeetingLocation(field) {
         read() {
             if (!fallback.hidden) {
                 const value = manualAddress.value.trim();
-                return value ? { address: value, coordinates: selected ? formatCoordinates(selected) : "" } : null;
+                return value ? Promise.resolve({ address: value, coordinates: selected ? formatCoordinates(selected) : "" }) : null;
             }
             if (!selected || !panel.hidden) {
                 return null;
             }
-            // Only the point placed by the user is persisted. Each viewer gets a fresh address lookup.
-            return { address: "", coordinates: formatCoordinates(selected) };
+            const coordinates = formatCoordinates(selected);
+            return selectedAddress.then(address => ({ address, coordinates }));
         },
         focus() {
             if (!fallback.hidden) {
