@@ -50,18 +50,22 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
         
         builder.HasMany(e => e.Cars)
             .WithOne()
-            .HasForeignKey("EventId");
+            .HasForeignKey("EventId")
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(e => e.Activities)
             .WithOne()
-            .HasForeignKey("EventId");
+            .HasForeignKey("EventId")
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(e => e.Items)
             .WithOne()
-            .HasForeignKey("EventId");
+            .HasForeignKey("EventId")
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(e => e.Expenses)
             .WithOne()
-            .HasForeignKey("EventId");
+            .HasForeignKey("EventId")
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

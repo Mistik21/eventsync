@@ -23,12 +23,12 @@ public class EventService : IEventService
 
     public async Task<Event?> GetEventAsync(Guid eventId, Guid currentUserId)
     {
-        var eventThis= await eventRepository.GetByIdAsync(eventId);
-        if (eventThis != null && eventThis.Participants.All(x => x.Id != currentUserId))
+        var eventDetails= await eventRepository.GetByIdAsync(eventId);
+        if (eventDetails != null && eventDetails.Participants.All(x => x.Id != currentUserId))
         {
             throw new Exception();
         }
-        return eventThis;
+        return eventDetails;
     }
 
     public async Task CreateEventAsync(EventCreationModel data, Guid currentUserId)
@@ -55,9 +55,27 @@ public class EventService : IEventService
         throw new NotImplementedException();
     }
 
-    public Task DeleteEventAsync(Guid eventId, Guid currentUserId)
+    public async Task<bool> DeleteEventAsync(Guid eventId, Guid currentUserId)
     {
-        throw new NotImplementedException();
+        var eventDetails = await eventRepository.GetByIdAsync(eventId);
+        if (eventDetails is null)
+        {
+            return false;
+        }
+
+        if (!eventDetails.IsOrganizer(currentUserId))
+        {
+            throw new UnauthorizedAccessException();
+        }
+
+        foreach (var participant in eventDetails.Participants)
+        {
+            participant.DecrementAttendedEventCount();
+        }
+
+        eventRepository.Remove(eventDetails);
+        await eventRepository.SavedAsync();
+        return true;
     }
 
     public Task JoinEventAsync(Guid eventId, Guid currentUserId)

@@ -311,7 +311,8 @@ namespace eventsynс.PostgresMigrations
 
                     b.HasOne("eventsynс.Domain.Entities.Event", null)
                         .WithMany("Activities")
-                        .HasForeignKey("EventId");
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("eventsynс.Domain.Entities.Car", b =>
@@ -324,7 +325,8 @@ namespace eventsynс.PostgresMigrations
 
                     b.HasOne("eventsynс.Domain.Entities.Event", null)
                         .WithMany("Cars")
-                        .HasForeignKey("EventId");
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.OwnsOne("eventsynс.Domain.Entities.Location", "LocationEnd", b1 =>
                         {
@@ -355,7 +357,8 @@ namespace eventsynс.PostgresMigrations
                 {
                     b.HasOne("eventsynс.Domain.Entities.Event", null)
                         .WithMany("Expenses")
-                        .HasForeignKey("EventId");
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("eventsynс.Domain.Entities.Event", b =>
@@ -395,7 +398,8 @@ namespace eventsynс.PostgresMigrations
                 {
                     b.HasOne("eventsynс.Domain.Entities.Event", null)
                         .WithMany("Items")
-                        .HasForeignKey("EventId");
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("eventsynс.Domain.Entities.User", null)
                         .WithMany()

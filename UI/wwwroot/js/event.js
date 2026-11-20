@@ -6,6 +6,10 @@ import { loadMapGl, lookupAddress, parseCoordinates } from "./two-gis.js";
 const find = id => document.getElementById(id);
 const dialog = document.querySelector(".event-dialog");
 const dialogContent = find("event-dialog-content");
+const deleteDialog = find("event-delete-dialog");
+const deleteConfirm = find("event-delete-confirm");
+const deleteCancel = find("event-delete-cancel");
+const deleteStatus = find("event-delete-status");
 const status = find("event-status");
 const dateFormat = new Intl.DateTimeFormat("ru-RU", { dateStyle: "long", timeStyle: "short" });
 const moneyFormat = new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 });
@@ -70,8 +74,9 @@ function renderEvent(event) {
     find("event-menu").hidden = !event.isOrganizer;
     const membershipAction = find("event-membership-action");
     membershipAction.textContent = event.isOrganizer ? "Удалить событие" : "Покинуть событие";
+    membershipAction.disabled = !event.isOrganizer;
     membershipAction.hidden = !event.isOrganizer && !event.isParticipant;
-    find("event-membership-hint").hidden = membershipAction.hidden;
+    find("event-membership-hint").hidden = event.isOrganizer || membershipAction.hidden;
     find("event-content").hidden = false;
     status.hidden = true;
     if (point) {
@@ -206,6 +211,58 @@ function showEventScreen() {
 find("event-info").addEventListener("click", () => { window.location.hash = "information"; });
 find("event-info-retry").addEventListener("click", loadParticipants);
 window.addEventListener("hashchange", showEventScreen);
+
+find("event-membership-action").addEventListener("click", () => {
+    if (!eventDetails?.isOrganizer) {
+        return;
+    }
+    deleteStatus.hidden = true;
+    deleteDialog.showModal();
+});
+
+deleteCancel.addEventListener("click", () => deleteDialog.close());
+deleteDialog.addEventListener("cancel", event => {
+    if (deleteConfirm.disabled) {
+        event.preventDefault();
+    }
+});
+
+find("event-delete-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!eventDetails?.isOrganizer || deleteConfirm.disabled) {
+        return;
+    }
+
+    deleteStatus.hidden = true;
+    deleteConfirm.disabled = true;
+    deleteCancel.disabled = true;
+    deleteConfirm.textContent = "Удаляем…";
+    let deleted = false;
+    try {
+        const response = await fetchApi(`/api/events/${encodeURIComponent(eventDetails.id)}`, { method: "DELETE" });
+        if (response.ok) {
+            window.location.replace("/");
+            deleted = true;
+            return;
+        }
+        const messages = {
+            401: getSessionErrorMessage(),
+            403: "Удалить событие может только организатор.",
+            404: "Событие уже удалено или отсутствует.",
+        };
+        deleteStatus.textContent = messages[response.status] ?? "Не удалось удалить событие. Попробуйте ещё раз.";
+        deleteStatus.hidden = false;
+    } catch {
+        deleteStatus.textContent = "Не удалось подтвердить удаление. Проверьте список событий.";
+        deleteStatus.hidden = false;
+    } finally {
+        if (!deleted) {
+            deleteConfirm.disabled = false;
+            deleteCancel.disabled = false;
+            deleteConfirm.textContent = "Удалить";
+        }
+    }
+});
 
 find("event-menu").addEventListener("click", () => {
     const edit = document.createElement("button");

@@ -84,5 +84,14 @@
         </header>
         <div id="event-dialog-content"></div>
     </dialog>
+    <dialog id="event-delete-dialog" class="event-dialog" aria-labelledby="event-delete-title">
+        <form id="event-delete-form">
+            <h2 id="event-delete-title">Удалить событие?</h2>
+            <p>Вместе с событием будут удалены его активности, поездки, вещи и расходы.</p>
+            <p id="event-delete-status" class="event-delete-status" role="status" hidden></p>
+            <button id="event-delete-cancel" class="event-dialog-action" type="button" autofocus>Отмена</button>
+            <button id="event-delete-confirm" class="event-dialog-action event-delete-confirm" type="submit">Удалить</button>
+        </form>
+    </dialog>
 </body>
 </html>

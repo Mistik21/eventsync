@@ -49,6 +49,11 @@ public class EventRepository : IEventRepository
     {
         db.Events.Add(@event);
     }
+
+    public void Remove(Event eventDetails)
+    {
+        db.Events.Remove(eventDetails);
+    }
     
     public async Task<int> SavedAsync()
     {

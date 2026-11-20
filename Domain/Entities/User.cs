@@ -28,6 +28,11 @@ public class User
         AttendedEventCount++;
     }
 
+    public void DecrementAttendedEventCount()
+    {
+        AttendedEventCount = Math.Max(0, AttendedEventCount - 1);
+    }
+
     public bool IsTelegramUser(long telegramId)
     {
         return true;

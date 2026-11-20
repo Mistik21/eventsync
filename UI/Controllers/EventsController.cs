@@ -114,7 +114,23 @@ public class EventsController : ControllerBase
     public IActionResult UpdateEvent(Guid id) => Ok();
 
     [HttpDelete("{id:guid}")]
-    public IActionResult DeleteEvent(Guid id) => NoContent();
+    public async Task<IActionResult> DeleteEvent(Guid id)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var deleted = await eventService.DeleteEventAsync(id, currentUserId);
+            return deleted ? NoContent() : NotFound();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
 
     [HttpPost("{id:guid}/join")]
     public IActionResult JoinEvent(Guid id) => Ok();

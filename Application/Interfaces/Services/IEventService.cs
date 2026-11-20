@@ -12,7 +12,7 @@ public interface IEventService
 
     Task CreateEventAsync(EventCreationModel data, Guid currentUserId);
     Task UpdateEventAsync(Guid eventId, EventUpdateModel data, Guid currentUserId);
-    Task DeleteEventAsync(Guid eventId, Guid currentUserId);
+    Task<bool> DeleteEventAsync(Guid eventId, Guid currentUserId);
 
     Task JoinEventAsync(Guid eventId, Guid currentUserId);
     Task LeaveEventAsync(Guid eventId, Guid currentUserId);

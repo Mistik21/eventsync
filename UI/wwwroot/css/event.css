@@ -146,6 +146,8 @@
     text-align: center;
 }
 
+.event-membership-action:enabled, #event-delete-form button:enabled { cursor: pointer; }
+
 .event-dialog {
     width: min(calc(100% - 24px), 416px);
     max-height: 85dvh;
@@ -170,6 +172,14 @@
     background: #f8f5f8;
     text-align: left;
 }
+
+.event-delete-confirm {
+    color: #a33e3e;
+    border-color: #f0d3d3;
+    background: #fff2f2;
+}
+
+.event-delete-status { color: #a33e3e; }
 
 .event-information > header {
     display: flex;
