@@ -14,6 +14,10 @@ public class PagesController : Controller
     public IActionResult CreateEvent() =>
         File("~/html/create-event.html", "text/html");
 
+    [HttpGet("/joinEvent")]
+    public IActionResult JoinEvent() =>
+        File("~/html/join-event.html", "text/html");
+
     [HttpGet("/profile")]
     public IActionResult Profile() =>
         File("~/html/profile.html", "text/html");

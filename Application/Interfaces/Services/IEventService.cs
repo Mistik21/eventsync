@@ -15,6 +15,7 @@ public interface IEventService
     Task<bool> DeleteEventAsync(Guid eventId, Guid currentUserId);
 
     Task JoinEventAsync(Guid eventId, Guid currentUserId);
+    Task<(Event Event, string? OrganizerName)?> GetInvitationAsync(Guid eventId);
     Task LeaveEventAsync(Guid eventId, Guid currentUserId);
 
     Task<List<User>?> GetParticipantsAsync(Guid eventId, Guid currentUserId);

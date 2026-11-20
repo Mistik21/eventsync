@@ -1,0 +1,86 @@
+.join-screen {
+    width: min(100%, 402px);
+    margin-inline: auto;
+    padding: max(18px, env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
+}
+
+.join-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.join-header a {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #e9defd;
+    border-radius: 12px;
+    color: #7544d6;
+    background: var(--purple-light);
+    text-decoration: none;
+    font-size: 22px;
+}
+.join-header h1 { margin: 0; font-size: 21px; }
+.join-header p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.join-screen label { color: var(--muted); font-size: 13px; }
+.join-code-field {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 6px;
+    padding-inline: 11px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #f8fafc;
+}
+.join-code-field:focus-within { outline: 2px solid var(--purple); }
+.join-code-field svg { width: 19px; flex-shrink: 0; color: #7544d6; }
+.join-code-field input {
+    min-width: 0;
+    width: 100%;
+    min-height: 44px;
+    border: 0;
+    outline: 0;
+    color: inherit;
+    background: transparent;
+}
+.join-status { margin: 12px 0; color: var(--muted); font-size: 13px; }
+.join-status[data-state="found"] { color: #167b56; }
+.join-status[data-state="error"] { color: #a33e3e; }
+.join-preview {
+    margin-top: 12px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    overflow-wrap: anywhere;
+}
+.join-preview img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 2.4;
+    object-fit: cover;
+    margin-bottom: 12px;
+    border-radius: 12px;
+}
+.join-role {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    color: #6941bb;
+    background: var(--purple-light);
+    font-size: 12px;
+}
+.join-preview h2 { margin: 7px 0; font-size: 19px; }
+.join-preview time, .join-preview p { margin: 3px 0; color: var(--muted); font-size: 13px; }
+.join-location > :first-child { color: #7544d6; }
+.join-preview button {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 12px;
+    padding: 8px;
+    border: 0;
+    border-radius: 12px;
+    color: white;
+    background: #7544d6;
+    font-weight: 600;
+    cursor: pointer;
+}
+.join-preview button:disabled { opacity: .65; cursor: wait; }

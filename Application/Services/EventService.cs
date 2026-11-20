@@ -23,11 +23,12 @@ public class EventService : IEventService
 
     public async Task<Event?> GetEventAsync(Guid eventId, Guid currentUserId)
     {
-        var eventDetails= await eventRepository.GetByIdAsync(eventId);
+        var eventDetails = await eventRepository.GetByIdAsync(eventId);
         if (eventDetails != null && eventDetails.Participants.All(x => x.Id != currentUserId))
         {
             throw new Exception();
         }
+
         return eventDetails;
     }
 
@@ -78,9 +79,32 @@ public class EventService : IEventService
         return true;
     }
 
-    public Task JoinEventAsync(Guid eventId, Guid currentUserId)
+    public async Task<(Event Event, string? OrganizerName)?> GetInvitationAsync(Guid eventId)
     {
-        throw new NotImplementedException();
+        var eventDetails = await eventRepository.GetByIdAsync(eventId);
+        if (eventDetails is null)
+        {
+            return null;
+        }
+
+        var organizer = await userRepository.GetByIdAsync(eventDetails.Organizer);
+        return (eventDetails, organizer?.Name);
+    }
+
+    public async Task JoinEventAsync(Guid eventId, Guid currentUserId)
+    {
+        var eventDetails = await eventRepository.GetByIdAsync(eventId);
+        var user = await userRepository.GetByIdAsync(currentUserId);
+        if (user == null || eventDetails == null || eventDetails.CollectionStatus == CollectionStatus.Open ||
+            eventDetails.Participants.Any(x => x.Id == currentUserId))
+        {
+            throw new Exception();
+        }
+
+        eventDetails.AddParticipant(user);
+        user.IncrementAttendedEventCount();
+        await eventRepository.SavedAsync();
+        await userRepository.SavedAsync();
     }
 
     public Task LeaveEventAsync(Guid eventId, Guid currentUserId)
@@ -90,11 +114,12 @@ public class EventService : IEventService
 
     public async Task<List<User>?> GetParticipantsAsync(Guid eventId, Guid currentUserId)
     {
-        var participants= await eventRepository.ListParticipantsAsync(eventId);
+        var participants = await eventRepository.ListParticipantsAsync(eventId);
         if (participants != null && participants.All(x => x.Id != currentUserId))
         {
             throw new Exception();
         }
+
         return participants;
     }
 

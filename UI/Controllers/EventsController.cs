@@ -132,8 +132,57 @@ public class EventsController : ControllerBase
         }
     }
 
+    [HttpGet("{id:guid}/invitation")]
+    public async Task<IActionResult> GetInvitation(Guid id)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        var invitation = await eventService.GetInvitationAsync(id);
+        if (invitation is null)
+        {
+            return NotFound();
+        }
+
+        var (eventDetails, organizerName) = invitation.Value;
+        var isParticipant = eventDetails.Participants.Any(user => user.Id == currentUserId);
+        if (!isParticipant && eventDetails.CollectionStatus != CollectionStatus.NotStarted)
+        {
+            return Conflict();
+        }
+
+        return Ok(new
+        {
+            eventDetails.Id,
+            eventDetails.Title,
+            eventDetails.MainImageUrl,
+            eventDetails.EventStartTime,
+            EventLocation = new LocationResponse(eventDetails.EventLocation.Address, eventDetails.EventLocation.Coordinates),
+            OrganizerName = organizerName,
+            ParticipantsCount = eventDetails.Participants.Count,
+            IsParticipant = isParticipant
+        });
+    }
+
     [HttpPost("{id:guid}/join")]
-    public IActionResult JoinEvent(Guid id) => Ok();
+    public async Task<IActionResult> JoinEvent(Guid id)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+        try
+        {
+           await eventService.JoinEventAsync(id, currentUserId);
+           return Ok();
+        }
+        catch (Exception)
+        {
+            return Forbid();
+        }
+    }
 
     [HttpPost("{id:guid}/leave")]
     public IActionResult LeaveEvent(Guid id) => NoContent();

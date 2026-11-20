@@ -240,7 +240,7 @@ find("event-invite-copy").addEventListener("click", async () => {
 
 find("event-invite-share").addEventListener("click", () => {
     const shareUrl = new URL("https://t.me/share/url");
-    shareUrl.searchParams.set("url", new URL("/", window.location.href).href);
+    shareUrl.searchParams.set("url", "https://t.me/EventSync1_bot");
     shareUrl.searchParams.set("text", `Приглашение на событие «${eventDetails.title}»\nКод приглашения: ${eventDetails.id}`);
     const telegram = window.Telegram?.WebApp;
     if (telegram?.initData && telegram.openTelegramLink) {
