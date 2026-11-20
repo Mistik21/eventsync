@@ -56,6 +56,8 @@
 .event-hero h1 { margin: 0; font-size: 23px; overflow-wrap: anywhere; }
 
 .event-info {
+    position: relative;
+    isolation: isolate;
     margin-top: 16px;
     padding: 13px;
     border: 1px solid var(--border);
@@ -75,6 +77,19 @@
     cursor: pointer;
 }
 
+.event-info-heading::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: 14px;
+}
+
+.event-info-heading:focus-visible::after {
+    outline: 2px solid var(--purple);
+    outline-offset: 2px;
+}
+
 .event-facts {
     display: grid;
     gap: 6px;
@@ -87,7 +102,8 @@
 
 .event-facts li { display: flex; gap: 8px; }
 .event-facts li > :first-child { color: #7441d0; }
-.event-map { height: 110px; margin-top: 10px; border-radius: 12px; overflow: hidden; }
+#event-map-preview { position: relative; z-index: 0; }
+.event-map { height: 170px; margin-top: 10px; border-radius: 12px; overflow: hidden; }
 
 .event-sections {
     display: grid;
@@ -210,7 +226,7 @@
 .event-info-day-selected { color: #6941bb; background: var(--purple-light); font-weight: 700; }
 .event-info-date { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
 .event-info-description { white-space: pre-wrap; }
-.event-information .event-map { height: 130px; }
+.event-information .event-map { height: 200px; }
 
 .event-info-people { padding-block: 0; list-style: none; }
 .event-info-people li { display: flex; align-items: center; gap: 10px; min-height: 58px; }
