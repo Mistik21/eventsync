@@ -29,19 +29,60 @@ public class EventsController : ControllerBase
             return Unauthorized();
         }
 
-        var events = await eventService.GetMyEventsAsync(currentUserId);
-        return events.Select(e => new EventListItemResponse(
-            e.Id,
-            e.Title,
-            e.Description,
-            e.MainImageUrl,
-            e.EventStartTime,
-            new LocationResponse(e.EventLocation.Address, e.EventLocation.Coordinates),
-            e.IsOrganizer(currentUserId))).ToList();
+        try
+        {
+            var events = await eventService.GetMyEventsAsync(currentUserId);
+            return Ok(events.Select(e => new EventListItemResponse(
+                e.Id,
+                e.Title,
+                e.Description,
+                e.MainImageUrl,
+                e.EventStartTime,
+                new LocationResponse(e.EventLocation.Address, e.EventLocation.Coordinates),
+                e.IsOrganizer(currentUserId))).ToList());
+        }
+        catch (Exception)
+        {
+            return BadRequest();
+        }
     }
 
     [HttpGet("{id:guid}")]
-    public IActionResult GetEvent(Guid id) => Ok();
+    public async Task<IActionResult> GetEvent(Guid id)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var result = await eventService.GetEventAsync(id, currentUserId);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(new EventResponse(
+                result.Id,
+                result.Title,
+                result.Description,
+                result.MainImageUrl,
+                result.EventStartTime,
+                new LocationResponse(result.EventLocation.Address, result.EventLocation.Coordinates),
+                result.Budget,
+                result.Budget - result.Expenses.Sum(expense => expense.Amount),
+                result.Organizer,
+                result.Participants.Count,
+                result.IsOrganizer(currentUserId),
+                result.Participants.Any(participant => participant.Id == currentUserId),
+                result.ImageEventUrl?.ToList() ?? [],
+                result.CollectionStatus));
+        }
+        catch (Exception)
+        {
+            return BadRequest();
+        }
+    }
 
     [HttpPost]
     public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest request)

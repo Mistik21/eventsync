@@ -6,7 +6,7 @@ const dateFormat = new Intl.DateTimeFormat("ru-RU", {
     timeStyle: "short",
 });
 
-function canDisplayCover(value) {
+export function canDisplayCover(value) {
     if (!value) {
         return false;
     }
@@ -29,6 +29,7 @@ function displayLocation(card, event) {
 
 function renderCard(template, event) {
     const card = template.content.cloneNode(true);
+    card.querySelector(".event-card-summary").href = `/html/event.html?id=${encodeURIComponent(event.id)}`;
     const cover = card.querySelector(".event-card-cover");
     if (canDisplayCover(event.mainImageUrl)) {
         cover.addEventListener("error", () => { cover.hidden = true; }, { once: true });
@@ -46,7 +47,6 @@ function renderCard(template, event) {
     date.textContent = dateFormat.format(event.start);
 
     displayLocation(card, event);
-    card.querySelector(".event-card-description").textContent = event.description;
     return card;
 }
 

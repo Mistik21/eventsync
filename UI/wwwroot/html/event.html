@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Событие · EventSync</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/event.css">
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <script type="module" src="/js/event.js"></script>
+</head>
+<body>
+    <main class="event-screen">
+        <header class="event-hero">
+            <img id="event-cover" alt="" referrerpolicy="no-referrer" hidden>
+            <div class="event-header-actions">
+                <a class="event-icon-button" href="/" aria-label="К списку событий">←</a>
+                <button class="event-icon-button" id="event-menu" type="button" aria-label="Действия с событием" hidden>⋯</button>
+            </div>
+            <h1 id="event-title">Событие</h1>
+        </header>
+        <p id="event-status" role="status">Загружаем событие…</p>
+        <div id="event-content" hidden>
+            <section class="event-info">
+                <button id="event-info" type="button" class="event-info-heading">
+                    Информация <span aria-hidden="true">›</span>
+                </button>
+                <ul class="event-facts">
+                    <li><span aria-hidden="true">▦</span><time id="event-date"></time></li>
+                    <li><span aria-hidden="true">♙</span><span id="event-participants"></span></li>
+                    <li><span aria-hidden="true">⌖</span><span id="event-address"></span></li>
+                </ul>
+                <div id="event-map" class="event-map" aria-label="Место встречи на карте" hidden></div>
+            </section>
+            <nav class="event-sections" aria-label="Разделы события">
+                <button type="button" data-section="activities"><span aria-hidden="true">✦</span>Активности</button>
+                <button type="button" data-section="drives"><span aria-hidden="true">↗</span>Поездки</button>
+                <button type="button" data-section="budget"><span aria-hidden="true">₽</span>Бюджет</button>
+                <button type="button" data-section="items"><span aria-hidden="true">✓</span>Чек-лист</button>
+                <button type="button" data-section="photos"><span aria-hidden="true">▧</span>Фото</button>
+            </nav>
+        </div>
+    </main>
+    <dialog class="event-dialog" aria-labelledby="event-dialog-title">
+        <header>
+            <h2 id="event-dialog-title"></h2>
+            <form method="dialog"><button type="submit" class="event-icon-button" aria-label="Закрыть">×</button></form>
+        </header>
+        <div id="event-dialog-content"></div>
+    </dialog>
+</body>
+</html>

@@ -21,18 +21,24 @@ public class UsersController : ControllerBase
     [HttpGet("me")]
     public async Task<IActionResult> GetMyProfile()
     {
-        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
         {
             return Unauthorized();
         }
 
-        var user = await userService.GetMyProfileAsync(userId);
-        if (user == null)
+        try
         {
-            return NotFound();
+            var user = await userService.GetMyProfileAsync(currentUserId);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return Ok(new UserResponse(user.Id, user.Name, user.AttendedEventCount,
+                await userService.GetCountByOrganizerAsync(currentUserId)));
         }
-
-        return Ok(new UserResponse(user.Id, user.Name, user.AttendedEventCount,
-            await userService.GetCountByOrganizerAsync(userId)));
+        catch (Exception)
+        {
+            return BadRequest();
+        }
     }
 }

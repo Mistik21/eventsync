@@ -30,7 +30,7 @@ public class AuthController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.InitData))
         {
-            return BadRequest("Не переданы данные Telegram.");
+            return BadRequest();
         }
 
         try

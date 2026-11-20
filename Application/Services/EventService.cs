@@ -5,31 +5,36 @@ using eventsynс.Domain.Repositories;
 
 namespace eventsynс.Application.Services;
 
-public class EventService:IEventService
+public class EventService : IEventService
 {
     private readonly IUserRepository userRepository;
     private readonly IEventRepository eventRepository;
-    
-    public EventService(IUserRepository userRepository,IEventRepository eventRepository)
+
+    public EventService(IUserRepository userRepository, IEventRepository eventRepository)
     {
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
     }
-    
+
     public async Task<List<Event>> GetMyEventsAsync(Guid currentUserId)
     {
         return await eventRepository.ListForOrganizerOrParticipantAsync(currentUserId);
     }
 
-    public Task<Event> GetEventAsync(Guid eventId, Guid currentUserId)
+    public async Task<Event?> GetEventAsync(Guid eventId, Guid currentUserId)
     {
-        throw new NotImplementedException();
+        var eventThis= await eventRepository.GetByIdAsync(eventId);
+        if (eventThis != null && eventThis.Participants.All(x => x.Id != currentUserId))
+        {
+            throw new Exception();
+        }
+        return eventThis;
     }
 
     public async Task CreateEventAsync(EventCreationModel data, Guid currentUserId)
     {
-        var eventNew= new Event(
-            Guid.NewGuid() ,
+        var eventNew = new Event(
+            Guid.NewGuid(),
             data.Title,
             data.Description,
             data.MainImageUrl,
