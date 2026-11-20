@@ -123,7 +123,27 @@ public class EventsController : ControllerBase
     public IActionResult LeaveEvent(Guid id) => NoContent();
 
     [HttpGet("{id:guid}/participants")]
-    public IActionResult GetParticipants(Guid id) => Ok();
+    public async Task<IActionResult> GetParticipants(Guid id)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var result = await eventService.GetParticipantsAsync(id, currentUserId);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result.Select(user => new { user.Id, user.Name }));
+        }
+        catch (Exception)
+        {
+            return BadRequest();
+        }
+    }
 
     [HttpDelete("{eventId:guid}/participants/{userId:guid}")]
     public IActionResult RemoveParticipant(Guid eventId, Guid userId)

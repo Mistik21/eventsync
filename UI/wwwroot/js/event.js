@@ -1,4 +1,5 @@
 import { canDisplayCover } from "./events-list.js";
+import { fetchCurrentUser, getInitials } from "./current-user.js";
 import { fetchApi, getSessionErrorMessage } from "./session.js";
 import { loadMapGl, lookupAddress, parseCoordinates } from "./two-gis.js";
 
@@ -11,6 +12,8 @@ const moneyFormat = new Intl.NumberFormat("ru-RU", { style: "currency", currency
 const participantFormat = new Intl.PluralRules("ru-RU");
 const participantLabels = { one: "участник", few: "участника", many: "участников" };
 let eventDetails;
+let previewMap;
+let participantsLoading = false;
 
 window.Telegram?.WebApp?.expand();
 
@@ -35,6 +38,7 @@ async function renderMap(point) {
         const map = new mapgl.Map(container, {
             key: apiKey, center, zoom: 15, lang: "ru", disableZoomOnScroll: true,
         });
+        previewMap = map;
         map.once("styleloaderror", () => { container.hidden = true; });
         new mapgl.Marker(map, { coordinates: center, interactive: false });
     } catch {
@@ -75,24 +79,133 @@ function renderEvent(event) {
         if (!savedAddress) {
             void lookupAddress(point).catch(() => "").then(resolvedAddress => {
                 address.textContent = resolvedAddress || "Не удалось определить адрес";
-                const detailsAddress = find("event-info-address");
-                if (detailsAddress) {
-                    detailsAddress.textContent = address.textContent;
-                }
+                find("event-info-address").textContent = address.textContent;
             });
         }
     }
+    find("event-info-address").textContent = address.textContent;
+    find("event-info-description").textContent = event.description || "Описание пока не добавлено";
+    renderInformationDate(start);
+    showEventScreen();
 }
 
-find("event-info").addEventListener("click", () => {
-    const address = paragraph(find("event-address").textContent);
-    address.id = "event-info-address";
-    openPanel("Информация",
-        paragraph(find("event-date").textContent),
-        paragraph(eventDetails.description || "Описание пока не добавлено"),
-        address,
-        paragraph(find("event-participants").textContent));
-});
+function renderInformationDate(start) {
+    if (Number.isNaN(start.getTime())) {
+        find("event-info-date").textContent = "Дата не указана";
+        find("event-info-time").textContent = "—";
+        return;
+    }
+
+    find("event-info-date").textContent = start.toLocaleDateString("ru-RU", { dateStyle: "long" });
+    find("event-info-time").textContent = start.toLocaleTimeString("ru-RU", { timeStyle: "short" });
+    find("event-info-month").textContent = start.toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
+    const dayOffset = (start.getDay() + 6) % 7;
+    const week = Array.from({ length: 7 }, (_, index) => {
+        const day = new Date(start);
+        day.setDate(start.getDate() + index - dayOffset);
+        const cell = document.createElement("div");
+        const weekday = document.createElement("small");
+        weekday.textContent = day.toLocaleDateString("ru-RU", { weekday: "short" });
+        if (index === dayOffset) {
+            cell.className = "event-info-day-selected";
+            cell.setAttribute("aria-current", "date");
+        }
+        cell.append(weekday, String(day.getDate()));
+        return cell;
+    });
+    find("event-info-week").replaceChildren(...week);
+    find("event-info-calendar").hidden = false;
+}
+
+function renderParticipant(user, currentUserId) {
+    const row = document.createElement("li");
+    const initials = document.createElement("span");
+    initials.className = "event-info-avatar";
+    initials.setAttribute("aria-hidden", "true");
+    initials.textContent = getInitials(user.name);
+    const label = document.createElement("div");
+    label.textContent = user.id === currentUserId ? "Вы" : user.name;
+    if (user.id === eventDetails.organizerId) {
+        const role = document.createElement("small");
+        role.textContent = "Организатор";
+        label.append(role);
+    }
+    row.append(initials, label);
+    if (eventDetails.isOrganizer && user.id !== currentUserId && user.id !== eventDetails.organizerId) {
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.textContent = "Удалить";
+        remove.title = "Удаление участников пока недоступно";
+        remove.setAttribute("aria-label", `Удалить участника: ${user.name}`);
+        remove.disabled = true;
+        row.append(remove);
+    }
+    return row;
+}
+
+async function loadParticipants() {
+    if (participantsLoading) {
+        return;
+    }
+    participantsLoading = true;
+    const message = find("event-info-participants-status");
+    const retry = find("event-info-retry");
+    const list = find("event-info-people");
+    retry.hidden = true;
+    list.hidden = true;
+    message.hidden = false;
+    message.textContent = "Загружаем участников…";
+    try {
+        const [response, currentUser] = await Promise.all([
+            fetchApi(`/api/events/${encodeURIComponent(eventDetails.id)}/participants`, { cache: "no-store" }),
+            fetchCurrentUser().then(result => result.ok ? result.json() : null).catch(() => null),
+        ]);
+        if (!response.ok) {
+            message.textContent = response.status === 401 ? getSessionErrorMessage()
+                : response.status === 403 ? "У вас нет доступа к списку участников."
+                : "Не удалось загрузить участников.";
+            retry.hidden = response.status === 401 || response.status === 403;
+            return;
+        }
+        const users = await response.json();
+        const currentUserId = currentUser?.id ?? (eventDetails.isOrganizer ? eventDetails.organizerId : null);
+        const rows = users.map(user => renderParticipant(user, currentUserId));
+        list.replaceChildren(...rows);
+        list.hidden = rows.length === 0;
+        message.hidden = !list.hidden;
+        message.textContent = "Участников пока нет.";
+    } catch {
+        message.textContent = "Не удалось загрузить участников.";
+        retry.hidden = false;
+    } finally {
+        participantsLoading = false;
+    }
+}
+
+function showEventScreen() {
+    if (!eventDetails) {
+        return;
+    }
+    const isInformation = window.location.hash === "#information";
+    const overview = find("event-overview");
+    const information = find("event-information");
+    if (!isInformation && information.hidden) {
+        return;
+    }
+    overview.hidden = isInformation;
+    information.hidden = !isInformation;
+    find(isInformation ? "event-info-location" : "event-map-preview").append(find("event-map"));
+    previewMap?.invalidateSize();
+    window.scrollTo(0, 0);
+    find(isInformation ? "event-info-title" : "event-info").focus();
+    if (isInformation) {
+        void loadParticipants();
+    }
+}
+
+find("event-info").addEventListener("click", () => { window.location.hash = "information"; });
+find("event-info-retry").addEventListener("click", loadParticipants);
+window.addEventListener("hashchange", showEventScreen);
 
 find("event-menu").addEventListener("click", () => {
     const edit = document.createElement("button");

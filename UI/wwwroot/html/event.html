@@ -10,7 +10,7 @@
     <script type="module" src="/js/event.js"></script>
 </head>
 <body>
-    <main class="event-screen">
+    <main id="event-overview" class="event-screen">
         <header class="event-hero">
             <img id="event-cover" alt="" referrerpolicy="no-referrer" hidden>
             <div class="event-header-actions">
@@ -30,7 +30,9 @@
                     <li><span aria-hidden="true">♙</span><span id="event-participants"></span></li>
                     <li><span aria-hidden="true">⌖</span><span id="event-address"></span></li>
                 </ul>
-                <div id="event-map" class="event-map" aria-label="Место встречи на карте" hidden></div>
+                <div id="event-map-preview">
+                    <div id="event-map" class="event-map" aria-label="Место встречи на карте" hidden></div>
+                </div>
             </section>
             <nav class="event-sections" aria-label="Разделы события">
                 <button type="button" data-section="activities"><span aria-hidden="true">✦</span>Активности</button>
@@ -43,6 +45,37 @@
                     aria-describedby="event-membership-hint"></button>
             <p id="event-membership-hint" class="event-membership-hint" hidden>Действие пока недоступно.</p>
         </div>
+    </main>
+    <main id="event-information" class="event-screen event-information" hidden>
+        <header>
+            <a href="#" id="event-info-back" class="event-icon-button" aria-label="Назад к событию">←</a>
+            <h1 tabindex="-1" id="event-info-title">Информация</h1>
+        </header>
+        <section>
+            <h2>Дата</h2>
+            <div class="event-info-box" id="event-info-calendar" hidden>
+                <p id="event-info-month"></p>
+                <div class="event-info-week" id="event-info-week"></div>
+            </div>
+            <div class="event-info-date">
+                <p class="event-info-box"><small>Дата начала</small><span id="event-info-date"></span></p>
+                <p class="event-info-box"><small>Время начала</small><span id="event-info-time"></span></p>
+            </div>
+        </section>
+        <section>
+            <h2>Описание</h2>
+            <p class="event-info-box event-info-description" id="event-info-description"></p>
+        </section>
+        <section>
+            <h2>Локация</h2>
+            <div class="event-info-box" id="event-info-location"><p id="event-info-address"></p></div>
+        </section>
+        <section>
+            <h2>Участники</h2>
+            <p id="event-info-participants-status" role="status" hidden></p>
+            <button id="event-info-retry" type="button" hidden>Повторить</button>
+            <ul class="event-info-box event-info-people" id="event-info-people" hidden></ul>
+        </section>
     </main>
     <dialog class="event-dialog" aria-labelledby="event-dialog-title">
         <header>

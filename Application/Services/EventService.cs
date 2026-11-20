@@ -70,9 +70,14 @@ public class EventService : IEventService
         throw new NotImplementedException();
     }
 
-    public Task<List<User>> GetParticipantsAsync(Guid eventId, Guid currentUserId)
+    public async Task<List<User>?> GetParticipantsAsync(Guid eventId, Guid currentUserId)
     {
-        throw new NotImplementedException();
+        var participants= await eventRepository.ListParticipantsAsync(eventId);
+        if (participants != null && participants.All(x => x.Id != currentUserId))
+        {
+            throw new Exception();
+        }
+        return participants;
     }
 
     public Task RemoveParticipantAsync(Guid eventId, Guid userId, Guid currentUserId)

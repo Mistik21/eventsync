@@ -17,7 +17,7 @@ public interface IEventService
     Task JoinEventAsync(Guid eventId, Guid currentUserId);
     Task LeaveEventAsync(Guid eventId, Guid currentUserId);
 
-    Task<List<User>> GetParticipantsAsync(Guid eventId, Guid currentUserId);
+    Task<List<User>?> GetParticipantsAsync(Guid eventId, Guid currentUserId);
     Task RemoveParticipantAsync(Guid eventId, Guid userId, Guid currentUserId);
 
     Task PayMyDebtAsync(Guid eventId, Guid currentUserId);

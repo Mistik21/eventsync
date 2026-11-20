@@ -12,13 +12,24 @@ public class EventRepository : IEventRepository
         this.db = db;
     }
 
-    public async Task<List<Event>> ListForOrganizerOrParticipantAsync(Guid userId) =>
-       await db.Events
+    public async Task<List<Event>> ListForOrganizerOrParticipantAsync(Guid userId)
+    {
+       return await db.Events
             .AsNoTracking()
             .Where(e => e.Organizer == userId || e.Participants.Any(p => p.Id == userId))
             .OrderBy(e => e.EventStartTime)
             .ThenBy(e => e.Id)
             .ToListAsync();
+    }
+
+    public async Task<List<User>> ListParticipantsAsync(Guid eventId)
+    {
+        return await db.Events
+            .AsNoTracking()
+            .Where(e => e.Id == eventId)
+            .SelectMany(e => e.Participants)
+            .ToListAsync();
+    }
 
     public async Task<int> CountByOrganizerAsync(Guid organizerId)
     {
