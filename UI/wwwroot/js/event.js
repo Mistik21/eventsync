@@ -10,11 +10,16 @@ const deleteDialog = find("event-delete-dialog");
 const deleteConfirm = find("event-delete-confirm");
 const deleteCancel = find("event-delete-cancel");
 const deleteStatus = find("event-delete-status");
+const inviteButton = find("event-invite");
+const inviteDialog = find("event-invite-dialog");
+const inviteCode = find("event-invite-code");
+const inviteStatus = find("event-invite-status");
 const status = find("event-status");
 const dateFormat = new Intl.DateTimeFormat("ru-RU", { dateStyle: "long", timeStyle: "short" });
 const moneyFormat = new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 });
 const participantFormat = new Intl.PluralRules("ru-RU");
 const participantLabels = { one: "участник", few: "участника", many: "участников" };
+const collectionNotStarted = 0;
 let eventDetails;
 let previewMap;
 let participantsLoading = false;
@@ -52,6 +57,7 @@ async function renderMap(point) {
 
 function renderEvent(event) {
     eventDetails = event;
+    inviteButton.hidden = event.collectionStatus !== collectionNotStarted;
     document.title = `${event.title} · EventSync`;
     find("event-title").textContent = event.title;
     const cover = find("event-cover");
@@ -136,7 +142,8 @@ function renderParticipant(user, currentUserId) {
         label.append(role);
     }
     row.append(initials, label);
-    if (eventDetails.isOrganizer && user.id !== currentUserId && user.id !== eventDetails.organizerId) {
+    if (eventDetails.isOrganizer && eventDetails.collectionStatus === collectionNotStarted
+        && user.id !== currentUserId && user.id !== eventDetails.organizerId) {
         const remove = document.createElement("button");
         remove.type = "button";
         remove.textContent = "Удалить";
@@ -211,6 +218,37 @@ function showEventScreen() {
 find("event-info").addEventListener("click", () => { window.location.hash = "information"; });
 find("event-info-retry").addEventListener("click", loadParticipants);
 window.addEventListener("hashchange", showEventScreen);
+
+inviteButton.addEventListener("click", () => {
+    if (inviteButton.hidden) {
+        return;
+    }
+    inviteCode.textContent = eventDetails.id;
+    inviteStatus.hidden = true;
+    inviteDialog.showModal();
+});
+
+find("event-invite-copy").addEventListener("click", async () => {
+    try {
+        await navigator.clipboard.writeText(eventDetails.id);
+        inviteStatus.textContent = "Код скопирован.";
+    } catch {
+        inviteStatus.textContent = "Выделите и скопируйте код вручную.";
+    }
+    inviteStatus.hidden = false;
+});
+
+find("event-invite-share").addEventListener("click", () => {
+    const shareUrl = new URL("https://t.me/share/url");
+    shareUrl.searchParams.set("url", new URL("/", window.location.href).href);
+    shareUrl.searchParams.set("text", `Приглашение на событие «${eventDetails.title}»\nКод приглашения: ${eventDetails.id}`);
+    const telegram = window.Telegram?.WebApp;
+    if (telegram?.initData && telegram.openTelegramLink) {
+        telegram.openTelegramLink(shareUrl.href);
+    } else {
+        window.open(shareUrl.href, "_blank", "noopener,noreferrer");
+    }
+});
 
 find("event-membership-action").addEventListener("click", () => {
     if (!eventDetails?.isOrganizer) {
