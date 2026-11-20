@@ -232,6 +232,46 @@
 .event-info-people li { display: flex; align-items: center; gap: 10px; min-height: 58px; }
 .event-info-people li + li { border-top: 1px solid var(--border); }
 .event-info-people li > div { min-width: 0; }
+
+.event-invite-button {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 12px;
+    padding: 10px 14px;
+    border: 0;
+    border-radius: 12px;
+    color: white;
+    background: #7544d6;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.event-invite-dialog h2 { font-size: 16px; }
+
+.event-invite-card {
+    margin-top: 10px;
+    padding: 12px;
+    border: 1px solid #e9defd;
+    border-radius: 16px;
+    background: #f2eaff;
+}
+
+.event-invite-card .event-invite-code {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: #6941bb;
+    background: white;
+    font-size: 13px;
+    white-space: normal;
+}
+
+.event-invite-code code { font: inherit; user-select: all; }
+.event-invite-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.event-invite-actions .event-invite-button { margin: 0; padding-inline: 6px; font-size: 14px; }
+.event-invite-actions .event-invite-copy { border: 1px solid #e9defd; color: #6941bb; background: white; }
+.event-invite-card [role="status"] { margin: 8px 0 0; font-size: 13px; }
+
 .event-info-avatar {
     display: grid;
     flex: 0 0 34px;
