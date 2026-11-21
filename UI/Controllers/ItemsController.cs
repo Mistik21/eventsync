@@ -68,10 +68,47 @@ public class ItemsController : ControllerBase
     }
 
     [HttpPatch("{itemId:guid}")]
-    public IActionResult UpdateItem(Guid eventId, Guid itemId) => Ok();
+    public async Task<IActionResult> UpdateItem(UpdateItemRequest data,Guid eventId, Guid itemId)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await itemService.UpdateItemAsync(
+                eventId, 
+                itemId,
+                new ItemUpdateModel(data.Title,data.Description,data.Count, data.UrlShop), 
+                currentUserId
+                );
+            return Ok();
+        }
+        catch (Exception)
+        {
+            return BadRequest();
+        }
+    }
 
     [HttpDelete("{itemId:guid}")]
-    public IActionResult DeleteItem(Guid eventId, Guid itemId) => NoContent();
+    public async Task<IActionResult> DeleteItem(Guid eventId, Guid itemId)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await itemService.DeleteItemAsync(eventId, itemId, currentUserId);
+            return Ok();
+        }
+        catch (Exception)
+        {
+            return BadRequest();
+        }
+    }
 
     [HttpPost("{itemId:guid}/assign")]
     public async Task<IActionResult> AssignItem(Guid eventId, Guid itemId)

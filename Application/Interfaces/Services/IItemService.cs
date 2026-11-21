@@ -11,9 +11,9 @@ public interface IItemService
 
     Task CreateItemAsync(Guid eventId, ItemCreationModel data, Guid currentUserId);
 
-    Task UpdateItemAsync(Guid itemId, ItemUpdateModel data, Guid currentUserId);
+    Task UpdateItemAsync(Guid eventId, Guid itemId, ItemUpdateModel data, Guid currentUserId);
 
-    Task DeleteItemAsync(Guid itemId, Guid currentUserId);
+    Task DeleteItemAsync(Guid eventId, Guid itemId, Guid currentUserId);
 
     Task AssignItemAsync(Guid eventId ,Guid itemId, Guid currentUserId);
     Task UnassignItemAsync(Guid eventId, Guid itemId, Guid currentUserId);

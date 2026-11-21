@@ -50,18 +50,18 @@
         </li>
     </template>
 
-    <dialog id="item-create-dialog" class="items-dialog" aria-labelledby="item-create-title">
+    <dialog id="item-form-dialog" class="items-dialog" aria-labelledby="item-form-title">
         <header>
-            <h2 id="item-create-title">Добавить</h2>
-            <button id="item-create-close" class="items-close" type="button" aria-label="Закрыть форму">×</button>
+            <h2 id="item-form-title">Добавить</h2>
+            <button id="item-form-close" class="items-close" type="button" aria-label="Закрыть форму">×</button>
         </header>
-        <form id="item-create-form">
+        <form id="item-form">
             <fieldset id="item-fields" class="items-fields">
                 <label for="item-title">Название</label>
                 <input id="item-title" name="title" type="text" placeholder="Введите название…" required>
 
                 <label for="item-url">Ссылка (необязательное поле)</label>
-                <input id="item-url" name="urlShop" type="url" inputmode="url" placeholder="Вставьте URL…">
+                <input id="item-url" name="urlShop" type="text" inputmode="url" placeholder="Вставьте URL…">
 
                 <label for="item-count">Количество</label>
                 <div class="items-stepper">
@@ -74,8 +74,8 @@
                 <textarea id="item-description" name="description" rows="3" placeholder="Добавить детали…"></textarea>
             </fieldset>
             <footer>
-                <p id="item-create-error" class="items-status" data-error="true" role="alert" hidden></p>
-                <button id="item-create-submit" class="items-primary" type="submit">Создать</button>
+                <p id="item-form-error" class="items-status" data-error="true" role="alert" hidden></p>
+                <button id="item-form-submit" class="items-primary" type="submit">Создать</button>
             </footer>
         </form>
     </dialog>
@@ -83,7 +83,7 @@
     <dialog id="item-details-dialog" class="items-dialog" aria-labelledby="item-details-title">
         <header>
             <h2 id="item-details-title"></h2>
-            <form method="dialog"><button class="items-close" aria-label="Закрыть карточку">×</button></form>
+            <form method="dialog"><button id="item-details-close" class="items-close" aria-label="Закрыть карточку">×</button></form>
         </header>
         <dl class="item-details">
             <dt>Количество</dt><dd id="item-details-count"></dd>
@@ -91,6 +91,11 @@
             <dt>Ответственный</dt><dd id="item-details-owner"></dd>
             <dt id="item-details-description-label">Заметки</dt><dd id="item-details-description"></dd>
         </dl>
+        <footer class="item-details-actions">
+            <p id="item-delete-error" class="items-status" data-error="true" role="alert" hidden></p>
+            <button id="item-edit" class="item-details-button" type="button">Редактировать</button>
+            <button id="item-delete" class="item-details-button item-delete" type="button">Удалить</button>
+        </footer>
     </dialog>
 </body>
 </html>

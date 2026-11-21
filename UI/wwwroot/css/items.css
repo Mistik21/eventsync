@@ -210,3 +210,20 @@
 .item-details dt:not(:first-child) { margin-top: 12px; }
 .item-details dd { margin: 0; background: var(--surface); overflow-wrap: anywhere; white-space: pre-wrap; }
 .item-details a { color: var(--items-ink); }
+
+.item-details-actions { display: grid; gap: 10px; }
+.item-details-actions .items-status { margin: 0; }
+
+.item-details-button {
+    min-height: 52px;
+    padding: 10px 14px;
+    border: 1px solid #d8dfe8;
+    border-radius: 14px;
+    color: #344256;
+    background: #eff2f7;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.item-delete { border-color: #efd0d0; color: #a33e3e; background: #fdf1f1; }
+.item-details-button:disabled { opacity: .65; cursor: wait; }

@@ -127,7 +127,11 @@ public class Event
     {
         Items = Items.Append(item).ToList();
     }
-    public void RemoveItem(Guid itemId){}
+
+    public void RemoveItem(Guid itemId)
+    {
+        Items = Items.Where(item => item.Id != itemId).ToList();
+    }
     public void AddActivity(Activity activity){}
     public void RemoveActivity(Guid activityId){}
     public void AddCar(Car car){}

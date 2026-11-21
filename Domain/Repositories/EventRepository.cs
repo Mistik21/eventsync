@@ -55,6 +55,10 @@ public class EventRepository : IEventRepository
     {
         db.Events.Remove(eventDetails);
     }
+    public void RemoveItem(Item item)
+    {
+        db.Items.Remove(item);
+    }
     
     public async Task<int> SavedAsync()
     {

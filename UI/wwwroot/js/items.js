@@ -4,24 +4,33 @@ import { fetchApi, getSessionErrorMessage } from "./session.js";
 const find = id => document.getElementById(id);
 const eventId = window.location.pathname.match(/^\/event\/([\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12})\/items\/?$/i)?.[1];
 const api = `/api/events/${eventId}`;
+const itemsApi = `${api}/items`;
+const itemUrl = itemId => `${itemsApi}/${encodeURIComponent(itemId)}`;
 const status = find("items-status");
 const retry = find("items-retry");
 const empty = find("items-empty");
 const content = find("items-content");
 const list = find("items-list");
 const add = find("items-add");
-const createDialog = find("item-create-dialog");
+const formDialog = find("item-form-dialog");
 const detailsDialog = find("item-details-dialog");
-const form = find("item-create-form");
+const form = find("item-form");
 const fields = find("item-fields");
 const title = find("item-title");
 const link = find("item-url");
 const count = find("item-count");
+const notes = find("item-description");
 const minus = find("item-count-minus");
 const plus = find("item-count-plus");
-const close = find("item-create-close");
-const submit = find("item-create-submit");
-const createError = find("item-create-error");
+const close = find("item-form-close");
+const submit = find("item-form-submit");
+const formError = find("item-form-error");
+const detailsClose = find("item-details-close");
+const editButton = find("item-edit");
+const deleteButton = find("item-delete");
+const deleteError = find("item-delete-error");
+let detailsItem;
+let editingItem;
 
 window.Telegram?.WebApp?.expand();
 
@@ -30,6 +39,11 @@ function showStatus(message, { error = false, canRetry = false } = {}) {
     status.hidden = !message;
     status.dataset.error = String(error);
     retry.hidden = !canRetry;
+}
+
+function showDialogError(element, message) {
+    element.textContent = message;
+    element.hidden = !message;
 }
 
 function getRequestError(response, fallback) {
@@ -66,6 +80,8 @@ async function getParticipantNames() {
 }
 
 function openDetails(item, responsibleName) {
+    detailsItem = item;
+    showDialogError(deleteError, "");
     find("item-details-title").textContent = item.title;
     find("item-details-count").textContent = `${item.count} шт.`;
     find("item-details-owner").textContent = responsibleName || "Свободно";
@@ -116,7 +132,7 @@ async function loadItems({ fallback = "Не удалось загрузить ч
     content.hidden = true;
     showStatus("Загружаем чек-лист…");
     try {
-        const response = await fetchApi(`${api}/items`, { cache: "no-store" });
+        const response = await fetchApi(itemsApi, { cache: "no-store" });
         if (!response.ok) {
             showStatus(getRequestError(response, fallback), {
                 error: true,
@@ -148,13 +164,24 @@ async function loadItems({ fallback = "Не удалось загрузить ч
     }
 }
 
+function focusList(itemId, selector = ".item-open") {
+    if (!content.hidden) {
+        const card = itemId ? list.querySelector(`[data-item-id="${CSS.escape(itemId)}"]`) : null;
+        (card?.querySelector(selector) ?? card?.querySelector(".item-open") ?? add).focus();
+    } else if (!retry.hidden) {
+        retry.focus();
+    } else if (!empty.hidden) {
+        empty.querySelector("[data-add-item]").focus();
+    }
+}
+
 async function changeAssignment(itemId, action) {
     const failure = action === "unassign" ? "Не удалось снять назначение." : "Не удалось взять предмет.";
     list.inert = true;
     add.disabled = true;
     showStatus("Сохраняем…");
     try {
-        const response = await fetchApi(`${api}/items/${encodeURIComponent(itemId)}/${action}`, { method: "POST" });
+        const response = await fetchApi(`${itemUrl(itemId)}/${action}`, { method: "POST" });
         if (response.ok) {
             await loadItems({ fallback: "Изменение сохранено. Не удалось обновить список." });
         } else if (response.status === 400 || response.status === 409) {
@@ -168,18 +195,41 @@ async function changeAssignment(itemId, action) {
     } finally {
         list.inert = false;
         add.disabled = false;
-        if (!content.hidden) {
-            const card = list.querySelector(`[data-item-id="${CSS.escape(itemId)}"]`);
-            (card?.querySelector(".item-action:not([hidden])") ?? card?.querySelector(".item-open") ?? add).focus();
-        } else if (!retry.hidden) {
-            retry.focus();
-        } else if (!empty.hidden) {
-            empty.querySelector("[data-add-item]").focus();
+        focusList(itemId, ".item-action:not([hidden])");
+    }
+}
+
+function setDeleting(deleting) {
+    deleteButton.disabled = deleting;
+    editButton.disabled = deleting;
+    detailsClose.disabled = deleting;
+    deleteButton.textContent = deleting ? "Удаляем…" : "Удалить";
+}
+
+async function deleteItem() {
+    const fallback = "Не удалось удалить предмет. Попробуйте ещё раз.";
+    showDialogError(deleteError, "");
+    setDeleting(true);
+    try {
+        const response = await fetchApi(itemUrl(detailsItem.id), { method: "DELETE" });
+        if (!response.ok) {
+            showDialogError(deleteError, getRequestError(response, fallback));
+            return;
         }
+        detailsDialog.close();
+        await loadItems({ fallback: "Предмет удалён. Не удалось обновить список." });
+        focusList();
+    } catch {
+        showDialogError(deleteError, fallback);
+    } finally {
+        setDeleting(false);
     }
 }
 
 function updateStepper() {
+    if (count.validity.rangeUnderflow) {
+        count.value = count.min;
+    }
     const value = count.valueAsNumber;
     minus.disabled = Number.isNaN(value) || value <= Number(count.min);
     plus.disabled = value >= Number(count.max);
@@ -196,33 +246,47 @@ function setSubmitting(saving) {
     fields.disabled = saving;
     close.disabled = saving;
     submit.disabled = saving;
-    submit.textContent = saving ? "Создаём…" : "Создать";
+    if (editingItem) {
+        submit.textContent = saving ? "Сохраняем…" : "Сохранить";
+    } else {
+        submit.textContent = saving ? "Создаём…" : "Создать";
+    }
 }
 
-function showCreateError(message) {
-    createError.textContent = message;
-    createError.hidden = !message;
+function openItemForm(item = null) {
+    editingItem = item;
+    form.reset();
+    find("item-form-title").textContent = item ? "Редактировать предмет" : "Добавить";
+    if (item) {
+        title.value = item.title;
+        link.value = item.urlShop ?? "";
+        count.value = String(item.count);
+        notes.value = item.description ?? "";
+    }
+    showDialogError(formError, "");
+    setSubmitting(false);
+    updateStepper();
+    formDialog.showModal();
 }
 
 for (const button of document.querySelectorAll("[data-add-item]")) {
-    button.addEventListener("click", () => {
-        form.reset();
-        showCreateError("");
-        updateStepper();
-        createDialog.showModal();
-    });
+    button.addEventListener("click", () => openItemForm());
 }
 
-count.addEventListener("input", () => {
-    if (count.validity.rangeUnderflow) {
-        count.value = count.min;
-    }
-    updateStepper();
+editButton.addEventListener("click", () => {
+    detailsDialog.close();
+    openItemForm(detailsItem);
 });
+deleteButton.addEventListener("click", deleteItem);
+detailsDialog.addEventListener("cancel", event => {
+    if (deleteButton.disabled) event.preventDefault();
+});
+
+count.addEventListener("input", updateStepper);
 minus.addEventListener("click", () => stepCount(-1));
 plus.addEventListener("click", () => stepCount(1));
-close.addEventListener("click", () => createDialog.close());
-createDialog.addEventListener("cancel", event => {
+close.addEventListener("click", () => formDialog.close());
+formDialog.addEventListener("cancel", event => {
     if (submit.disabled) event.preventDefault();
 });
 
@@ -232,42 +296,44 @@ form.addEventListener("submit", async event => {
 
     const name = title.value.trim();
     if (!name) {
-        showCreateError("Введите название предмета.");
+        showDialogError(formError, "Введите название предмета.");
         title.focus();
         return;
     }
-    const url = link.value.trim();
-    if (url && !getLink(url)) {
-        showCreateError("Введите ссылку, начинающуюся с http:// или https://.");
+    const savedUrl = editingItem?.urlShop ?? "";
+    const url = link.value === savedUrl ? savedUrl : link.value.trim();
+    if (url && url !== savedUrl && !getLink(url)) {
+        showDialogError(formError, "Введите ссылку, начинающуюся с http:// или https://.");
         link.focus();
         return;
     }
 
     const item = {
         title: name,
-        description: find("item-description").value.trim(),
+        description: notes.value.trim(),
         count: count.valueAsNumber,
         urlShop: url || null,
     };
-    showCreateError("");
+    const itemId = editingItem?.id;
+    const fallback = itemId ? "Не удалось сохранить изменения." : "Не удалось создать предмет.";
+    showDialogError(formError, "");
     setSubmitting(true);
-    const fallback = "Не удалось создать предмет. Попробуйте ещё раз.";
     try {
-        const response = await fetchApi(`${api}/items`, {
-            method: "POST",
+        const response = await fetchApi(itemId ? itemUrl(itemId) : itemsApi, {
+            method: itemId ? "PATCH" : "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(item),
         });
         if (!response.ok) {
-            showCreateError(getRequestError(response, fallback));
+            showDialogError(formError, getRequestError(response, fallback));
             return;
         }
-        createDialog.close();
-        await loadItems({ fallback: "Предмет создан. Не удалось обновить список." });
-        if (!content.hidden) add.focus();
-        else if (!retry.hidden) retry.focus();
+        formDialog.close();
+        const saved = itemId ? "Изменения сохранены." : "Предмет создан.";
+        await loadItems({ fallback: `${saved} Не удалось обновить список.` });
+        focusList(itemId);
     } catch {
-        showCreateError(fallback);
+        showDialogError(formError, fallback);
     } finally {
         setSubmitting(false);
     }
