@@ -6,7 +6,7 @@ public class Item
     public string Title {get; }
     public string Description {get; }
     public int Count {get; }
-    public Guid? ResponsibleID {get; }
+    public Guid? ResponsibleID {get; private set; }
     public string? UrlShop {get; }
 
     public Item(Guid id, string title, string description, int count,string? urlShop)
@@ -22,7 +22,16 @@ public class Item
     public void ChangeDescription(string description){}
     public void ChangeCount(int count){}
     public void ChangeUrlShop(string? url){}
-    public void AssignTo(Guid userId){}
+
+    public void AssignTo(Guid userId)
+    {
+        ResponsibleID = userId;
+    }
+
+    public void UnassignTo()
+    {
+        ResponsibleID = null;
+    }
 
     public bool IsResponsible(Guid userId)
     {

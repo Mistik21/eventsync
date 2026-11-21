@@ -52,7 +52,7 @@
 .items-empty h2 { margin: 0 0 18px; font-size: 24px; }
 .items-empty p { margin: 0 0 30px; color: var(--muted); font-size: 16px; line-height: 1.4; }
 
-.items-primary, .items-add, .items-stepper button {
+.items-primary, .items-add, .items-stepper button, .item-action {
     border: 0;
     color: white;
     background: var(--items-action);
@@ -60,7 +60,7 @@
 }
 
 .items-primary { width: 100%; min-height: 64px; padding: 10px 14px; border-radius: 14px; font-weight: 650; }
-.items-primary:disabled { opacity: .65; cursor: wait; }
+.items-primary:disabled, .items-add:disabled { opacity: .65; cursor: wait; }
 .items-screen :focus-visible, .items-dialog :focus-visible { outline: 2px solid var(--items-action); outline-offset: 3px; }
 
 .items-progress {
@@ -125,17 +125,17 @@
 .item-summary small { color: var(--muted); font-size: 13px; }
 .item-owner { grid-column: 1 / -1; color: var(--items-ink); font-size: 13px; overflow-wrap: anywhere; }
 
-.item-take {
+.item-action {
     margin: 12px 14px 12px 0;
     padding: 9px 8px;
     min-width: 70px;
-    border: 0;
     border-radius: 10px;
-    color: var(--items-ink);
-    background: var(--items-tint);
     font-size: 13px;
     font-weight: 600;
 }
+
+.item-action[data-action="unassign"] { color: #402400; background: #f5a623; }
+.items-list[inert] .item-action { opacity: .65; }
 
 .items-add {
     position: fixed;

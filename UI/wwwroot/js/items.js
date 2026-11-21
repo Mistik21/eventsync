@@ -1,3 +1,4 @@
+import { fetchCurrentUser } from "./current-user.js";
 import { fetchApi, getSessionErrorMessage } from "./session.js";
 
 const find = id => document.getElementById(id);
@@ -83,26 +84,37 @@ function openDetails(item, responsibleName) {
     detailsDialog.showModal();
 }
 
-function renderItem(item, responsibleName) {
+function renderItem(item, participants, currentUserId) {
+    const responsibleId = getResponsibleId(item);
+    const isMine = Boolean(responsibleId && responsibleId === currentUserId);
+    const responsibleName = responsibleId ? participants.get(responsibleId) || "Участник события" : null;
     const card = find("item-card-template").content.firstElementChild.cloneNode(true);
-    card.dataset.assigned = String(Boolean(responsibleName));
+    card.dataset.itemId = item.id;
+    card.dataset.assigned = String(Boolean(responsibleId));
     card.querySelector("strong").textContent = item.title;
     card.querySelector("small").textContent = `${item.count} шт.`;
     const owner = card.querySelector(".item-owner");
-    if (responsibleName) {
+    if (responsibleId && !isMine) {
         owner.textContent = `✓ Берёт ${responsibleName}`;
         owner.hidden = false;
-        card.querySelector(".item-take").hidden = true;
     }
-    card.querySelector(".item-open").addEventListener("click", () => openDetails(item, responsibleName));
+    if (!responsibleId || isMine) {
+        const button = card.querySelector(".item-action");
+        const action = isMine ? "unassign" : "assign";
+        button.dataset.action = action;
+        button.textContent = isMine ? "Не принесу" : "Взять";
+        button.setAttribute("aria-label", `${button.textContent}: ${item.title}`);
+        button.hidden = false;
+        button.addEventListener("click", () => void changeAssignment(item.id, action));
+    }
+    card.querySelector(".item-open").addEventListener("click", () => openDetails(item, isMine ? "Вы" : responsibleName));
     return card;
 }
 
-async function loadItems({ afterCreate = false } = {}) {
+async function loadItems({ fallback = "Не удалось загрузить чек-лист.", mutationError = "" } = {}) {
     empty.hidden = true;
     content.hidden = true;
     showStatus("Загружаем чек-лист…");
-    const fallback = afterCreate ? "Предмет создан. Не удалось обновить список." : "Не удалось загрузить чек-лист.";
     try {
         const response = await fetchApi(`${api}/items`, { cache: "no-store" });
         if (!response.ok) {
@@ -116,11 +128,11 @@ async function loadItems({ afterCreate = false } = {}) {
         const items = await response.json();
         const taken = items.filter(getResponsibleId).length;
         if (items.length) {
-            const participants = taken ? await getParticipantNames() : new Map();
-            list.replaceChildren(...items.map(item => {
-                const id = getResponsibleId(item);
-                return renderItem(item, id ? participants.get(id) || "Участник события" : null);
-            }));
+            const [participants, currentUser] = taken ? await Promise.all([
+                getParticipantNames(),
+                fetchCurrentUser().then(response => response.ok ? response.json() : null).catch(() => null),
+            ]) : [new Map(), null];
+            list.replaceChildren(...items.map(item => renderItem(item, participants, currentUser?.id)));
             const subject = items.length === 1 ? "предмета" : "предметов";
             find("items-progress-label").textContent = `Взято ${taken} из ${items.length} ${subject}`;
             find("items-progress-percent").textContent = `${Math.round(taken / items.length * 100)}%`;
@@ -130,9 +142,40 @@ async function loadItems({ afterCreate = false } = {}) {
         }
         empty.hidden = items.length !== 0;
         content.hidden = items.length === 0;
-        showStatus("");
+        showStatus(mutationError, { error: Boolean(mutationError) });
     } catch {
         showStatus(fallback, { error: true, canRetry: true });
+    }
+}
+
+async function changeAssignment(itemId, action) {
+    const failure = action === "unassign" ? "Не удалось снять назначение." : "Не удалось взять предмет.";
+    list.inert = true;
+    add.disabled = true;
+    showStatus("Сохраняем…");
+    try {
+        const response = await fetchApi(`${api}/items/${encodeURIComponent(itemId)}/${action}`, { method: "POST" });
+        if (response.ok) {
+            await loadItems({ fallback: "Изменение сохранено. Не удалось обновить список." });
+        } else if (response.status === 400 || response.status === 409) {
+            const message = response.status === 409 ? "Назначение уже изменилось." : failure;
+            await loadItems({ fallback: `${message} Не удалось обновить список.`, mutationError: message });
+        } else {
+            showStatus(getRequestError(response, failure), { error: true });
+        }
+    } catch {
+        showStatus(failure, { error: true });
+    } finally {
+        list.inert = false;
+        add.disabled = false;
+        if (!content.hidden) {
+            const card = list.querySelector(`[data-item-id="${CSS.escape(itemId)}"]`);
+            (card?.querySelector(".item-action:not([hidden])") ?? card?.querySelector(".item-open") ?? add).focus();
+        } else if (!retry.hidden) {
+            retry.focus();
+        } else if (!empty.hidden) {
+            empty.querySelector("[data-add-item]").focus();
+        }
     }
 }
 
@@ -220,7 +263,7 @@ form.addEventListener("submit", async event => {
             return;
         }
         createDialog.close();
-        await loadItems({ afterCreate: true });
+        await loadItems({ fallback: "Предмет создан. Не удалось обновить список." });
         if (!content.hidden) add.focus();
         else if (!retry.hidden) retry.focus();
     } catch {

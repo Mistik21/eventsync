@@ -15,6 +15,6 @@ public interface IItemService
 
     Task DeleteItemAsync(Guid itemId, Guid currentUserId);
 
-    Task AssignItemAsync(Guid itemId, Guid currentUserId);
-    Task UnassignItemAsync(Guid itemId, Guid currentUserId);
+    Task AssignItemAsync(Guid eventId ,Guid itemId, Guid currentUserId);
+    Task UnassignItemAsync(Guid eventId, Guid itemId, Guid currentUserId);
 }

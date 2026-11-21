@@ -53,13 +53,27 @@ public class ItemService:IItemService
         throw new NotImplementedException();
     }
 
-    public Task AssignItemAsync(Guid itemId, Guid currentUserId)
+    public async Task AssignItemAsync(Guid eventId ,Guid itemId, Guid currentUserId)
     {
-        throw new NotImplementedException();
+        var eventDetails = await eventRepository.GetByIdAsync(eventId);
+        var item = eventDetails?.Items.SingleOrDefault(i => i.Id == itemId);
+        if (eventDetails == null || !eventDetails.IsParticipant(currentUserId) || item==null || item.ResponsibleID!=null)
+        {
+            throw new Exception();
+        }
+        item.AssignTo(currentUserId);
+        await eventRepository.SavedAsync();
     }
 
-    public Task UnassignItemAsync(Guid itemId, Guid currentUserId)
+    public async Task UnassignItemAsync(Guid eventId, Guid itemId, Guid currentUserId)
     {
-        throw new NotImplementedException();
+        var eventDetails = await eventRepository.GetByIdAsync(eventId);
+        var item = eventDetails?.Items.SingleOrDefault(i => i.Id == itemId);
+        if (eventDetails == null || !eventDetails.IsParticipant(currentUserId) || item==null || !item.IsResponsible(currentUserId))
+        {
+            throw new Exception();
+        }
+        item.UnassignTo();
+        await eventRepository.SavedAsync();
     }
 }

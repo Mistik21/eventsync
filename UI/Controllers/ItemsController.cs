@@ -21,7 +21,9 @@ public class ItemsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetItems(Guid eventId){if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+    public async Task<IActionResult> GetItems(Guid eventId)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
         {
             return Unauthorized();
         }
@@ -72,8 +74,40 @@ public class ItemsController : ControllerBase
     public IActionResult DeleteItem(Guid eventId, Guid itemId) => NoContent();
 
     [HttpPost("{itemId:guid}/assign")]
-    public IActionResult AssignItem(Guid eventId, Guid itemId) => Ok();
+    public async Task<IActionResult> AssignItem(Guid eventId, Guid itemId)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await itemService.AssignItemAsync(eventId, itemId, currentUserId);
+            return Ok();
+        }
+        catch (Exception)
+        {
+            return BadRequest();
+        }
+    }
 
     [HttpPost("{itemId:guid}/unassign")]
-    public IActionResult UnassignItem(Guid eventId, Guid itemId) => NoContent();
+    public async Task<IActionResult> UnassignItem(Guid eventId, Guid itemId)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await itemService.UnassignItemAsync(eventId, itemId, currentUserId);
+            return Ok();
+        }
+        catch (Exception)
+        {
+            return BadRequest();
+        }
+    }
 }
