@@ -1,0 +1,47 @@
+using eventsynс.Application.Interfaces.Services;
+using eventsynс.Application.Models;
+using eventsynс.Application.Models.Cost;
+using eventsynс.Domain.Repositories;
+
+namespace eventsynс.Application.Services;
+
+public class CostService:ICostService
+{
+    private readonly IEventRepository eventRepository;
+
+    public CostService(IEventRepository eventRepository)
+    {
+        this.eventRepository = eventRepository;
+    }
+    public async Task<BudgetData> GetBudgetAsync(Guid eventId, Guid currentUserId)
+    {
+        var eventDetails= await eventRepository.GetByIdAsync(eventId);
+        if (eventDetails == null || !eventDetails.IsParticipant(currentUserId))
+        {
+            throw new Exception();
+        }
+        return new BudgetData(
+            eventDetails.Budget,
+            eventDetails.CollectedBudget,
+            eventDetails.SpentAmount(),
+            eventDetails.Budget-eventDetails.SpentAmount(),
+            eventDetails.Debts,
+            eventDetails.Expenses.ToList()
+            );
+    }
+
+    public Task<Guid> CreateCostAsync(Guid eventId, CostCreationModel data, Guid currentUserId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task UpdateCostAsync(Guid costId, CostUpdateModel data, Guid currentUserId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task DeleteCostAsync(Guid costId, Guid currentUserId)
+    {
+        throw new NotImplementedException();
+    }
+}

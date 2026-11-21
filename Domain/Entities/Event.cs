@@ -11,7 +11,7 @@ public class Event
     public CollectionStatus CollectionStatus { get; }
     public int CollectedBudget { get; }
     public int Budget {get; }
-    public IReadOnlyDictionary<Guid, int> Debts {get; }
+    public IReadOnlyDictionary<Guid, int> Debts { get; } = new Dictionary<Guid, int>();
     public IReadOnlyList<User> Participants { get; private set; } = new List<User>();
     public Guid Organizer {get; }
     public IReadOnlyList<Item> Items {get; }
@@ -55,6 +55,11 @@ public class Event
     {
         Title = title; 
     }
+
+    public int SpentAmount()
+    {
+        return Expenses.Sum(e => e.Amount);
+    }
     public void ChangeDescription(string description){}
     public void ChangeStartTime(DateTime startTime){}
     public void ChangeLocation(Location location){}
@@ -73,7 +78,7 @@ public class Event
 
     public bool IsParticipant(Guid userId)
     {
-        return true;
+        return Participants.Any(x => x.Id == userId);
     }
     public void AddItem(Item item){}
     public void RemoveItem(Guid itemId){}

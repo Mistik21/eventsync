@@ -5,6 +5,6 @@ public record BudgetData(
     int CollectedBudget,
     int SpentAmount,
     int RemainingBudget,
-    int MyDebt,
+    IReadOnlyDictionary<Guid, int> Debts,
     List<Domain.Entities.Cost> Costs
 );
