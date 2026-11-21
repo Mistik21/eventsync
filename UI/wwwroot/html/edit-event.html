@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f8f8f7">
+    <title>Редактировать событие · EventSync</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/create-event.css">
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <script type="module" src="/js/create-event.js"></script>
+</head>
+<body>
+    <main class="create-screen edit-screen">
+        <header class="create-header">
+            <a id="edit-event-back" class="create-back" href="/" aria-label="Назад к событию">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M19 12H5m6-6-6 6 6 6"/>
+                </svg>
+            </a>
+            <h1>Редактировать событие</h1>
+        </header>
+
+        <form class="create-form" data-mode="edit">
+            <fieldset class="create-fields" disabled hidden>
+                <div class="cover-control">
+                    <label class="cover-picker" for="event-cover">
+                        <span class="cover-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6m4 3h6m-3-3v6M4 16l5-5 5 5 2-2 4 4"/>
+                            </svg>
+                            <span class="cover-caption">Добавить обложку</span>
+                        </span>
+                        <img class="cover-preview" alt="" referrerpolicy="no-referrer" hidden>
+                        <input id="event-cover" type="file" accept="image/jpeg,image/png,image/webp">
+                    </label>
+                    <button class="cover-remove" type="button" aria-label="Удалить обложку" hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+                    </button>
+                </div>
+
+                <div class="create-field">
+                    <label for="event-title">Название события <span aria-hidden="true">*</span></label>
+                    <input id="event-title" name="title" type="text" placeholder="Введите название…" required>
+                </div>
+
+                <div class="create-field">
+                    <label for="event-description">Описание <span aria-hidden="true">*</span></label>
+                    <textarea id="event-description" name="description" rows="3" placeholder="Введите текст…" required></textarea>
+                </div>
+
+                <div class="create-field">
+                    <label for="event-start">Дата и время <span aria-hidden="true">*</span></label>
+                    <div class="create-input-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 4v4m8-4v4M4 10h16m-12 4h2m4 0h2m-8 3h2"/>
+                        </svg>
+                        <input id="event-start" name="eventStartTime" type="datetime-local" required>
+                    </div>
+                </div>
+
+                <div class="create-field meeting-location">
+                    <label for="event-address">Место встречи</label>
+                    <div class="create-input-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                            <path d="M19 10c0 5-7 10-7 10s-7-5-7-10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/>
+                        </svg>
+                        <input class="meeting-edit-address" id="event-address" type="text" placeholder="Введите адрес…">
+                    </div>
+                    <div id="meeting-map-panel" class="meeting-map-panel" hidden>
+                        <div class="meeting-map" role="region" aria-label="Место встречи на карте 2ГИС" tabindex="-1"></div>
+                        <button class="meeting-map-confirm" type="button" disabled hidden>Подтвердить</button>
+                    </div>
+                    <button class="meeting-map-toggle edit-map-toggle" type="button" aria-expanded="false" aria-controls="meeting-map-panel">
+                        <span>Выбрать на карте 2ГИС</span>
+                    </button>
+                    <p class="meeting-location-status" role="status" hidden></p>
+                </div>
+
+                <div class="create-field">
+                    <label for="event-budget">Общий бюджет мероприятия</label>
+                    <div class="create-input-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                             stroke-linejoin="round" aria-hidden="true">
+                            <path d="M19 8V6a2 2 0 0 0-2-2H7a3 3 0 0 0 0 6h13v8a2 2 0 0 1-2 2H7a3 3 0 0 1-3-3V7m16 6h-5v4h5"/>
+                        </svg>
+                        <input id="event-budget" name="budget" type="number" inputmode="numeric"
+                               min="0" max="2147483647" step="1" placeholder="0">
+                        <span class="budget-currency" aria-hidden="true">₽</span>
+                    </div>
+                </div>
+            </fieldset>
+
+            <p class="create-status" role="status">Загружаем событие…</p>
+            <button class="create-submit" type="submit" disabled hidden>Сохранить</button>
+        </form>
+    </main>
+</body>
+</html>

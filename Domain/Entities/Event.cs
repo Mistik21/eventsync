@@ -6,13 +6,13 @@ public class Event
 
     public Guid Id { get; }
     public string Title { get; set; }
-    public string Description {get;}
-    public string MainImageUrl { get;  }
-    public DateTime EventStartTime {get; }
+    public string Description {get; private set;}
+    public string MainImageUrl { get;  private set;}
+    public DateTime EventStartTime {get; private set;}
     public Location EventLocation { get; private set; } = null!;
     public CollectionStatus CollectionStatus { get; private set; }
     public int CollectedBudget { get; private set; }
-    public int Budget {get; }
+    public int Budget {get; private set;}
     public IReadOnlyDictionary<Guid, int> Debts { get; private set; } = new Dictionary<Guid, int>();
     public IReadOnlyList<User> Participants { get; private set; } = new List<User>();
     public Guid Organizer {get; }
@@ -62,11 +62,31 @@ public class Event
     {
         return Expenses.Sum(e => e.Amount);
     }
-    public void ChangeDescription(string description){}
-    public void ChangeStartTime(DateTime startTime){}
-    public void ChangeLocation(Location location){}
-    public void ChangeBudget(int budget){}
-    public void ChangeMainImage(string imageUrl){}
+
+    public void ChangeDescription(string description)
+    {
+        Description = description;
+    }
+
+    public void ChangeStartTime(DateTime startTime)
+    {
+        EventStartTime = startTime;
+    }
+
+    public void ChangeLocation(Location location)
+    {
+        EventLocation = location;
+    }
+
+    public void ChangeBudget(int budget)
+    {
+        Budget = budget;
+    }
+
+    public void ChangeMainImage(string imageUrl)
+    {
+        MainImageUrl = imageUrl;
+    }
 
     public void OpenCollection()
     {

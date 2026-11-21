@@ -107,7 +107,32 @@ public class EventsController : ControllerBase
     }
 
     [HttpPatch("{eventId:guid}")]
-    public IActionResult UpdateEvent(Guid eventId) => Ok();
+    public async Task<IActionResult> UpdateEvent(UpdateEventRequest data, Guid eventId)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await eventService.UpdateEventAsync(
+                eventId,
+                new EventUpdateModel(
+                    data.Title,
+                    data.Description,
+                    data.EventStartTime,
+                    new Location(data.EventLocation.Address, data.EventLocation.Coordinates),
+                    data.Budget,
+                    data.MainImageUrl
+                    ), currentUserId);
+            return Ok();
+        }
+        catch (Exception)
+        {
+            return BadRequest();
+        }
+    }
 
     [HttpDelete("{eventId:guid}")]
     public async Task<IActionResult> DeleteEvent(Guid eventId)

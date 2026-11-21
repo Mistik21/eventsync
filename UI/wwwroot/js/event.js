@@ -77,7 +77,9 @@ function renderEvent(event) {
     const address = find("event-address");
     const savedAddress = event.eventLocation?.address?.trim();
     address.textContent = savedAddress || (point ? "Определяем адрес…" : "Место не указано");
-    find("event-menu").hidden = !event.isOrganizer;
+    const editLink = find("event-edit");
+    editLink.hidden = !event.isOrganizer || event.collectionStatus !== collectionNotStarted;
+    editLink.href = `/event/${encodeURIComponent(event.id)}/edit`;
     const membershipAction = find("event-membership-action");
     membershipAction.textContent = event.isOrganizer ? "Удалить событие" : "Покинуть событие";
     membershipAction.disabled = !event.isOrganizer;
@@ -300,15 +302,6 @@ find("event-delete-form").addEventListener("submit", async event => {
             deleteConfirm.textContent = "Удалить";
         }
     }
-});
-
-find("event-menu").addEventListener("click", () => {
-    const edit = document.createElement("button");
-    edit.className = "event-dialog-action";
-    edit.type = "button";
-    edit.textContent = "Редактировать событие";
-    edit.disabled = true;
-    openPanel("Управление событием", edit, paragraph("Редактирование пока недоступно."));
 });
 
 document.querySelector(".event-sections").addEventListener("click", ({ target }) => {

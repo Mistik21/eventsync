@@ -51,9 +51,21 @@ public class EventService : IEventService
         await userRepository.SavedAsync();
     }
 
-    public Task UpdateEventAsync(Guid eventId, EventUpdateModel data, Guid currentUserId)
+    public async Task UpdateEventAsync(Guid eventId, EventUpdateModel data, Guid currentUserId)
     {
-        throw new NotImplementedException();
+        var eventDetails = await eventRepository.GetByIdAsync(eventId);
+        if (eventDetails==null || !eventDetails.IsOrganizer(currentUserId) || eventDetails.IsOpenCollection() || data.Budget < 0)
+        {
+            throw new Exception();
+        }
+        eventDetails.ChangeTitle(data.Title);
+        eventDetails.ChangeDescription(data.Description);
+        eventDetails.ChangeBudget(data.Budget);
+        eventDetails.ChangeStartTime(data.EventStartTime);
+        eventDetails.ChangeLocation(data.EventLocation);
+        if (data.MainImageUrl != null) eventDetails.ChangeMainImage(data.MainImageUrl);
+        await eventRepository.SavedAsync();
+        
     }
 
     public async Task<bool> DeleteEventAsync(Guid eventId, Guid currentUserId)

@@ -314,3 +314,28 @@
     background: #7459b5;
     cursor: wait;
 }
+
+.edit-screen .create-back {
+    border: 1px solid #e4def1;
+    background: #f7f4fb;
+}
+
+.edit-screen .cover-picker--filled {
+    min-height: 66px;
+    align-items: center;
+    border-style: dashed;
+}
+
+.edit-screen .cover-preview { opacity: .43; }
+.edit-screen .cover-picker--filled .cover-label { padding: 0; background: none; }
+.edit-screen .cover-remove { inset-block-start: 50%; transform: translateY(-50%); }
+
+.meeting-map--preview { height: 108px; pointer-events: none; }
+
+.edit-map-toggle {
+    justify-self: start;
+    min-height: 36px;
+    padding: 4px 0;
+    border: 0;
+    background: transparent;
+}
