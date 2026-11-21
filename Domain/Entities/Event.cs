@@ -16,7 +16,7 @@ public class Event
     public IReadOnlyDictionary<Guid, int> Debts { get; private set; } = new Dictionary<Guid, int>();
     public IReadOnlyList<User> Participants { get; private set; } = new List<User>();
     public Guid Organizer {get; }
-    public IReadOnlyList<Item> Items {get; }
+    public IReadOnlyList<Item> Items { get; private set; } = new List<Item>();
     public IReadOnlyList<Activity> Activities {get; }
     public IReadOnlyList<Car> Cars {get; }
     public string[] ImageEventUrl { get;  }
@@ -122,7 +122,11 @@ public class Event
     {
         return Participants.Any(x => x.Id == userId);
     }
-    public void AddItem(Item item){}
+
+    public void AddItem(Item item)
+    {
+        Items = Items.Append(item).ToList();
+    }
     public void RemoveItem(Guid itemId){}
     public void AddActivity(Activity activity){}
     public void RemoveActivity(Guid activityId){}

@@ -8,6 +8,15 @@ public class Item
     public int Count {get; }
     public Guid? ResponsibleID {get; }
     public string? UrlShop {get; }
+
+    public Item(Guid id, string title, string description, int count,string? urlShop)
+    {
+        Id = id;
+        Title = title;
+        Description = description;
+        Count = count;
+        UrlShop = urlShop;
+    }
     
     public void ChangeTitle(string title){}
     public void ChangeDescription(string description){}
@@ -17,6 +26,6 @@ public class Item
 
     public bool IsResponsible(Guid userId)
     {
-        return true;
+        return userId == ResponsibleID;
     }
 }

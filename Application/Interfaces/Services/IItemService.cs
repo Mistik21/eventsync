@@ -9,7 +9,7 @@ public interface IItemService
 {
     Task<List<Item>> GetItemsAsync(Guid eventId, Guid currentUserId);
 
-    Task<Guid> CreateItemAsync(Guid eventId, ItemCreationModel data, Guid currentUserId);
+    Task CreateItemAsync(Guid eventId, ItemCreationModel data, Guid currentUserId);
 
     Task UpdateItemAsync(Guid itemId, ItemUpdateModel data, Guid currentUserId);
 

@@ -58,6 +58,7 @@ function renderEvent(event) {
     eventDetails = event;
     inviteButton.hidden = event.collectionStatus !== collectionNotStarted;
     find("event-budget-link").href = `/event/${encodeURIComponent(event.id)}/budget`;
+    find("event-items-link").href = `/event/${encodeURIComponent(event.id)}/items`;
     document.title = `${event.title} · EventSync`;
     find("event-title").textContent = event.title;
     const cover = find("event-cover");

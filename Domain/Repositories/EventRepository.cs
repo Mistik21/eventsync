@@ -41,6 +41,7 @@ public class EventRepository : IEventRepository
         return await db.Events
             .Include(e => e.Participants)
             .Include(e => e.Expenses)
+            .Include(e => e.Items)
             .AsSplitQuery()
             .SingleOrDefaultAsync(e => e.Id == id);
     }

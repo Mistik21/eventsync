@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Чек-лист · EventSync</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/items.css">
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <script type="module" src="/js/items.js"></script>
+</head>
+<body>
+    <main class="items-screen">
+        <header class="items-header">
+            <a id="items-back" class="items-back" href="/" aria-label="Назад к событию">←</a>
+            <h1>Чек-лист</h1>
+        </header>
+
+        <p id="items-status" class="items-status" role="status">Загружаем чек-лист…</p>
+        <button id="items-retry" class="items-retry" type="button" hidden>Повторить</button>
+
+        <section id="items-empty" class="items-empty" aria-labelledby="items-empty-title" hidden>
+            <div class="items-empty-circle" aria-hidden="true"></div>
+            <h2 id="items-empty-title">Предметов нет</h2>
+            <p>В список пока ничего не добавлено</p>
+            <button class="items-primary" type="button" data-add-item>Добавить</button>
+        </section>
+
+        <div id="items-content" hidden>
+            <section class="items-progress" aria-label="Прогресс чек-листа">
+                <div class="items-progress-heading">
+                    <strong id="items-progress-label"></strong>
+                    <span id="items-progress-percent" aria-hidden="true"></span>
+                </div>
+                <progress id="items-progress" max="1" value="0" aria-labelledby="items-progress-label"></progress>
+            </section>
+            <ul id="items-list" class="items-list" aria-label="Предметы"></ul>
+            <button id="items-add" class="items-add" type="button" aria-label="Добавить предмет" data-add-item>+</button>
+        </div>
+    </main>
+
+    <template id="item-card-template">
+        <li class="item-card">
+            <button class="item-open" type="button">
+                <span class="item-icon" aria-hidden="true"></span>
+                <span class="item-summary"><strong></strong><small></small></span>
+                <span class="item-owner" hidden></span>
+            </button>
+            <button class="item-take" type="button" title="Назначение ответственного пока недоступно" disabled>Взять</button>
+        </li>
+    </template>
+
+    <dialog id="item-create-dialog" class="items-dialog" aria-labelledby="item-create-title">
+        <header>
+            <h2 id="item-create-title">Добавить</h2>
+            <button id="item-create-close" class="items-close" type="button" aria-label="Закрыть форму">×</button>
+        </header>
+        <form id="item-create-form">
+            <fieldset id="item-fields" class="items-fields">
+                <label for="item-title">Название</label>
+                <input id="item-title" name="title" type="text" placeholder="Введите название…" required>
+
+                <label for="item-url">Ссылка (необязательное поле)</label>
+                <input id="item-url" name="urlShop" type="url" inputmode="url" placeholder="Вставьте URL…">
+
+                <label for="item-count">Количество</label>
+                <div class="items-stepper">
+                    <button id="item-count-minus" type="button" aria-label="Уменьшить количество">−</button>
+                    <input id="item-count" name="count" type="number" inputmode="numeric" min="0" max="2147483647" step="1" value="0" required>
+                    <button id="item-count-plus" type="button" aria-label="Увеличить количество">+</button>
+                </div>
+
+                <label for="item-description">Заметки (необязательное поле)</label>
+                <textarea id="item-description" name="description" rows="3" placeholder="Добавить детали…"></textarea>
+            </fieldset>
+            <footer>
+                <p id="item-create-error" class="items-status" data-error="true" role="alert" hidden></p>
+                <button id="item-create-submit" class="items-primary" type="submit">Создать</button>
+            </footer>
+        </form>
+    </dialog>
+
+    <dialog id="item-details-dialog" class="items-dialog" aria-labelledby="item-details-title">
+        <header>
+            <h2 id="item-details-title"></h2>
+            <form method="dialog"><button class="items-close" aria-label="Закрыть карточку">×</button></form>
+        </header>
+        <dl class="item-details">
+            <dt>Количество</dt><dd id="item-details-count"></dd>
+            <dt>Ссылка</dt><dd><a id="item-details-link" target="_blank" rel="noopener noreferrer" hidden></a><span id="item-details-no-link">—</span></dd>
+            <dt>Ответственный</dt><dd id="item-details-owner"></dd>
+            <dt id="item-details-description-label">Заметки</dt><dd id="item-details-description"></dd>
+        </dl>
+    </dialog>
+</body>
+</html>
