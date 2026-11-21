@@ -9,7 +9,7 @@ namespace eventsynс.UI.Controllers;
 public class ActivitiesController : ControllerBase
 {
     [HttpGet]
-    public IActionResult GetActivities(Guid eventId) => Ok();
+    public IActionResult GetActivities(Guid eventId) => Ok()  ;
 
     [HttpGet("{activityId:guid}")]
     public IActionResult GetActivity(Guid eventId, Guid activityId) => Ok();
