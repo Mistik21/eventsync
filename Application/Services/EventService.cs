@@ -21,10 +21,10 @@ public class EventService : IEventService
         return await eventRepository.ListForOrganizerOrParticipantAsync(currentUserId);
     }
 
-    public async Task<Event?> GetEventAsync(Guid eventId, Guid currentUserId)
+    public async Task<Event> GetEventAsync(Guid eventId, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetByIdAsync(eventId);
-        if (eventDetails != null && eventDetails.Participants.All(x => x.Id != currentUserId))
+        if (eventDetails == null || !eventDetails.IsParticipant(currentUserId))
         {
             throw new Exception();
         }
@@ -66,7 +66,7 @@ public class EventService : IEventService
 
         if (!eventDetails.IsOrganizer(currentUserId))
         {
-            throw new UnauthorizedAccessException();
+            throw new Exception();
         }
 
         foreach (var participant in eventDetails.Participants)
@@ -96,7 +96,7 @@ public class EventService : IEventService
         var eventDetails = await eventRepository.GetByIdAsync(eventId);
         var user = await userRepository.GetByIdAsync(currentUserId);
         if (user == null || eventDetails == null || eventDetails.CollectionStatus == CollectionStatus.Open ||
-            eventDetails.Participants.Any(x => x.Id == currentUserId))
+            eventDetails.IsParticipant(currentUserId))
         {
             throw new Exception();
         }
@@ -114,13 +114,8 @@ public class EventService : IEventService
 
     public async Task<List<User>?> GetParticipantsAsync(Guid eventId, Guid currentUserId)
     {
-        var participants = await eventRepository.ListParticipantsAsync(eventId);
-        if (participants != null && participants.All(x => x.Id != currentUserId))
-        {
-            throw new Exception();
-        }
-
-        return participants;
+        var eventDetails = await GetEventAsync(eventId, currentUserId);
+        return eventDetails.Participants.ToList();
     }
 
     public Task RemoveParticipantAsync(Guid eventId, Guid userId, Guid currentUserId)

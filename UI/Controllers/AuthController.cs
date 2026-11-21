@@ -52,7 +52,7 @@ public class AuthController : ControllerBase
         }
         catch (UnauthorizedAccessException)
         {
-            return Unauthorized("Не удалось проверить данные Telegram.");
+            return Unauthorized();
         }
     }
 }

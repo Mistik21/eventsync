@@ -58,10 +58,6 @@ public class EventsController : ControllerBase
         try
         {
             var result = await eventService.GetEventAsync(id, currentUserId);
-            if (result == null)
-            {
-                return NotFound();
-            }
             return Ok(new EventResponse(
                 result.Id,
                 result.Title,
@@ -74,7 +70,7 @@ public class EventsController : ControllerBase
                 result.Organizer,
                 result.Participants.Count,
                 result.IsOrganizer(currentUserId),
-                result.Participants.Any(participant => participant.Id == currentUserId),
+                result.IsParticipant(currentUserId),
                 result.ImageEventUrl?.ToList() ?? [],
                 result.CollectionStatus));
         }
@@ -126,9 +122,9 @@ public class EventsController : ControllerBase
             var deleted = await eventService.DeleteEventAsync(id, currentUserId);
             return deleted ? NoContent() : NotFound();
         }
-        catch (UnauthorizedAccessException)
+        catch (Exception)
         {
-            return Forbid();
+            return BadRequest();
         }
     }
 
@@ -147,7 +143,7 @@ public class EventsController : ControllerBase
         }
 
         var (eventDetails, organizerName) = invitation.Value;
-        var isParticipant = eventDetails.Participants.Any(user => user.Id == currentUserId);
+        var isParticipant = eventDetails.IsParticipant(currentUserId);
         if (!isParticipant && eventDetails.CollectionStatus != CollectionStatus.NotStarted)
         {
             return Conflict();
@@ -180,7 +176,7 @@ public class EventsController : ControllerBase
         }
         catch (Exception)
         {
-            return Forbid();
+            return BadRequest();
         }
     }
 
