@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Бюджет · EventSync</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/budget.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script type="module" src="/js/budget.js"></script>
+</head>
+<body>
+    <main class="budget-screen">
+        <header class="budget-header">
+            <a id="budget-back" class="budget-back" href="/" aria-label="Назад к событию">←</a>
+            <h1>Бюджет</h1>
+        </header>
+
+        <p id="budget-status" class="budget-status" role="status">Загружаем бюджет…</p>
+        <button id="budget-retry" class="budget-retry" type="button" hidden>Повторить</button>
+
+        <section id="budget-closed" class="budget-closed" aria-labelledby="budget-closed-title" hidden>
+            <div class="budget-circle" aria-hidden="true"></div>
+            <h2 id="budget-closed-title">Сбор пока не открыт</h2>
+            <p>Запланированный бюджет: <span id="budget-planned"></span></p>
+            <button id="budget-open" class="budget-button" type="button" aria-label="Открыть сбор" hidden>Открыть</button>
+        </section>
+
+        <div id="budget-active" class="budget-active" hidden>
+            <section class="budget-summary" aria-label="Сводка бюджета">
+                <h2 id="budget-total" tabindex="-1"></h2>
+                <progress id="budget-progress" max="1" value="0" aria-label="Собрано от запланированного бюджета"></progress>
+                <dl class="budget-totals">
+                    <div><dt>Собрано</dt><dd id="budget-collected"></dd></div>
+                    <div><dt>Потрачено</dt><dd id="budget-spent"></dd></div>
+                    <div><dt>Остаток</dt><dd id="budget-balance"></dd></div>
+                </dl>
+            </section>
+
+            <section aria-labelledby="budget-contributions-title">
+                <div class="budget-section-heading">
+                    <h2 id="budget-contributions-title">Взносы участников</h2>
+                    <span id="budget-paid-count"></span>
+                </div>
+                <ul id="budget-contributions" class="budget-list"></ul>
+                <p id="budget-no-contributions" class="budget-empty" hidden>Участников пока нет.</p>
+            </section>
+
+            <section aria-labelledby="budget-costs-title">
+                <h2 id="budget-costs-title" class="budget-section-heading">Траты</h2>
+                <ul id="budget-costs" class="budget-list budget-costs"></ul>
+                <p id="budget-no-costs" class="budget-empty" hidden>Трат пока нет.</p>
+            </section>
+        </div>
+
+        <footer id="budget-footer" class="budget-footer" hidden>
+            <button class="budget-button" type="button" title="Сохранение трат пока недоступно" disabled>+ Добавить трату</button>
+        </footer>
+    </main>
+
+    <template id="budget-row-template">
+        <li class="budget-person">
+            <span class="budget-avatar" aria-hidden="true"></span>
+            <div class="budget-person-details"><strong></strong><small></small></div>
+            <span class="budget-badge"></span>
+            <button type="button" class="budget-button budget-pay" title="Отметка взноса пока недоступна" disabled hidden>Я скинул</button>
+        </li>
+    </template>
+</body>
+</html>

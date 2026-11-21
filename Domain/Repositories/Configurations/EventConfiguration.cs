@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using eventsynс.Domain.Entities;
 
@@ -30,6 +32,22 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
             .IsRequired();
 
         builder.Property(e => e.CollectionStatus)
+            .IsRequired();
+
+        builder.Property(e => e.Debts)
+            .HasConversion(
+                debts => JsonSerializer.Serialize(debts, JsonSerializerOptions.Default),
+                json => JsonSerializer.Deserialize<Dictionary<Guid, int>>(json, JsonSerializerOptions.Default)
+                    ?? new Dictionary<Guid, int>(),
+                new ValueComparer<IReadOnlyDictionary<Guid, int>>(
+                    (left, right) => ReferenceEquals(left, right) ||
+                        (left != null && right != null && left.Count == right.Count &&
+                            left.All(debt => right.ContainsKey(debt.Key) && right[debt.Key] == debt.Value)),
+                    debts => debts.OrderBy(debt => debt.Key)
+                        .Aggregate(0, (hash, debt) => HashCode.Combine(hash, debt.Key, debt.Value)),
+                    debts => new Dictionary<Guid, int>(debts)))
+            .HasColumnType("jsonb")
+            .HasDefaultValueSql("'{}'::jsonb")
             .IsRequired();
 
         builder.OwnsOne(e => e.EventLocation, location =>

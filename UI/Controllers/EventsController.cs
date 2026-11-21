@@ -47,8 +47,8 @@ public class EventsController : ControllerBase
         }
     }
 
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetEvent(Guid id)
+    [HttpGet("{eventId:guid}")]
+    public async Task<IActionResult> GetEvent(Guid eventId)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
         {
@@ -57,7 +57,7 @@ public class EventsController : ControllerBase
 
         try
         {
-            var result = await eventService.GetEventAsync(id, currentUserId);
+            var result = await eventService.GetEventAsync(eventId, currentUserId);
             return Ok(new EventResponse(
                 result.Id,
                 result.Title,
@@ -106,11 +106,11 @@ public class EventsController : ControllerBase
         return Ok();
     }
 
-    [HttpPatch("{id:guid}")]
-    public IActionResult UpdateEvent(Guid id) => Ok();
+    [HttpPatch("{eventId:guid}")]
+    public IActionResult UpdateEvent(Guid eventId) => Ok();
 
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> DeleteEvent(Guid id)
+    [HttpDelete("{eventId:guid}")]
+    public async Task<IActionResult> DeleteEvent(Guid eventId)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
         {
@@ -119,7 +119,7 @@ public class EventsController : ControllerBase
 
         try
         {
-            var deleted = await eventService.DeleteEventAsync(id, currentUserId);
+            var deleted = await eventService.DeleteEventAsync(eventId, currentUserId);
             return deleted ? NoContent() : NotFound();
         }
         catch (Exception)
@@ -128,15 +128,15 @@ public class EventsController : ControllerBase
         }
     }
 
-    [HttpGet("{id:guid}/invitation")]
-    public async Task<IActionResult> GetInvitation(Guid id)
+    [HttpGet("{eventId:guid}/invitation")]
+    public async Task<IActionResult> GetInvitation(Guid eventId)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
         {
             return Unauthorized();
         }
 
-        var invitation = await eventService.GetInvitationAsync(id);
+        var invitation = await eventService.GetInvitationAsync(eventId);
         if (invitation is null)
         {
             return NotFound();
@@ -162,8 +162,8 @@ public class EventsController : ControllerBase
         });
     }
 
-    [HttpPost("{id:guid}/join")]
-    public async Task<IActionResult> JoinEvent(Guid id)
+    [HttpPost("{eventId:guid}/join")]
+    public async Task<IActionResult> JoinEvent(Guid eventId)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
         {
@@ -171,7 +171,7 @@ public class EventsController : ControllerBase
         }
         try
         {
-           await eventService.JoinEventAsync(id, currentUserId);
+           await eventService.JoinEventAsync(eventId, currentUserId);
            return Ok();
         }
         catch (Exception)
@@ -183,8 +183,8 @@ public class EventsController : ControllerBase
     [HttpPost("{id:guid}/leave")]
     public IActionResult LeaveEvent(Guid id) => NoContent();
 
-    [HttpGet("{id:guid}/participants")]
-    public async Task<IActionResult> GetParticipants(Guid id)
+    [HttpGet("{eventId:guid}/participants")]
+    public async Task<IActionResult> GetParticipants(Guid eventId)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
         {
@@ -193,7 +193,7 @@ public class EventsController : ControllerBase
 
         try
         {
-            var result = await eventService.GetParticipantsAsync(id, currentUserId);
+            var result = await eventService.GetParticipantsAsync(eventId, currentUserId);
             if (result == null)
             {
                 return NotFound();
@@ -214,5 +214,21 @@ public class EventsController : ControllerBase
     public IActionResult PayDebt(Guid eventId) => NoContent();
 
     [HttpPost("{eventId:guid}/collection/open")]
-    public IActionResult OpenCollection(Guid eventId) => NoContent();
+    public async Task<IActionResult> OpenCollection(Guid eventId)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await eventService.OpenCollectionAsync(eventId, currentUserId);
+            return Ok();
+        }
+        catch (Exception)
+        {
+            return BadRequest();
+        }
+    }
 }

@@ -8,17 +8,18 @@ public class Event
     public string MainImageUrl { get;  }
     public DateTime EventStartTime {get; }
     public Location EventLocation { get; private set; } = null!;
-    public CollectionStatus CollectionStatus { get; }
-    public int CollectedBudget { get; }
+    public CollectionStatus CollectionStatus { get; private set; }
+    public int CollectedBudget { get; private set; }
     public int Budget {get; }
-    public IReadOnlyDictionary<Guid, int> Debts { get; } = new Dictionary<Guid, int>();
+    private Guid[] PaidParticipantIds { get; set; } = [];
+    public IReadOnlyDictionary<Guid, int> Debts { get; private set; } = new Dictionary<Guid, int>();
     public IReadOnlyList<User> Participants { get; private set; } = new List<User>();
     public Guid Organizer {get; }
     public IReadOnlyList<Item> Items {get; }
     public IReadOnlyList<Activity> Activities {get; }
     public IReadOnlyList<Car> Cars {get; }
     public string[] ImageEventUrl { get;  }
-    public IReadOnlyList<Cost> Expenses {get; }
+    public IReadOnlyList<Cost> Expenses { get; } = new List<Cost>();
 
     public Event(
         Guid id,
@@ -65,7 +66,18 @@ public class Event
     public void ChangeLocation(Location location){}
     public void ChangeBudget(int budget){}
     public void ChangeMainImage(string imageUrl){}
-    public void OpenCollection(){}
+
+    public void OpenCollection()
+    {
+        CollectionStatus = CollectionStatus.Open;
+        var result = new Dictionary<Guid, int>();
+        foreach (var user in Participants)
+        {
+            result.Add(user.Id, Budget/Participants.Count);
+        }
+
+        Debts = result;
+    }
     public void AddImage(string imageUrl){}
     public void RemoveImage(string imageUrl){}
 
@@ -73,7 +85,9 @@ public class Event
     {
         Participants = Participants.Append(user).ToList();
     }
-    public void PayDebt(Guid userId){}
+    public void PayDebt(Guid userId)
+    {
+    }
     public void RemoveParticipant(Guid userId){}
 
     public bool IsParticipant(Guid userId)
@@ -91,7 +105,7 @@ public class Event
 
     public int GetDebt(Guid userId)
     {
-        return 1;
+        return Debts.GetValueOrDefault(userId);
     }
 
     public bool IsOrganizer(Guid userId)
@@ -99,6 +113,8 @@ public class Event
         return userId==Organizer;
     }
     public void AddDebtToAll(int amount){}
-    public void AddCost(Cost cost){}
+    public void AddCost(Cost cost)
+    {
+    }
     public void RemoveCost(Guid costId){}
 }

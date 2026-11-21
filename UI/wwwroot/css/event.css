@@ -112,7 +112,7 @@
     margin-top: 12px;
 }
 
-.event-sections button {
+.event-sections :is(button, a) {
     display: grid;
     align-content: start;
     justify-items: start;
@@ -124,10 +124,11 @@
     color: #172033;
     background: var(--tile-background, #fff4e9);
     font-weight: 700;
+    text-decoration: none;
     cursor: pointer;
 }
 
-.event-sections button span {
+.event-sections :is(button, a) span {
     display: grid;
     place-items: center;
     width: 38px;

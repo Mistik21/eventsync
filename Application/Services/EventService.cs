@@ -128,8 +128,14 @@ public class EventService : IEventService
         throw new NotImplementedException();
     }
 
-    public Task OpenCollectionAsync(Guid eventId, Guid currentUserId)
+    public async Task OpenCollectionAsync(Guid eventId, Guid currentUserId)
     {
-        throw new NotImplementedException();
+        var eventDetails = await eventRepository.GetByIdAsync(eventId);
+        if (eventDetails==null || !eventDetails.IsOrganizer(currentUserId))
+        {
+            throw new Exception();
+        }
+        eventDetails.OpenCollection();
+        await eventRepository.SavedAsync();
     }
 }

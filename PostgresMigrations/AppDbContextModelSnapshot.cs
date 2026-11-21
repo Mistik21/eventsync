@@ -171,6 +171,12 @@ namespace eventsynс.PostgresMigrations
                     b.Property<int>("CollectionStatus")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Debts")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValueSql("'{}'::jsonb");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");

@@ -16,7 +16,6 @@ const inviteCode = find("event-invite-code");
 const inviteStatus = find("event-invite-status");
 const status = find("event-status");
 const dateFormat = new Intl.DateTimeFormat("ru-RU", { dateStyle: "long", timeStyle: "short" });
-const moneyFormat = new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 });
 const participantFormat = new Intl.PluralRules("ru-RU");
 const participantLabels = { one: "участник", few: "участника", many: "участников" };
 const collectionNotStarted = 0;
@@ -58,6 +57,7 @@ async function renderMap(point) {
 function renderEvent(event) {
     eventDetails = event;
     inviteButton.hidden = event.collectionStatus !== collectionNotStarted;
+    find("event-budget-link").href = `/event/${encodeURIComponent(event.id)}/budget`;
     document.title = `${event.title} · EventSync`;
     find("event-title").textContent = event.title;
     const cover = find("event-cover");
@@ -312,16 +312,11 @@ find("event-menu").addEventListener("click", () => {
 });
 
 document.querySelector(".event-sections").addEventListener("click", ({ target }) => {
-    const button = target.closest("[data-section]");
+    const button = target.closest("button[data-section]");
     if (!button) {
         return;
     }
     switch (button.dataset.section) {
-        case "budget":
-            openPanel("Бюджет",
-                paragraph(`Общий бюджет — ${moneyFormat.format(eventDetails.budget)}`),
-                paragraph(`Остаток — ${moneyFormat.format(eventDetails.remainingBudget)}`));
-            break;
         case "photos": {
             const images = (eventDetails.imageEventUrls ?? []).filter(canDisplayCover).map(url => {
                 const image = document.createElement("img");
