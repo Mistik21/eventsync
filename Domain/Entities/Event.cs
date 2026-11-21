@@ -2,6 +2,8 @@ namespace eventsynс.Domain.Entities;
 
 public class Event
 {
+    private readonly List<Cost> expenses = new();
+
     public Guid Id { get; }
     public string Title { get; set; }
     public string Description {get;}
@@ -11,7 +13,6 @@ public class Event
     public CollectionStatus CollectionStatus { get; private set; }
     public int CollectedBudget { get; private set; }
     public int Budget {get; }
-    private Guid[] PaidParticipantIds { get; set; } = [];
     public IReadOnlyDictionary<Guid, int> Debts { get; private set; } = new Dictionary<Guid, int>();
     public IReadOnlyList<User> Participants { get; private set; } = new List<User>();
     public Guid Organizer {get; }
@@ -19,7 +20,7 @@ public class Event
     public IReadOnlyList<Activity> Activities {get; }
     public IReadOnlyList<Car> Cars {get; }
     public string[] ImageEventUrl { get;  }
-    public IReadOnlyList<Cost> Expenses { get; } = new List<Cost>();
+    public IReadOnlyList<Cost> Expenses => expenses;
 
     public Event(
         Guid id,
@@ -78,6 +79,11 @@ public class Event
 
         Debts = result;
     }
+
+    public bool IsOpenCollection()
+    {
+        return CollectionStatus == CollectionStatus.Open;
+    }
     public void AddImage(string imageUrl){}
     public void RemoveImage(string imageUrl){}
 
@@ -87,6 +93,8 @@ public class Event
     }
     public void PayDebt(Guid userId)
     {
+        CollectedBudget+=Debts[userId];
+        Debts = new Dictionary<Guid, int>(Debts) { [userId] = 0 };
     }
     public void RemoveParticipant(Guid userId){}
 
@@ -100,21 +108,15 @@ public class Event
     public void RemoveActivity(Guid activityId){}
     public void AddCar(Car car){}
     public void RemoveCar(Guid carId){}
-    public void AddDebt(Guid userId, int amount){}
     public void ReduceDebt(Guid userId, int amount){}
-
-    public int GetDebt(Guid userId)
-    {
-        return Debts.GetValueOrDefault(userId);
-    }
 
     public bool IsOrganizer(Guid userId)
     {
         return userId==Organizer;
     }
-    public void AddDebtToAll(int amount){}
     public void AddCost(Cost cost)
     {
+        expenses.Add(cost);
     }
     public void RemoveCost(Guid costId){}
 }

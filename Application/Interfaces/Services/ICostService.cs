@@ -7,7 +7,7 @@ public interface ICostService
 {
     Task<BudgetData> GetBudgetAsync(Guid eventId, Guid currentUserId);
 
-    Task<Guid> CreateCostAsync(Guid eventId, CostCreationModel data, Guid currentUserId);
+    Task CreateCostAsync(Guid eventId, CostCreationModel data, Guid currentUserId);
 
     Task UpdateCostAsync(Guid costId, CostUpdateModel data, Guid currentUserId);
 

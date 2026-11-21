@@ -39,7 +39,7 @@
 
             <section aria-labelledby="budget-contributions-title">
                 <div class="budget-section-heading">
-                    <h2 id="budget-contributions-title">Взносы участников</h2>
+                    <h2 id="budget-contributions-title" tabindex="-1">Взносы участников</h2>
                     <span id="budget-paid-count"></span>
                 </div>
                 <ul id="budget-contributions" class="budget-list"></ul>
@@ -54,7 +54,7 @@
         </div>
 
         <footer id="budget-footer" class="budget-footer" hidden>
-            <button class="budget-button" type="button" title="Сохранение трат пока недоступно" disabled>+ Добавить трату</button>
+            <button id="budget-add-cost" class="budget-button" type="button">+ Добавить трату</button>
         </footer>
     </main>
 
@@ -63,8 +63,30 @@
             <span class="budget-avatar" aria-hidden="true"></span>
             <div class="budget-person-details"><strong></strong><small></small></div>
             <span class="budget-badge"></span>
-            <button type="button" class="budget-button budget-pay" title="Отметка взноса пока недоступна" disabled hidden>Я скинул</button>
+            <button type="button" class="budget-button budget-pay" hidden>Я скинул</button>
         </li>
     </template>
+
+    <dialog id="budget-cost-dialog" class="budget-cost-dialog" aria-labelledby="budget-cost-dialog-title">
+        <header>
+            <h2 id="budget-cost-dialog-title">Новая запись</h2>
+            <button id="budget-close-cost" class="budget-close-cost" type="button" aria-label="Закрыть окно">×</button>
+        </header>
+        <form id="budget-cost-form">
+            <div class="budget-cost-field">
+                <label for="budget-cost-name">На что потратили</label>
+                <input id="budget-cost-name" name="title" type="text" placeholder="Введите текст…" required autofocus>
+            </div>
+            <div class="budget-cost-field">
+                <label for="budget-cost-amount">Сумма</label>
+                <div class="budget-amount-field">
+                    <input id="budget-cost-amount" name="amount" type="number" inputmode="numeric" min="1" max="2147483647" step="1" placeholder="0" required>
+                    <span aria-hidden="true">₽</span>
+                </div>
+            </div>
+            <p id="budget-cost-error" class="budget-status" data-error="true" role="alert" hidden></p>
+            <button id="budget-save-cost" class="budget-button" type="submit">Создать</button>
+        </form>
+    </dialog>
 </body>
 </html>

@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using eventsynс.Application.Interfaces.Services;
+using eventsynс.Application.Models.Cost;
+using eventsynс.UI.DTOs.Requests.Costs;
 using eventsynс.UI.DTOs.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -45,7 +47,23 @@ public class CostsController : ControllerBase
     }
 
     [HttpPost("costs")]
-    public IActionResult CreateCost(Guid eventId) => Ok();
+    public async Task<IActionResult> CreateCost(CreateCostRequest data,Guid eventId)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await costService.CreateCostAsync(eventId,new CostCreationModel(data.Title,data.Amount), currentUserId);
+            return Ok();
+        }
+        catch (Exception)
+        {
+            return BadRequest();
+        }
+    }
 
     [HttpPatch("costs/{costId:guid}")]
     public IActionResult UpdateCost(Guid eventId, Guid costId) => Ok();

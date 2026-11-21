@@ -11,9 +11,18 @@ const active = find("budget-active");
 const openButton = find("budget-open");
 const status = find("budget-status");
 const retry = find("budget-retry");
+const addCostButton = find("budget-add-cost");
+const costDialog = find("budget-cost-dialog");
+const costForm = find("budget-cost-form");
+const costName = find("budget-cost-name");
+const costAmount = find("budget-cost-amount");
+const costError = find("budget-cost-error");
+const saveCostButton = find("budget-save-cost");
+const closeCostButton = find("budget-close-cost");
 let eventDetails;
 let pendingLoad;
 let opening = false;
+let saving = false;
 
 window.Telegram?.WebApp?.expand();
 
@@ -35,13 +44,26 @@ async function getJson(url) {
     return requireSuccess(await fetchApi(url, { cache: "no-store" })).json();
 }
 
-function showRequestError(error, fallback, canRetry = true) {
+async function postBudgetAction(action, body) {
+    const options = { method: "POST" };
+    if (body !== undefined) {
+        options.headers = { "Content-Type": "application/json" };
+        options.body = JSON.stringify(body);
+    }
+    requireSuccess(await fetchApi(`${api}/${action}`, options));
+}
+
+function requestErrorMessage(error, fallback) {
     const messages = {
         401: getSessionErrorMessage(),
         403: "У вас нет доступа к этому бюджету.",
         404: "Событие не найдено.",
     };
-    showStatus(messages[error.cause] ?? fallback, { error: true, canRetry: canRetry && error.cause !== 401 });
+    return messages[error.cause] ?? fallback;
+}
+
+function showRequestError(error, fallback, canRetry = true) {
+    showStatus(requestErrorMessage(error, fallback), { error: true, canRetry: canRetry && error.cause !== 401 });
 }
 
 function renderParticipant(participant, currentUserId, depositRequired) {
@@ -53,7 +75,9 @@ function renderParticipant(participant, currentUserId, depositRequired) {
     const badge = row.querySelector(".budget-badge");
     if (isCurrentUser && participant.debt > 0) {
         badge.hidden = true;
-        row.querySelector(".budget-pay").hidden = false;
+        const payButton = row.querySelector(".budget-pay");
+        payButton.hidden = false;
+        payButton.addEventListener("click", () => markDebtPaid(payButton));
     } else if (participant.debt > 0) {
         badge.textContent = "Не внесено";
         badge.dataset.state = "due";
@@ -150,6 +174,97 @@ function loadBudget({ quiet = false } = {}) {
     return pendingLoad;
 }
 
+async function markDebtPaid(button) {
+    if (saving || active.hidden || button.disabled) {
+        return;
+    }
+
+    saving = true;
+    button.disabled = true;
+    button.textContent = "Отмечаем…";
+    addCostButton.disabled = true;
+    showStatus("");
+    let saved = false;
+    try {
+        await pendingLoad;
+        await postBudgetAction("pay-debt");
+        saved = true;
+        await loadBudget();
+        find("budget-contributions-title").focus();
+    } catch (error) {
+        showRequestError(error, "Не удалось отметить взнос.", false);
+    } finally {
+        saving = false;
+        button.disabled = saved;
+        button.textContent = saved ? "✓ Внесено" : "Я скинул";
+        addCostButton.disabled = false;
+    }
+}
+
+function showCostError(message) {
+    costError.textContent = message;
+    costError.hidden = !message;
+}
+
+addCostButton.addEventListener("click", () => {
+    if (saving || active.hidden || !eventDetails?.isOrganizer || costDialog.open) {
+        return;
+    }
+    costForm.reset();
+    showCostError("");
+    costDialog.showModal();
+});
+
+closeCostButton.addEventListener("click", () => costDialog.close());
+costDialog.addEventListener("cancel", event => {
+    if (saveCostButton.disabled) {
+        event.preventDefault();
+    }
+});
+
+costForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (saving || !costDialog.open || active.hidden || !eventDetails?.isOrganizer) {
+        return;
+    }
+
+    const title = costName.value.trim();
+    const amount = costAmount.valueAsNumber;
+    if (!title) {
+        showCostError("Введите название траты.");
+        costName.focus();
+        return;
+    }
+    if (!Number.isInteger(amount) || amount < 1 || amount > Number(costAmount.max)) {
+        showCostError("Укажите сумму в целых рублях.");
+        costAmount.focus();
+        return;
+    }
+
+    saving = true;
+    saveCostButton.disabled = true;
+    saveCostButton.textContent = "Сохраняем…";
+    closeCostButton.disabled = true;
+    costName.readOnly = true;
+    costAmount.readOnly = true;
+    showCostError("");
+    try {
+        await pendingLoad;
+        await postBudgetAction("costs", { title, amount });
+        costDialog.close();
+        await loadBudget();
+    } catch (error) {
+        showCostError(requestErrorMessage(error, "Не удалось добавить трату."));
+    } finally {
+        saving = false;
+        saveCostButton.disabled = false;
+        saveCostButton.textContent = "Создать";
+        closeCostButton.disabled = false;
+        costName.readOnly = false;
+        costAmount.readOnly = false;
+    }
+});
+
 openButton.addEventListener("click", async () => {
     if (!eventDetails?.isOrganizer || eventDetails.collectionStatus !== collectionNotStarted || opening) {
         return;
@@ -162,7 +277,7 @@ openButton.addEventListener("click", async () => {
     try {
         await pendingLoad;
         if (eventDetails.collectionStatus === collectionNotStarted) {
-            requireSuccess(await fetchApi(`${api}/collection/open`, { method: "POST" }));
+            await postBudgetAction("collection/open");
             closed.hidden = true;
             showStatus("Загружаем бюджет…");
         }

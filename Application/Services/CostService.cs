@@ -1,6 +1,7 @@
 using eventsynс.Application.Interfaces.Services;
 using eventsynс.Application.Models;
 using eventsynс.Application.Models.Cost;
+using eventsynс.Domain.Entities;
 using eventsynс.Domain.Repositories;
 
 namespace eventsynс.Application.Services;
@@ -30,9 +31,17 @@ public class CostService:ICostService
             );
     }
 
-    public Task<Guid> CreateCostAsync(Guid eventId, CostCreationModel data, Guid currentUserId)
+    public async Task CreateCostAsync(Guid eventId, CostCreationModel data, Guid currentUserId)
     {
-        throw new NotImplementedException();
+        var eventDetails= await eventRepository.GetByIdAsync(eventId);
+        if (eventDetails == null || !eventDetails.IsOrganizer(currentUserId) || !eventDetails.IsOpenCollection())
+        {
+            throw new Exception();
+        }
+
+        var cost = new Cost(Guid.Empty, data.Title, data.Amount);
+        eventDetails.AddCost(cost);
+        await eventRepository.SavedAsync();
     }
 
     public Task UpdateCostAsync(Guid costId, CostUpdateModel data, Guid currentUserId)

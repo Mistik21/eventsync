@@ -1,7 +1,10 @@
-.budget-screen {
+.budget-screen, .budget-cost-dialog {
     --budget-accent: #06b2ce;
     --budget-ink: #087386;
     --budget-blue: #e5f7fb;
+}
+
+.budget-screen {
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -71,8 +74,8 @@
 
 .budget-button:hover:not(:disabled) { background: #05a6c0; }
 .budget-button:disabled { opacity: .65; cursor: default; }
-#budget-open:disabled { cursor: wait; }
-.budget-screen :focus-visible { outline: 2px solid var(--budget-ink); outline-offset: 3px; }
+#budget-open:disabled, #budget-save-cost:disabled, .budget-pay:disabled { cursor: wait; }
+.budget-screen :focus-visible, .budget-cost-dialog :focus-visible { outline: 2px solid var(--budget-ink); outline-offset: 3px; }
 
 .budget-active { display: grid; gap: 16px; padding-bottom: 18px; }
 
@@ -183,3 +186,58 @@
 }
 
 .budget-footer button { width: 100%; }
+
+.budget-cost-dialog {
+    position: fixed;
+    inset: auto 0 0;
+    width: min(100%, 402px);
+    max-width: 100%;
+    max-height: calc(100dvh - 12px);
+    margin: 0 auto;
+    padding: 16px 20px max(20px, env(safe-area-inset-bottom));
+    overflow: auto;
+    border: 0;
+    border-radius: 22px 22px 0 0;
+    color: inherit;
+    background: var(--surface);
+    box-shadow: 0 -6px 22px rgb(23 32 51 / 12%);
+}
+
+.budget-cost-dialog::backdrop { background: rgb(23 32 51 / 35%); }
+.budget-cost-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.budget-cost-dialog h2 { margin: 0; font-size: 20px; }
+
+.budget-close-cost {
+    min-width: 40px;
+    min-height: 40px;
+    margin-inline-end: -8px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    color: var(--muted);
+    background: transparent;
+    font-size: 23px;
+    cursor: pointer;
+}
+
+.budget-cost-dialog form { display: grid; gap: 16px; margin-top: 10px; }
+.budget-cost-field { display: grid; gap: 6px; }
+.budget-cost-field label { color: var(--muted); font-size: 12px; }
+
+.budget-cost-field input {
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: inherit;
+    background: #f6f8fa;
+    font-size: 16px;
+}
+
+.budget-amount-field { position: relative; }
+.budget-amount-field input { padding-inline-end: 34px; appearance: textfield; }
+.budget-amount-field input::-webkit-inner-spin-button { appearance: none; }
+.budget-amount-field span { position: absolute; inset-inline-end: 12px; top: 50%; translate: 0 -50%; color: var(--muted); pointer-events: none; }
+.budget-cost-dialog .budget-status { margin: 0; }
+.budget-cost-dialog .budget-button { margin-top: 6px; }

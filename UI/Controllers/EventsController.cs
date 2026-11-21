@@ -144,7 +144,7 @@ public class EventsController : ControllerBase
 
         var (eventDetails, organizerName) = invitation.Value;
         var isParticipant = eventDetails.IsParticipant(currentUserId);
-        if (!isParticipant && eventDetails.CollectionStatus != CollectionStatus.NotStarted)
+        if (!isParticipant && eventDetails.IsOpenCollection())
         {
             return Conflict();
         }
@@ -211,7 +211,23 @@ public class EventsController : ControllerBase
         => NoContent();
 
     [HttpPost("{eventId:guid}/pay-debt")]
-    public IActionResult PayDebt(Guid eventId) => NoContent();
+    public async Task<IActionResult> PayDebt(Guid eventId)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await eventService.PayMyDebtAsync(eventId, currentUserId);
+            return Ok();
+        }
+        catch (Exception)
+        {
+            return BadRequest();
+        }
+    }
 
     [HttpPost("{eventId:guid}/collection/open")]
     public async Task<IActionResult> OpenCollection(Guid eventId)

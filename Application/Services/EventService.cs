@@ -123,15 +123,21 @@ public class EventService : IEventService
         throw new NotImplementedException();
     }
 
-    public Task PayMyDebtAsync(Guid eventId, Guid currentUserId)
+    public async Task PayMyDebtAsync(Guid eventId, Guid currentUserId)
     {
-        throw new NotImplementedException();
+        var eventDetails = await eventRepository.GetByIdAsync(eventId);
+        if (eventDetails==null || !eventDetails.IsParticipant(currentUserId) || !eventDetails.IsOpenCollection())
+        {
+            throw new Exception();
+        }
+        eventDetails.PayDebt(currentUserId);
+        await eventRepository.SavedAsync();
     }
 
     public async Task OpenCollectionAsync(Guid eventId, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetByIdAsync(eventId);
-        if (eventDetails==null || !eventDetails.IsOrganizer(currentUserId))
+        if (eventDetails==null || !eventDetails.IsOrganizer(currentUserId) || eventDetails.IsOpenCollection())
         {
             throw new Exception();
         }
