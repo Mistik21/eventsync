@@ -15,7 +15,7 @@ public class UserService: IUserService
         this.eventRepository = eventRepository;
     }
     
-    public async Task<User?> GetMyProfileAsync(Guid currentUserId)
+    public async Task<User> GetMyProfileAsync(Guid currentUserId)
     {
         return await userRepository.GetByIdAsync(currentUserId);
     }

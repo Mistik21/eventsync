@@ -32,7 +32,7 @@ jobs:
           revision-cores: 1
           revision-network-id: enphqfrmf1asvafuao75
           revision-env: |
-            ASPNETCORE_ENVIRONMENT=Development
+            ASPNETCORE_ENVIRONMENT=Production
             ${{ secrets.DGIS_API_KEY && format('TwoGis__ApiKey={0}', secrets.DGIS_API_KEY) || '' }}
           revision-secrets: |
             ConnectionStrings__DefaultConnection=e6q5g00uaq06cn37ojug/e6qo494pb2964cb94cfq/db-connection-string

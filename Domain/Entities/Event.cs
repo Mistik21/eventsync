@@ -6,20 +6,20 @@ public class Event
 
     public Guid Id { get; }
     public string Title { get; set; }
-    public string Description {get; private set;}
-    public string MainImageUrl { get;  private set;}
-    public DateTime EventStartTime {get; private set;}
+    public string Description { get; private set; }
+    public string MainImageUrl { get; private set; }
+    public DateTime EventStartTime { get; private set; }
     public Location EventLocation { get; private set; } = null!;
     public CollectionStatus CollectionStatus { get; private set; }
     public int CollectedBudget { get; private set; }
-    public int Budget {get; private set;}
+    public int Budget { get; private set; }
     public IReadOnlyDictionary<Guid, int> Debts { get; private set; } = new Dictionary<Guid, int>();
     public IReadOnlyList<User> Participants { get; private set; } = new List<User>();
-    public Guid Organizer {get; }
+    public Guid Organizer { get; }
     public IReadOnlyList<Item> Items { get; private set; } = new List<Item>();
-    public IReadOnlyList<Activity> Activities {get; }
-    public IReadOnlyList<Car> Cars {get; }
-    public string[] ImageEventUrl { get;  }
+    public IReadOnlyList<Activity> Activities { get; }
+    public IReadOnlyList<Car> Cars { get; }
+    public string[] ImageEventUrl { get; }
     public IReadOnlyList<Cost> Expenses => expenses;
 
     public Event(
@@ -33,6 +33,7 @@ public class Event
         Guid organizer)
         : this(id, title, description, mainImageUrl, eventStartTime, budget, organizer)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(budget);
         EventLocation = eventLocation;
     }
 
@@ -53,9 +54,11 @@ public class Event
         Budget = budget;
         Organizer = organizer;
     }
+
     public void ChangeTitle(string title)
     {
-        Title = title; 
+        if (IsOpenCollection()) throw DomainConflict.CreateException();
+        Title = title;
     }
 
     public int SpentAmount()
@@ -65,36 +68,43 @@ public class Event
 
     public void ChangeDescription(string description)
     {
+        if (IsOpenCollection()) throw DomainConflict.CreateException();
         Description = description;
     }
 
     public void ChangeStartTime(DateTime startTime)
     {
+        if (IsOpenCollection()) throw DomainConflict.CreateException();
         EventStartTime = startTime;
     }
 
     public void ChangeLocation(Location location)
     {
+        if (IsOpenCollection()) throw DomainConflict.CreateException();
         EventLocation = location;
     }
 
     public void ChangeBudget(int budget)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(budget);
+        if (IsOpenCollection()) throw DomainConflict.CreateException();
         Budget = budget;
     }
 
     public void ChangeMainImage(string imageUrl)
     {
+        if (IsOpenCollection()) throw DomainConflict.CreateException();
         MainImageUrl = imageUrl;
     }
 
     public void OpenCollection()
     {
+        if (IsOpenCollection()) throw DomainConflict.CreateException();
         CollectionStatus = CollectionStatus.Open;
         var result = new Dictionary<Guid, int>();
         foreach (var user in Participants)
         {
-            result.Add(user.Id, Budget/Participants.Count);
+            result.Add(user.Id, Budget / Participants.Count);
         }
 
         Debts = result;
@@ -104,19 +114,31 @@ public class Event
     {
         return CollectionStatus == CollectionStatus.Open;
     }
-    public void AddImage(string imageUrl){}
-    public void RemoveImage(string imageUrl){}
+
+    public void AddImage(string imageUrl)
+    {
+    }
+
+    public void RemoveImage(string imageUrl)
+    {
+    }
 
     public void AddParticipant(User user)
     {
+        if (Participants.Contains(user) || IsOpenCollection()) throw DomainConflict.CreateException();
         Participants = Participants.Append(user).ToList();
     }
+
     public void PayDebt(Guid userId)
     {
-        CollectedBudget+=Debts[userId];
+        if (!IsOpenCollection()) throw DomainConflict.CreateException();
+        CollectedBudget += Debts[userId];
         Debts = new Dictionary<Guid, int>(Debts) { [userId] = 0 };
     }
-    public void RemoveParticipant(Guid userId){}
+
+    public void RemoveParticipant(Guid userId)
+    {
+    }
 
     public bool IsParticipant(Guid userId)
     {
@@ -132,19 +154,44 @@ public class Event
     {
         Items = Items.Where(item => item.Id != itemId).ToList();
     }
-    public void AddActivity(Activity activity){}
-    public void RemoveActivity(Guid activityId){}
-    public void AddCar(Car car){}
-    public void RemoveCar(Guid carId){}
-    public void ReduceDebt(Guid userId, int amount){}
+
+    public void AddActivity(Activity activity)
+    {
+    }
+
+    public void RemoveActivity(Guid activityId)
+    {
+    }
+
+    public void AddCar(Car car)
+    {
+    }
+
+    public void RemoveCar(Guid carId)
+    {
+    }
+
+    public void ReduceDebt(Guid userId, int amount)
+    {
+    }
 
     public bool IsOrganizer(Guid userId)
     {
-        return userId==Organizer;
+        return userId == Organizer;
     }
+
     public void AddCost(Cost cost)
     {
+        if (!IsOpenCollection()) throw DomainConflict.CreateException();
         expenses.Add(cost);
     }
-    public void RemoveCost(Guid costId){}
+
+    public void RemoveCost(Guid costId)
+    {
+    }
+
+    public Item GetRequiredItem(Guid itemId)
+    {
+        return Items.SingleOrDefault(item => item.Id == itemId) ?? throw new KeyNotFoundException();
+    }
 }

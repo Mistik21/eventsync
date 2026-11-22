@@ -1,5 +1,5 @@
-using System.Security.Claims;
 using eventsynс.Application.Interfaces.Services;
+using eventsynс.UI.Auth;
 using eventsynс.UI.DTOs.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,24 +21,13 @@ public class UsersController : ControllerBase
     [HttpGet("me")]
     public async Task<IActionResult> GetMyProfile()
     {
-        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var currentUserId))
+        if (!User.TryGetCurrentUserId(out var currentUserId))
         {
             return Unauthorized();
         }
 
-        try
-        {
-            var user = await userService.GetMyProfileAsync(currentUserId);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            return Ok(new UserResponse(user.Id, user.Name, user.AttendedEventCount,
-                await userService.GetCountByOrganizerAsync(currentUserId)));
-        }
-        catch (Exception)
-        {
-            return BadRequest();
-        }
+        var user = await userService.GetMyProfileAsync(currentUserId);
+        var organizedCount = await userService.GetCountByOrganizerAsync(currentUserId);
+        return Ok(new UserResponse(user.Id, user.Name, user.AttendedEventCount, organizedCount));
     }
 }

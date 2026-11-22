@@ -12,14 +12,16 @@ public class UserRepository : IUserRepository
         this.db = db;
     }
 
-    public async Task<User?> GetByIdAsync(Guid id)
+    public async Task<User> GetByIdAsync(Guid id)
     {
-        return await db.Users.FindAsync(id);
+        return await db.Users.FindAsync(id)
+            ?? throw new KeyNotFoundException();
     }
 
-    public async Task<User?> GetByTelegramIdAsync(long telegramId)
+    public async Task<User> GetByTelegramIdAsync(long telegramId)
     {
-        return await db.Users.FirstOrDefaultAsync(u => u.TelegramID == telegramId);
+        return await db.Users.FirstOrDefaultAsync(u => u.TelegramID == telegramId)
+            ?? throw new KeyNotFoundException();
     }
 
     public async Task<int> SavedAsync()

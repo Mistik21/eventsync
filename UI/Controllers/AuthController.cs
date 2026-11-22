@@ -20,10 +20,6 @@ public class AuthController : ControllerBase
         this.authService = authService;
     }
 
-    [HttpGet("session")]
-    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-    public IActionResult GetSession() => NoContent();
-
     [AllowAnonymous]
     [HttpPost("telegram")]
     public async Task<IActionResult> TelegramLogin([FromBody] TelegramLoginRequest request)
@@ -33,26 +29,14 @@ public class AuthController : ControllerBase
             return BadRequest();
         }
 
-        try
-        {
-            var user = await authService.AuthenticateTelegramAsync(request.InitData);
+        var user = await authService.AuthenticateTelegramAsync(request.InitData);
 
-            var identity = new ClaimsIdentity(
-                new[] { new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()) },
-                CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(identity));
+        var identity = new ClaimsIdentity(
+            new[] { new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()) },
+            CookieAuthenticationDefaults.AuthenticationScheme);
+        
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
 
-            return Ok(new UserResponse(
-                user.Id,
-                user.Name,
-                user.AttendedEventCount
-            ));
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Unauthorized();
-        }
+        return Ok(new UserResponse(user.Id, user.Name, user.AttendedEventCount));
     }
 }

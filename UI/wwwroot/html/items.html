@@ -92,9 +92,19 @@
             <dt id="item-details-description-label">Заметки</dt><dd id="item-details-description"></dd>
         </dl>
         <footer class="item-details-actions">
-            <p id="item-delete-error" class="items-status" data-error="true" role="alert" hidden></p>
             <button id="item-edit" class="item-details-button" type="button">Редактировать</button>
-            <button id="item-delete" class="item-details-button item-delete" type="button">Удалить</button>
+            <button id="item-delete" class="item-details-button item-delete" type="button" aria-haspopup="dialog">Удалить</button>
+        </footer>
+    </dialog>
+
+    <dialog id="item-delete-dialog" class="items-dialog item-delete-dialog" aria-labelledby="item-delete-title">
+        <header>
+            <h2 id="item-delete-title"></h2>
+        </header>
+        <footer class="item-details-actions">
+            <p id="item-delete-error" class="items-status" data-error="true" role="alert" hidden></p>
+            <button id="item-delete-cancel" class="item-details-button" type="button" autofocus>Отмена</button>
+            <button id="item-delete-confirm" class="item-details-button item-delete" type="button">Удалить</button>
         </footer>
     </dialog>
 </body>

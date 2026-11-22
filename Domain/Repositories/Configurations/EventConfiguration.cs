@@ -14,6 +14,8 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
 
         builder.HasKey(u => u.Id);
 
+        builder.Property<uint>("Version").IsRowVersion();
+
         builder.Property(e => e.Title)
             .IsRequired();
 
@@ -37,15 +39,8 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.Property(e => e.Debts)
             .HasConversion(
                 debts => JsonSerializer.Serialize(debts, JsonSerializerOptions.Default),
-                json => JsonSerializer.Deserialize<Dictionary<Guid, int>>(json, JsonSerializerOptions.Default)
-                    ?? new Dictionary<Guid, int>(),
-                new ValueComparer<IReadOnlyDictionary<Guid, int>>(
-                    (left, right) => ReferenceEquals(left, right) ||
-                        (left != null && right != null && left.Count == right.Count &&
-                            left.All(debt => right.ContainsKey(debt.Key) && right[debt.Key] == debt.Value)),
-                    debts => debts.OrderBy(debt => debt.Key)
-                        .Aggregate(0, (hash, debt) => HashCode.Combine(hash, debt.Key, debt.Value)),
-                    debts => new Dictionary<Guid, int>(debts)))
+                json => JsonSerializer.Deserialize<Dictionary<Guid, int>>(
+                    json, JsonSerializerOptions.Default) ?? new Dictionary<Guid, int>())
             .HasColumnType("jsonb")
             .HasDefaultValueSql("'{}'::jsonb")
             .IsRequired();

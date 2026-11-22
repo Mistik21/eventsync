@@ -227,3 +227,16 @@
 
 .item-delete { border-color: #efd0d0; color: #a33e3e; background: #fdf1f1; }
 .item-details-button:disabled { opacity: .65; cursor: wait; }
+
+.item-delete-dialog header {
+    align-items: start;
+    min-height: 118px;
+    padding-block: 4px 24px;
+}
+
+.item-delete-dialog h2 { line-height: 1.4; }
+
+.item-delete-dialog footer {
+    gap: 13px;
+    padding: 15px 18px max(24px, env(safe-area-inset-bottom));
+}

@@ -6,7 +6,7 @@ using eventsynс.Domain.Repositories;
 
 namespace eventsynс.Application.Services;
 
-public class CostService:ICostService
+public class CostService : ICostService
 {
     private readonly IEventRepository eventRepository;
 
@@ -14,32 +14,29 @@ public class CostService:ICostService
     {
         this.eventRepository = eventRepository;
     }
+
     public async Task<BudgetData> GetBudgetAsync(Guid eventId, Guid currentUserId)
     {
-        var eventDetails= await eventRepository.GetByIdAsync(eventId);
-        if (eventDetails == null || !eventDetails.IsParticipant(currentUserId))
-        {
-            throw new Exception();
-        }
+        var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
+        if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
         return new BudgetData(
             eventDetails.Budget,
             eventDetails.CollectedBudget,
             eventDetails.SpentAmount(),
-            eventDetails.Budget-eventDetails.SpentAmount(),
+            eventDetails.Budget - eventDetails.SpentAmount(),
             eventDetails.Debts,
             eventDetails.Expenses.ToList()
-            );
+        );
     }
 
     public async Task CreateCostAsync(Guid eventId, CostCreationModel data, Guid currentUserId)
     {
-        var eventDetails= await eventRepository.GetByIdAsync(eventId);
-        if (eventDetails == null || !eventDetails.IsOrganizer(currentUserId) || !eventDetails.IsOpenCollection())
-        {
-            throw new Exception();
-        }
-
-        var cost = new Cost(Guid.Empty, data.Title, data.Amount);
+        var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
+        if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+        var cost = new Cost(
+            Guid.Empty,
+            data.Title,
+            data.Amount);
         eventDetails.AddCost(cost);
         await eventRepository.SavedAsync();
     }

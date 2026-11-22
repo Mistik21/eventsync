@@ -14,6 +14,7 @@ const list = find("items-list");
 const add = find("items-add");
 const formDialog = find("item-form-dialog");
 const detailsDialog = find("item-details-dialog");
+const deleteDialog = find("item-delete-dialog");
 const form = find("item-form");
 const fields = find("item-fields");
 const title = find("item-title");
@@ -25,9 +26,10 @@ const plus = find("item-count-plus");
 const close = find("item-form-close");
 const submit = find("item-form-submit");
 const formError = find("item-form-error");
-const detailsClose = find("item-details-close");
 const editButton = find("item-edit");
 const deleteButton = find("item-delete");
+const deleteCancel = find("item-delete-cancel");
+const deleteConfirm = find("item-delete-confirm");
 const deleteError = find("item-delete-error");
 let detailsItem;
 let editingItem;
@@ -81,7 +83,6 @@ async function getParticipantNames() {
 
 function openDetails(item, responsibleName) {
     detailsItem = item;
-    showDialogError(deleteError, "");
     find("item-details-title").textContent = item.title;
     find("item-details-count").textContent = `${item.count} шт.`;
     find("item-details-owner").textContent = responsibleName || "Свободно";
@@ -199,14 +200,30 @@ async function changeAssignment(itemId, action) {
     }
 }
 
+function openDeleteConfirmation() {
+    find("item-delete-title").textContent = `Вы уверены, что хотите удалить из списка предмет: ${detailsItem.title}?`;
+    showDialogError(deleteError, "");
+    detailsDialog.close();
+    deleteDialog.showModal();
+}
+
+function cancelDeleteConfirmation() {
+    if (deleteConfirm.disabled) return;
+
+    deleteDialog.close();
+    detailsDialog.showModal();
+    deleteButton.focus();
+}
+
 function setDeleting(deleting) {
-    deleteButton.disabled = deleting;
-    editButton.disabled = deleting;
-    detailsClose.disabled = deleting;
-    deleteButton.textContent = deleting ? "Удаляем…" : "Удалить";
+    deleteCancel.disabled = deleting;
+    deleteConfirm.disabled = deleting;
+    deleteConfirm.textContent = deleting ? "Удаляем…" : "Удалить";
 }
 
 async function deleteItem() {
+    if (!deleteDialog.open || deleteConfirm.disabled) return;
+
     const fallback = "Не удалось удалить предмет. Попробуйте ещё раз.";
     showDialogError(deleteError, "");
     setDeleting(true);
@@ -216,7 +233,7 @@ async function deleteItem() {
             showDialogError(deleteError, getRequestError(response, fallback));
             return;
         }
-        detailsDialog.close();
+        deleteDialog.close();
         await loadItems({ fallback: "Предмет удалён. Не удалось обновить список." });
         focusList();
     } catch {
@@ -277,9 +294,12 @@ editButton.addEventListener("click", () => {
     detailsDialog.close();
     openItemForm(detailsItem);
 });
-deleteButton.addEventListener("click", deleteItem);
-detailsDialog.addEventListener("cancel", event => {
-    if (deleteButton.disabled) event.preventDefault();
+deleteButton.addEventListener("click", openDeleteConfirmation);
+deleteCancel.addEventListener("click", cancelDeleteConfirmation);
+deleteConfirm.addEventListener("click", deleteItem);
+deleteDialog.addEventListener("cancel", event => {
+    event.preventDefault();
+    cancelDeleteConfirmation();
 });
 
 count.addEventListener("input", updateStepper);

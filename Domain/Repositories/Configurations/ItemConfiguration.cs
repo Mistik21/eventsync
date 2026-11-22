@@ -12,6 +12,8 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
 
         builder.HasKey(u => u.Id);
 
+        builder.Property<uint>("Version").IsRowVersion();
+
         builder.Property(u => u.Title)
             .IsRequired();
 

@@ -1,6 +1,8 @@
+using System.Security.Authentication;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using eventsynс.Application.Interfaces.Auth;
+using eventsynс.Domain.Entities;
 using eventsynс.Domain.Repositories;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
@@ -23,20 +25,20 @@ public class TelegramSessionHandler(
         if (values.Count != 1 || values[0] is not { Length: > 0 } initData)
             return AuthenticateResult.Fail("Некорректные данные Telegram.");
 
-        long telegramId;
+        User user;
         try
         {
-            var telegramUser = await validator.ValidateAsync(initData);
-            telegramId = telegramUser.TelegramId;
+            var telegramUser = validator.Validate(initData);
+            user = await users.GetByTelegramIdAsync(telegramUser.TelegramId);
         }
-        catch (UnauthorizedAccessException)
+        catch (InvalidCredentialException)
         {
             return AuthenticateResult.Fail("Не удалось проверить данные Telegram.");
         }
-
-        var user = await users.GetByTelegramIdAsync(telegramId);
-        if (user is null)
+        catch (KeyNotFoundException)
+        {
             return AuthenticateResult.Fail("Пользователь Telegram не найден.");
+        }
 
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())], Scheme.Name);
         return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), Scheme.Name));

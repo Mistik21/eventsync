@@ -1,11 +1,13 @@
 using eventsynс.Application.Interfaces.Auth;
 using eventsynс.Application.Interfaces.Services;
 using eventsynс.Application.Services;
+using eventsynс.Domain;
 using Microsoft.EntityFrameworkCore;
 using eventsynс.Domain.Repositories;
 using eventsynс.UI.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Authentication;
 
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
@@ -16,8 +18,6 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     Args = args,
     WebRootPath = webRoot
 });
-builder.WebHost.UseSetting("DetailedErrors", "true");
-
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 // Add services to the container.
 
@@ -58,6 +58,7 @@ builder.Services.AddAuthentication("EventSync")
     });
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
 builder.Services.AddHttpClient("TwoGisGeocoder", client =>
 {
     client.BaseAddress = new Uri("https://catalog.api.2gis.com/");
@@ -84,6 +85,12 @@ if (app.Environment.IsDevelopment())
 
 }
 
+app.UseExceptionHandler(new ExceptionHandlerOptions
+{
+    StatusCodeSelector = GetExceptionStatusCode,
+    AllowStatusCode404Response = true
+});
+
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
@@ -94,3 +101,15 @@ app.UseAuthorization();
 app.MapControllers().RequireAuthorization();
 
 app.Run();
+
+static int GetExceptionStatusCode(Exception exception) => exception switch
+{
+    BadHttpRequestException badRequest => badRequest.StatusCode,
+    ArgumentOutOfRangeException => StatusCodes.Status400BadRequest,
+    InvalidCredentialException => StatusCodes.Status401Unauthorized,
+    UnauthorizedAccessException => StatusCodes.Status403Forbidden,
+    KeyNotFoundException => StatusCodes.Status404NotFound,
+    DbUpdateConcurrencyException => StatusCodes.Status409Conflict,
+    InvalidOperationException invalidOperation when DomainConflict.IsConflict(invalidOperation) => StatusCodes.Status409Conflict,
+    _ => StatusCodes.Status500InternalServerError
+};

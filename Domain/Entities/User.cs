@@ -18,11 +18,6 @@ public class User
         AttendedEventCount = attendedEventCount;
     }
 
-    public void ChangeName(string name)
-    {
-        Name = name;
-    }
-
     public void IncrementAttendedEventCount()
     {
         AttendedEventCount++;
@@ -32,9 +27,5 @@ public class User
     {
         AttendedEventCount = Math.Max(0, AttendedEventCount - 1);
     }
-
-    public bool IsTelegramUser(long telegramId)
-    {
-        return true;
-    }
+    
 }

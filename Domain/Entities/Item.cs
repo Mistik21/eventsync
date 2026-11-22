@@ -14,7 +14,7 @@ public class Item
         Id = id;
         Title = title;
         Description = description;
-        Count = count;
+        ChangeCount(count);
         UrlShop = urlShop;
     }
 
@@ -30,10 +30,7 @@ public class Item
 
     public void ChangeCount(int count)
     {
-        if (count < 0)
-        {
-            throw new Exception();
-        }
+        if (count < 0) throw new ArgumentOutOfRangeException();
         Count = count;
     }
 
@@ -44,6 +41,10 @@ public class Item
 
     public void AssignTo(Guid userId)
     {
+        if (ResponsibleID != null)
+        {
+            throw DomainConflict.CreateException();
+        }
         ResponsibleID = userId;
     }
 

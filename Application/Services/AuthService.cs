@@ -18,18 +18,20 @@ public class AuthService : IAuthService
 
     public async Task<User> AuthenticateTelegramAsync(string initData)
     {
-        var telegramUser = await telegramAuthValidator.ValidateAsync(initData);
+        var telegramUser = telegramAuthValidator.Validate(initData);
 
-        var user = await userRepository.GetByTelegramIdAsync(telegramUser.TelegramId);
-
-        if (user is null)
+        try
         {
-            user = new User(Guid.NewGuid(), telegramUser.TelegramId, telegramUser.Name, 0);
+            var user = await userRepository.GetByTelegramIdAsync(telegramUser.TelegramId);
+            return user;
+        }
+        catch (KeyNotFoundException)
+        {
+            var user = new User(Guid.NewGuid(), telegramUser.TelegramId, telegramUser.Name, 0);
 
             userRepository.Add(user);
             await userRepository.SavedAsync();
+            return user;
         }
-
-        return user;
     }
 }
