@@ -24,6 +24,7 @@ builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<ICostService, CostService>();
 builder.Services.AddScoped<IItemService, ItemService>();
+builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 

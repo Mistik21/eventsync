@@ -5,5 +5,5 @@ public record CreateActivityRequest(
     string Description,
     DateTime ActivityStartTime,
     DateTime ActivityEndTime,
-    int MaxParticipants
+    int? MaxParticipants
 );

@@ -2,8 +2,6 @@ namespace eventsynс.Domain.Entities;
 
 public class Event
 {
-    private readonly List<Cost> expenses = new();
-
     public Guid Id { get; }
     public string Title { get; set; }
     public string Description { get; private set; }
@@ -17,10 +15,13 @@ public class Event
     public IReadOnlyList<User> Participants { get; private set; } = new List<User>();
     public Guid Organizer { get; }
     public IReadOnlyList<Item> Items { get; private set; } = new List<Item>();
-    public IReadOnlyList<Activity> Activities { get; }
+    public IReadOnlyList<Activity> Activities => activities;
     public IReadOnlyList<Car> Cars { get; }
     public string[] ImageEventUrl { get; }
     public IReadOnlyList<Cost> Expenses => expenses;
+    
+    private readonly List<Cost> expenses = new();
+    private readonly List<Activity> activities = new();
 
     public Event(
         Guid id,
@@ -157,6 +158,7 @@ public class Event
 
     public void AddActivity(Activity activity)
     {
+        activities.Add(activity);
     }
 
     public void RemoveActivity(Guid activityId)

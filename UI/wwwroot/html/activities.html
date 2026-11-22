@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Активности · EventSync</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/activities.css">
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <script type="module" src="/js/activities.js"></script>
+</head>
+<body>
+    <main class="activities-screen">
+        <header class="activities-header">
+            <a id="activities-back" class="activities-back" href="/" aria-label="Назад к событию">←</a>
+            <h1 id="activities-title" tabindex="-1">Активности</h1>
+        </header>
+
+        <p id="activities-status" class="activities-status" role="status">Загружаем активности…</p>
+        <button id="activities-retry" class="activities-retry" type="button" hidden>Повторить</button>
+
+        <section id="activities-empty" class="activities-empty" aria-labelledby="activities-empty-title" hidden>
+            <div class="activities-empty-circle" aria-hidden="true"></div>
+            <h2 id="activities-empty-title">Активностей нет</h2>
+            <p>Пока ничего не запланировано</p>
+            <button id="activities-add-empty" class="activities-primary" type="button" aria-haspopup="dialog" hidden>Добавить</button>
+        </section>
+
+        <div id="activities-list"></div>
+        <button id="activities-add" class="activities-add" type="button" aria-label="Добавить активность" aria-haspopup="dialog" hidden>+</button>
+    </main>
+
+    <template id="activity-card-template">
+        <li>
+            <button class="activity-card" type="button" aria-haspopup="dialog">
+                <span class="activity-card-meta"><span class="activity-card-time"></span><span class="activity-card-seats"></span></span>
+                <strong class="activity-card-title"></strong>
+                <span class="activity-card-description"></span>
+                <span class="activity-card-role" hidden>Вы организатор</span>
+            </button>
+        </li>
+    </template>
+
+    <dialog id="activity-form-dialog" class="activities-dialog" aria-labelledby="activity-form-title">
+        <header>
+            <h2 id="activity-form-title">Новая активность</h2>
+            <button id="activity-form-close" class="activities-close" type="button" aria-label="Закрыть форму">×</button>
+        </header>
+        <form id="activity-form">
+            <fieldset id="activity-fields" class="activity-fields">
+                <label class="activity-field">Название
+                    <input name="title" type="text" placeholder="Введите текст…" required autofocus>
+                </label>
+                <fieldset class="activity-time-fields">
+                    <legend>Время</legend>
+                    <div class="activity-time-inputs">
+                        <label class="activity-field">Начало
+                            <input name="activityStartTime" type="datetime-local" required>
+                        </label>
+                        <label class="activity-field">Конец
+                            <input name="activityEndTime" type="datetime-local" required>
+                        </label>
+                    </div>
+                </fieldset>
+                <label class="activity-limit-switch">Ограничить количество участников
+                    <input id="activity-use-limit" type="checkbox" role="switch" aria-controls="activity-stepper">
+                </label>
+                <div id="activity-stepper" class="activity-stepper" hidden>
+                    <button id="activity-minus" type="button" aria-label="Уменьшить лимит">−</button>
+                    <input name="maxParticipants" type="number" inputmode="numeric" min="1" max="2147483646" step="1" value="1" aria-label="Лимит участников" disabled required>
+                    <button id="activity-plus" type="button" aria-label="Увеличить лимит">+</button>
+                </div>
+                <label class="activity-field">Описание (необязательное поле)
+                    <textarea name="description" rows="3" placeholder="Добавить детали…"></textarea>
+                </label>
+            </fieldset>
+            <footer>
+                <p id="activity-form-error" class="activities-status" data-error="true" role="alert" hidden></p>
+                <button id="activity-save" class="activities-primary" type="submit">Создать</button>
+            </footer>
+        </form>
+    </dialog>
+
+    <dialog id="activity-details-dialog" class="activities-dialog" aria-labelledby="activity-details-title">
+        <header>
+            <h2 id="activity-details-title"></h2>
+            <form method="dialog"><button class="activities-close" aria-label="Закрыть карточку">×</button></form>
+        </header>
+        <div class="activity-details">
+            <dl class="activity-detail-times">
+                <div><dt>Начало</dt><dd id="activity-details-start"></dd></div>
+                <div><dt>Конец</dt><dd id="activity-details-end"></dd></div>
+            </dl>
+            <p id="activity-details-description" class="activity-description" hidden></p>
+            <section aria-labelledby="activity-participants-title">
+                <h3 id="activity-participants-title"></h3>
+                <ul id="activity-participants" class="activity-participants" hidden></ul>
+                <p id="activity-participants-note" class="activity-participants-note" hidden></p>
+            </section>
+        </div>
+        <footer id="activity-details-actions" class="activity-actions" hidden>
+            <button id="activity-edit" class="activity-action" type="button" aria-haspopup="dialog">Редактировать</button>
+            <button id="activity-delete" class="activity-action activity-danger" type="button" aria-haspopup="dialog">Удалить</button>
+        </footer>
+    </dialog>
+
+    <dialog id="activity-delete-dialog" class="activities-dialog activity-delete-dialog" aria-labelledby="activity-delete-title">
+        <header><h2 id="activity-delete-title"></h2></header>
+        <footer class="activity-actions">
+            <p id="activity-delete-error" class="activities-status" data-error="true" role="alert" hidden></p>
+            <button id="activity-delete-cancel" class="activity-action" type="button" autofocus>Отмена</button>
+            <button id="activity-delete-confirm" class="activity-action activity-danger" type="button">Удалить</button>
+        </footer>
+    </dialog>
+</body>
+</html>
