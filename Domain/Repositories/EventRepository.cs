@@ -34,6 +34,7 @@ public class EventRepository : IEventRepository
             .Include(e => e.Expenses)
             .Include(e => e.Items)
             .Include(e => e.Activities)
+                .ThenInclude(activity => activity.Participants)
             .AsSplitQuery()
             .SingleOrDefaultAsync(e => e.Id == eventId);
         return result ?? throw new KeyNotFoundException();

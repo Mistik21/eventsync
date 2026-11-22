@@ -36,6 +36,7 @@ const deleteConfirm = find("activity-delete-confirm");
 const deleteCancel = find("activity-delete-cancel");
 const deleteError = find("activity-delete-error");
 let isOrganizer = false;
+let eventStart;
 let selectedActivity;
 let editingActivity;
 let saving = false;
@@ -93,7 +94,7 @@ function dayLabel(date) {
 }
 
 function normalizeActivity(activity) {
-    const participants = activity.participants ?? [];
+    const participants = activity.participants;
     const limit = activity.maxParticipants;
     return {
         id: activity.id,
@@ -103,8 +104,8 @@ function normalizeActivity(activity) {
         start: parseDate(activity.activityStartTime ?? activity["\u0430ctivityStartTime"]),
         end: parseDate(activity.activityEndTime ?? activity["\u0430ctivityEndTime"]),
         limit: limit > 0 && limit < unlimited ? limit : null,
-        participants,
-        count: activity.participantsCount ?? (participants.length || null),
+        participants: participants ?? [],
+        count: activity.participantsCount ?? participants?.length ?? null,
     };
 }
 
@@ -176,6 +177,7 @@ async function loadPage() {
             readActivities(),
         ]);
         isOrganizer = event.isOrganizer === true;
+        eventStart = parseDate(event.eventStartTime);
         renderActivities(activities);
         showStatus("");
     } catch (error) {
@@ -234,6 +236,7 @@ function openForm(activity = null) {
         limitInput.value = activity.limit ?? 1;
         detailsDialog.close();
     }
+    updateTimeBounds();
     updateStepper();
     find("activity-form-title").textContent = activity ? "Редактирование активности" : "Новая активность";
     saveButton.textContent = activity ? "Сохранить" : "Создать";
@@ -258,6 +261,18 @@ function closeForm() {
 
 function readTime(input, original) {
     return original && input.value === localDateTime(original) ? original : parseDate(input.value);
+}
+
+function updateTimeBounds() {
+    const start = readTime(startInput, editingActivity?.start);
+    const end = readTime(endInput, editingActivity?.end);
+    startInput.min = localDateTime(eventStart);
+    endInput.min = localDateTime(start ?? eventStart);
+    startInput.setCustomValidity(start && eventStart && start < eventStart
+        ? "Начало активности не может быть раньше начала события." : "");
+    endInput.setCustomValidity(start && end && end <= start
+        ? "Укажите время окончания позже времени начала." : "");
+    return { start, end };
 }
 
 function matchesChanges(activity, payload) {
@@ -299,6 +314,8 @@ formDialog.addEventListener("cancel", event => {
     }
 });
 
+startInput.addEventListener("input", updateTimeBounds);
+endInput.addEventListener("input", updateTimeBounds);
 limitToggle.addEventListener("change", updateStepper);
 limitInput.addEventListener("input", updateStepper);
 limitMinus.addEventListener("click", () => {
@@ -315,18 +332,13 @@ form.addEventListener("submit", async event => {
     if (!formDialog.open || saving || !isOrganizer) return;
     const title = titleInput.value.trim();
     const activity = editingActivity;
-    const start = readTime(startInput, activity?.start);
-    const end = readTime(endInput, activity?.end);
+    const { start, end } = updateTimeBounds();
     if (!title) {
         showMessage(formError, "Введите название активности.");
         titleInput.focus();
         return;
     }
-    if (!start || !end || end <= start) {
-        showMessage(formError, "Укажите время окончания позже времени начала.");
-        endInput.focus();
-        return;
-    }
+    if (!startInput.reportValidity() || !endInput.reportValidity() || !start || !end) return;
 
     const payload = {
         title,

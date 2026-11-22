@@ -28,7 +28,17 @@ public class ActivitiesController : ControllerBase
         }
 
         var result = await activityService.GetActivitiesAsync(eventId, currentUserId);
-        return Ok(result);
+        return Ok(result.Select(activity => new
+        {
+            activity.Id,
+            activity.Title,
+            activity.Description,
+            activity.Creator,
+            activity.АctivityStartTime,
+            activity.АctivityEndTime,
+            activity.MaxParticipants,
+            Participants = activity.Participants.Select(user => new { user.Id, user.Name })
+        }));
     }
 
     [HttpGet("{activityId:guid}")]
