@@ -5,5 +5,5 @@ public record UpdateActivityRequest(
     string Description,
     DateTime ActivityStartTime,
     DateTime ActivityEndTime,
-    int MaxParticipants
+    int? MaxParticipants
 );

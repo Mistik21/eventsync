@@ -1,3 +1,4 @@
+import { fetchCurrentUser } from "./current-user.js";
 import { fetchApi, getSessionErrorMessage } from "./session.js";
 
 const find = id => document.getElementById(id);
@@ -36,6 +37,7 @@ const deleteConfirm = find("activity-delete-confirm");
 const deleteCancel = find("activity-delete-cancel");
 const deleteError = find("activity-delete-error");
 let isOrganizer = false;
+let currentUserId;
 let eventStart;
 let selectedActivity;
 let editingActivity;
@@ -98,6 +100,7 @@ function normalizeActivity(activity) {
     const limit = activity.maxParticipants;
     return {
         id: activity.id,
+        creatorId: activity.creatorId ?? activity.creator,
         title: activity.title,
         description: activity.description ?? "",
         // The current controller serializes entity properties with a Cyrillic «а».
@@ -120,6 +123,10 @@ function seatsLabel({ count, limit }) {
     return count >= limit ? "Мест нет" : `Свободно ${limit - count} из ${limit}`;
 }
 
+function isActivityCreator(activity) {
+    return Boolean(currentUserId && currentUserId === activity?.creatorId);
+}
+
 function activityCard(activity) {
     const row = find("activity-card-template").content.firstElementChild.cloneNode(true);
     const description = row.querySelector(".activity-card-description");
@@ -131,7 +138,7 @@ function activityCard(activity) {
     row.querySelector(".activity-card-seats").textContent = seatsLabel(activity);
     row.querySelector(".activity-card-title").textContent = activity.title;
     showMessage(description, activity.description);
-    row.querySelector(".activity-card-role").hidden = !isOrganizer;
+    row.querySelector(".activity-card-role").hidden = !isActivityCreator(activity);
     row.querySelector("button").addEventListener("click", () => showDetails(activity));
     return row;
 }
@@ -172,11 +179,13 @@ function renderActivities(activities) {
 async function loadPage() {
     showStatus("Загружаем активности…");
     try {
-        const [event, activities] = await Promise.all([
+        const [event, activities, viewer] = await Promise.all([
             request(eventUrl, { cache: "no-store" }).then(response => response.json()),
             readActivities(),
+            fetchCurrentUser().then(response => response.ok ? response.json() : null).catch(() => null),
         ]);
         isOrganizer = event.isOrganizer === true;
+        currentUserId = viewer?.id ?? (isOrganizer ? event.organizerId : null);
         eventStart = parseDate(event.eventStartTime);
         renderActivities(activities);
         showStatus("");
@@ -211,29 +220,34 @@ function showDetails(activity) {
     list.hidden = names.length === 0;
     showMessage(find("activity-participants-note"), list.hidden
         ? (count === 0 ? "Пока никто не записан" : "Список участников недоступен") : "");
-    find("activity-details-actions").hidden = !isOrganizer;
+    find("activity-details-actions").hidden = !isActivityCreator(activity);
     detailsDialog.showModal();
 }
 
 function updateStepper() {
     const value = limitInput.valueAsNumber;
+    const minimum = Number(limitInput.min);
     find("activity-stepper").hidden = !limitToggle.checked;
     limitInput.disabled = !limitToggle.checked;
-    limitMinus.disabled = !(value > 1);
+    limitMinus.disabled = !(value > minimum);
     limitPlus.disabled = value >= Number(limitInput.max);
+    limitInput.setCustomValidity(limitToggle.checked && value < minimum
+        ? `Лимит участников должен быть не меньше ${minimum}.` : "");
 }
 
 function openForm(activity = null) {
-    if (!isOrganizer || saving) return;
+    if (saving || !(activity ? isActivityCreator(activity) : isOrganizer)) return;
     editingActivity = activity;
     form.reset();
+    const minimum = Math.max(1, activity?.count ?? 0);
+    limitInput.min = String(minimum);
+    limitInput.value = String(activity?.limit ?? minimum);
     if (activity) {
         titleInput.value = activity.title;
         startInput.value = localDateTime(activity.start);
         endInput.value = localDateTime(activity.end);
         descriptionInput.value = activity.description;
         limitToggle.checked = activity.limit !== null;
-        limitInput.value = activity.limit ?? 1;
         detailsDialog.close();
     }
     updateTimeBounds();
@@ -329,9 +343,9 @@ limitPlus.addEventListener("click", () => {
 
 form.addEventListener("submit", async event => {
     event.preventDefault();
-    if (!formDialog.open || saving || !isOrganizer) return;
-    const title = titleInput.value.trim();
     const activity = editingActivity;
+    if (!formDialog.open || saving || !(activity ? isActivityCreator(activity) : isOrganizer)) return;
+    const title = titleInput.value.trim();
     const { start, end } = updateTimeBounds();
     if (!title) {
         showMessage(formError, "Введите название активности.");
@@ -339,6 +353,8 @@ form.addEventListener("submit", async event => {
         return;
     }
     if (!startInput.reportValidity() || !endInput.reportValidity() || !start || !end) return;
+    updateStepper();
+    if (!limitInput.reportValidity()) return;
 
     const payload = {
         title,
@@ -373,7 +389,7 @@ form.addEventListener("submit", async event => {
 });
 
 deleteButton.addEventListener("click", () => {
-    if (saving || !isOrganizer) return;
+    if (saving || !isActivityCreator(selectedActivity)) return;
     find("activity-delete-title").textContent = `Вы уверены, что хотите удалить активность: ${selectedActivity.title}?`;
     showMessage(deleteError, "");
     detailsDialog.close();
@@ -387,7 +403,7 @@ deleteDialog.addEventListener("cancel", event => {
 });
 
 deleteConfirm.addEventListener("click", async () => {
-    if (!deleteDialog.open || saving || !isOrganizer) return;
+    if (!deleteDialog.open || saving || !isActivityCreator(selectedActivity)) return;
     const { id } = selectedActivity;
     saving = deleteConfirm.disabled = deleteCancel.disabled = true;
     deleteConfirm.textContent = "Удаляем…";

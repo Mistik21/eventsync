@@ -8,14 +8,13 @@ namespace eventsynс.Application.Interfaces.Services;
 public interface IActivityService
 {
     Task<List<Domain.Entities.Activity>> GetActivitiesAsync(Guid eventId, Guid currentUserId);
-    Task<Activity> GetActivityAsync(Guid activityId, Guid currentUserId);
 
     Task CreateActivityAsync(Guid eventId, ActivityCreationModel data, Guid currentUserId);
 
-    Task UpdateActivityAsync(Guid activityId, ActivityUpdateModel data, Guid currentUserId);
+    Task UpdateActivityAsync(Guid eventId,Guid activityId, ActivityUpdateModel data, Guid currentUserId);
 
-    Task DeleteActivityAsync(Guid activityId, Guid currentUserId);
+    Task DeleteActivityAsync(Guid eventId,Guid activityId, Guid currentUserId);
 
-    Task JoinActivityAsync(Guid activityId, Guid currentUserId);
-    Task LeaveActivityAsync(Guid activityId, Guid currentUserId);
+    Task JoinActivityAsync(Guid eventId,Guid activityId, Guid currentUserId);
+    Task LeaveActivityAsync(Guid eventId,Guid activityId, Guid currentUserId);
 }

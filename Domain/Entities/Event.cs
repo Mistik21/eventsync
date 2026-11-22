@@ -163,6 +163,7 @@ public class Event
 
     public void RemoveActivity(Guid activityId)
     {
+        activities.RemoveAll(activity => activity.Id == activityId);
     }
 
     public void AddCar(Car car)
@@ -170,10 +171,6 @@ public class Event
     }
 
     public void RemoveCar(Guid carId)
-    {
-    }
-
-    public void ReduceDebt(Guid userId, int amount)
     {
     }
 
@@ -200,5 +197,9 @@ public class Event
     public Cost GetRequiredCost(Guid costId)
     {
         return Expenses.SingleOrDefault(cost => cost.Id == costId) ?? throw new KeyNotFoundException();
+    }
+    public Activity GetRequiredActivity(Guid activityId)
+    {
+        return Activities.SingleOrDefault(activity => activity.Id == activityId) ?? throw new KeyNotFoundException();
     }
 }

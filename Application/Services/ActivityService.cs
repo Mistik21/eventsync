@@ -24,11 +24,6 @@ public class ActivityService: IActivityService
         return eventDetails.Activities.ToList();
     }
 
-    public Task<Activity> GetActivityAsync(Guid activityId, Guid currentUserId)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task CreateActivityAsync(Guid eventId, ActivityCreationModel data, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
@@ -48,22 +43,36 @@ public class ActivityService: IActivityService
         await eventRepository.SavedAsync();
     }
 
-    public Task UpdateActivityAsync(Guid activityId, ActivityUpdateModel data, Guid currentUserId)
+    public async Task UpdateActivityAsync(Guid eventId,Guid activityId, ActivityUpdateModel data, Guid currentUserId)
+    {
+        var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
+        if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+        var activity = eventDetails.GetRequiredActivity(activityId);
+        if (!activity.IsCreator(currentUserId)) throw new UnauthorizedAccessException();
+        activity.ChangeTitle(data.Title);
+        activity.ChangeDescription(data.Description);
+        activity.ChangeTime(data.ActivityStartTime, data.ActivityEndTime);
+        activity.ChangeMaxParticipants(data.MaxParticipants);
+        await eventRepository.SavedAsync();
+    }
+
+    public async Task DeleteActivityAsync(Guid eventId,Guid activityId, Guid currentUserId)
+    {
+        var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
+        if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+        var activity = eventDetails.GetRequiredActivity(activityId);
+        if (!activity.IsCreator(currentUserId)) throw new UnauthorizedAccessException();
+        eventDetails.RemoveActivity(activityId);
+        eventRepository.RemoveActivity(activity);
+        await eventRepository.SavedAsync();
+    }
+
+    public Task JoinActivityAsync(Guid eventId,Guid activityId, Guid currentUserId)
     {
         throw new NotImplementedException();
     }
 
-    public Task DeleteActivityAsync(Guid activityId, Guid currentUserId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task JoinActivityAsync(Guid activityId, Guid currentUserId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task LeaveActivityAsync(Guid activityId, Guid currentUserId)
+    public Task LeaveActivityAsync(Guid eventId,Guid activityId, Guid currentUserId)
     {
         throw new NotImplementedException();
     }

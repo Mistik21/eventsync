@@ -41,9 +41,6 @@ public class ActivitiesController : ControllerBase
         }));
     }
 
-    [HttpGet("{activityId:guid}")]
-    public IActionResult GetActivity(Guid eventId, Guid activityId) => Ok();
-
     [HttpPost]
     public async Task<IActionResult> CreateActivity(CreateActivityRequest data, Guid eventId)
     {
@@ -64,12 +61,38 @@ public class ActivitiesController : ControllerBase
     }
 
     [HttpPatch("{activityId:guid}")]
-    public IActionResult UpdateActivity(Guid eventId, Guid activityId)
-        => Ok();
+    public async Task<IActionResult> UpdateActivity(UpdateActivityRequest data,Guid eventId, Guid activityId)
+    {
+        if (!User.TryGetCurrentUserId(out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        await activityService.UpdateActivityAsync(
+            eventId,
+            activityId,
+            new ActivityUpdateModel(
+                data.Title, 
+                data.Description, 
+                data.ActivityStartTime, 
+                data.ActivityEndTime,
+                data.MaxParticipants
+                ),
+            currentUserId);
+        return Ok();
+    }
 
     [HttpDelete("{activityId:guid}")]
-    public IActionResult DeleteActivity(Guid eventId, Guid activityId)
-        => NoContent();
+    public async Task<IActionResult> DeleteActivity(Guid eventId, Guid activityId)
+    {
+        if (!User.TryGetCurrentUserId(out var currentUserId))
+        {
+            return Unauthorized();
+        }
+        
+        await activityService.DeleteActivityAsync(eventId, activityId, currentUserId);
+        return Ok();
+    }
 
     [HttpPost("{activityId:guid}/join")]
     public IActionResult JoinActivity(Guid eventId, Guid activityId)

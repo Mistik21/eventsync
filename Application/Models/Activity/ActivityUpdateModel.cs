@@ -5,5 +5,5 @@ public record class ActivityUpdateModel(
     string Description,
     DateTime ActivityStartTime,
     DateTime ActivityEndTime,
-    int MaxParticipants
+    int? MaxParticipants
 );

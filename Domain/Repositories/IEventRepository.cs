@@ -12,5 +12,6 @@ public interface IEventRepository
     void AddEvent(Event user);
     void RemoveEvent(Event eventDetails);
     void RemoveCost(Cost cost);
+    void RemoveActivity(Activity activity);
     void RemoveItem(Item item);
 }
