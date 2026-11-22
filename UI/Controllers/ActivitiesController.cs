@@ -95,8 +95,16 @@ public class ActivitiesController : ControllerBase
     }
 
     [HttpPost("{activityId:guid}/join")]
-    public IActionResult JoinActivity(Guid eventId, Guid activityId)
-        => Ok();
+    public async Task<IActionResult> JoinActivity(Guid eventId, Guid activityId)
+    {
+        if (!User.TryGetCurrentUserId(out var currentUserId))
+        {
+            return Unauthorized();
+        }
+        
+        await activityService.JoinActivityAsync(eventId, activityId, currentUserId);
+        return Ok();
+    }
 
     [HttpPost("{activityId:guid}/leave")]
     public IActionResult LeaveActivity(Guid eventId, Guid activityId)

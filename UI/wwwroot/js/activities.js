@@ -18,6 +18,7 @@ const addEmptyButton = find("activities-add-empty");
 const formDialog = find("activity-form-dialog");
 const detailsDialog = find("activity-details-dialog");
 const deleteDialog = find("activity-delete-dialog");
+const membershipDialog = find("activity-membership-dialog");
 const form = find("activity-form");
 const fields = find("activity-fields");
 const titleInput = form.elements.title;
@@ -36,11 +37,15 @@ const deleteButton = find("activity-delete");
 const deleteConfirm = find("activity-delete-confirm");
 const deleteCancel = find("activity-delete-cancel");
 const deleteError = find("activity-delete-error");
+const membershipConfirm = find("activity-membership-confirm");
+const membershipCancel = find("activity-membership-cancel");
+const membershipError = find("activity-membership-error");
 let isOrganizer = false;
 let currentUserId;
 let eventStart;
 let selectedActivity;
 let editingActivity;
+let membershipActivity;
 let saving = false;
 
 window.Telegram?.WebApp?.expand();
@@ -120,11 +125,19 @@ async function readActivities() {
 function seatsLabel({ count, limit }) {
     if (limit === null) return "Без лимита";
     if (count === null) return `Лимит · ${limit}`;
-    return count >= limit ? "Мест нет" : `Свободно ${limit - count} из ${limit}`;
+    return count >= limit ? `Занято ${count} из ${limit}` : `Свободно ${limit - count} из ${limit}`;
 }
 
 function isActivityCreator(activity) {
     return Boolean(currentUserId && currentUserId === activity?.creatorId);
+}
+
+function isActivityParticipant(activity) {
+    return activity.participants.some(user => user.id === currentUserId);
+}
+
+function isActivityFull({ count, limit }) {
+    return count !== null && limit !== null && count >= limit;
 }
 
 function activityCard(activity) {
@@ -135,11 +148,26 @@ function activityCard(activity) {
     const time = [start && timeFormat.format(start), end && (crossesMidnight
         ? `${dayLabel(end)}, ${timeFormat.format(end)}` : timeFormat.format(end))].filter(Boolean).join("–");
     row.querySelector(".activity-card-time").textContent = time || "Время не указано";
-    row.querySelector(".activity-card-seats").textContent = seatsLabel(activity);
+    const full = isActivityFull(activity);
+    const seats = row.querySelector(".activity-card-seats");
+    seats.textContent = seatsLabel(activity);
+    seats.dataset.full = String(full);
     row.querySelector(".activity-card-title").textContent = activity.title;
     showMessage(description, activity.description);
-    row.querySelector(".activity-card-role").hidden = !isActivityCreator(activity);
-    row.querySelector("button").addEventListener("click", () => showDetails(activity));
+    const isCreator = isActivityCreator(activity);
+    row.querySelector(".activity-card-role").hidden = !isCreator;
+    row.querySelector(".activity-card-open").addEventListener("click", () => showDetails(activity));
+
+    if (currentUserId && !isCreator) {
+        const joined = isActivityParticipant(activity);
+        const button = row.querySelector(".activity-card-membership");
+        button.id = `activity-membership-${activity.id}`;
+        button.dataset.joined = String(joined);
+        button.textContent = joined ? "Вы записаны · Отказаться" : (full ? "Мест нет" : "Записаться");
+        button.hidden = false;
+        button.disabled = !joined && full;
+        button.addEventListener("click", () => openMembershipDialog(activity));
+    }
     return row;
 }
 
@@ -296,7 +324,7 @@ function matchesChanges(activity, payload) {
         && activity.limit === (payload.maxParticipants === unlimited ? null : payload.maxParticipants);
 }
 
-async function refreshAfterMutation(dialog, errorField, verify) {
+async function refreshAfterMutation(dialog, errorField, verify, focusId = "activities-title") {
     let activities;
     try {
         activities = await readActivities();
@@ -314,8 +342,53 @@ async function refreshAfterMutation(dialog, errorField, verify) {
         return;
     }
     dialog.close();
-    find("activities-title").focus();
+    (find(focusId) ?? find("activities-title")).focus();
 }
+
+function openMembershipDialog(activity) {
+    if (saving) return;
+    membershipActivity = activity;
+    const joined = isActivityParticipant(activity);
+    const prompt = joined ? "отказаться от активности" : "записаться на активность";
+    find("activity-membership-title").textContent = `Вы уверены, что хотите ${prompt} «${activity.title}»?`;
+    membershipConfirm.textContent = joined ? "Отказаться" : "Записаться";
+    showMessage(membershipError, "");
+    membershipDialog.showModal();
+}
+
+membershipCancel.addEventListener("click", () => membershipDialog.close());
+membershipDialog.addEventListener("cancel", event => {
+    if (saving) event.preventDefault();
+});
+
+membershipConfirm.addEventListener("click", async () => {
+    if (saving || !membershipDialog.open) return;
+    const { id } = membershipActivity;
+    const joining = !isActivityParticipant(membershipActivity);
+    const action = joining ? "join" : "leave";
+    const failure = joining ? "Не удалось записаться на активность." : "Не удалось отказаться от активности.";
+
+    saving = membershipConfirm.disabled = membershipCancel.disabled = true;
+    membershipConfirm.textContent = joining ? "Записываем…" : "Отменяем запись…";
+    showMessage(membershipError, "");
+    try {
+        await request(`${activitiesUrl}/${encodeURIComponent(id)}/${action}`, { method: "POST" }).catch(error => {
+            if (error.cause !== 409) throw error;
+        });
+        await refreshAfterMutation(membershipDialog, membershipError, activities => {
+            const updated = activities.find(activity => activity.id === id);
+            if (!updated) return "Активность больше недоступна.";
+            if (isActivityParticipant(updated) === joining) return "";
+            if (joining && isActivityFull(updated)) return "Свободных мест больше нет.";
+            return joining ? "Сервер не подтвердил запись." : "Сервер не отменил запись.";
+        }, `activity-membership-${id}`);
+    } catch (error) {
+        showMessage(membershipError, errorMessage(error, failure));
+    } finally {
+        saving = membershipConfirm.disabled = membershipCancel.disabled = false;
+        membershipConfirm.textContent = joining ? "Записаться" : "Отказаться";
+    }
+});
 
 addButton.addEventListener("click", () => openForm());
 addEmptyButton.addEventListener("click", () => openForm());

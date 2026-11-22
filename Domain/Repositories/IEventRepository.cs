@@ -8,6 +8,7 @@ public interface IEventRepository
     Task<Event> GetEventByIdAsync(Guid id);
     Task<int> CountByOrganizerAsync(Guid organizerId);
     Task<int> SavedAsync();
+    Task SaveActivityChangesAsync(Guid eventId, Guid activityId, Func<Event, Task> change);
     void ClearTracking();
     void AddEvent(Event user);
     void RemoveEvent(Event eventDetails);

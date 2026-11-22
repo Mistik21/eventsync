@@ -6,7 +6,7 @@ using Activity = eventsynс.Domain.Entities.Activity;
 
 namespace eventsynс.Application.Services;
 
-public class ActivityService: IActivityService
+public class ActivityService : IActivityService
 {
     private readonly IEventRepository eventRepository;
     private readonly IUserRepository userRepository;
@@ -16,7 +16,7 @@ public class ActivityService: IActivityService
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
     }
-    
+
     public async Task<List<Activity>> GetActivitiesAsync(Guid eventId, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
@@ -27,10 +27,10 @@ public class ActivityService: IActivityService
     public async Task CreateActivityAsync(Guid eventId, ActivityCreationModel data, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        var user= await userRepository.GetByIdAsync(currentUserId);
+        var user = await userRepository.GetByIdAsync(currentUserId);
         if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
         var activity = new Activity(
-                Guid.Empty,
+            Guid.Empty,
             data.Title,
             data.Description,
             currentUserId,
@@ -43,20 +43,22 @@ public class ActivityService: IActivityService
         await eventRepository.SavedAsync();
     }
 
-    public async Task UpdateActivityAsync(Guid eventId,Guid activityId, ActivityUpdateModel data, Guid currentUserId)
+    public Task UpdateActivityAsync(Guid eventId, Guid activityId, ActivityUpdateModel data, Guid currentUserId)
     {
-        var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
-        var activity = eventDetails.GetRequiredActivity(activityId);
-        if (!activity.IsCreator(currentUserId)) throw new UnauthorizedAccessException();
-        activity.ChangeTitle(data.Title);
-        activity.ChangeDescription(data.Description);
-        activity.ChangeTime(data.ActivityStartTime, data.ActivityEndTime);
-        activity.ChangeMaxParticipants(data.MaxParticipants);
-        await eventRepository.SavedAsync();
+        return eventRepository.SaveActivityChangesAsync(eventId, activityId, eventDetails =>
+        {
+            if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+            var activity = eventDetails.GetRequiredActivity(activityId);
+            if (!activity.IsCreator(currentUserId)) throw new UnauthorizedAccessException();
+            activity.ChangeTitle(data.Title);
+            activity.ChangeDescription(data.Description);
+            activity.ChangeTime(data.ActivityStartTime, data.ActivityEndTime);
+            activity.ChangeMaxParticipants(data.MaxParticipants);
+            return Task.CompletedTask;
+        });
     }
 
-    public async Task DeleteActivityAsync(Guid eventId,Guid activityId, Guid currentUserId)
+    public async Task DeleteActivityAsync(Guid eventId, Guid activityId, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
         if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
@@ -67,12 +69,18 @@ public class ActivityService: IActivityService
         await eventRepository.SavedAsync();
     }
 
-    public Task JoinActivityAsync(Guid eventId,Guid activityId, Guid currentUserId)
+    public Task JoinActivityAsync(Guid eventId, Guid activityId, Guid currentUserId)
     {
-        throw new NotImplementedException();
+        return eventRepository.SaveActivityChangesAsync(eventId, activityId, async eventDetails =>
+        {
+            var user = await userRepository.GetByIdAsync(currentUserId);
+            if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+            var activity = eventDetails.GetRequiredActivity(activityId);
+            activity.AddParticipant(user);
+        });
     }
 
-    public Task LeaveActivityAsync(Guid eventId,Guid activityId, Guid currentUserId)
+    public Task LeaveActivityAsync(Guid eventId, Guid activityId, Guid currentUserId)
     {
         throw new NotImplementedException();
     }

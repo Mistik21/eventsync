@@ -1,3 +1,4 @@
+using System.Data;
 using eventsynс.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,6 +39,21 @@ public class EventRepository : IEventRepository
             .AsSplitQuery()
             .SingleOrDefaultAsync(e => e.Id == eventId);
         return result ?? throw new KeyNotFoundException();
+    }
+
+    public async Task SaveActivityChangesAsync(Guid eventId, Guid activityId, Func<Event, Task> change)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+            SELECT 1 FROM "Activities"
+            WHERE "Id" = {activityId} AND "EventId" = {eventId}
+            FOR UPDATE
+            """);
+
+        var eventDetails = await GetEventByIdAsync(eventId);
+        await change(eventDetails);
+        await SavedAsync();
+        await transaction.CommitAsync();
     }
 
     public void AddEvent(Event @event)

@@ -69,14 +69,14 @@ public class Activity
 
     public void AddParticipant(User user)
     {
-        if (!HasAvailableSeats()) throw DomainConflict.CreateException();
+        if (!HasAvailableSeats() || IsParticipant(user.Id)) throw DomainConflict.CreateException();
         participants.Add(user);
     }
     public void RemoveParticipant(Guid userId){}
 
     public bool IsParticipant(Guid userId)
     {
-        return true;
+        return participants.Any(user => user.Id == userId);
     }
 
     public bool IsCreator(Guid userId)

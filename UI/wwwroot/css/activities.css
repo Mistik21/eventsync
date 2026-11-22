@@ -89,7 +89,16 @@
     gap: 10px;
     width: 100%;
     padding: 14px 15px;
+}
+
+.activity-card-open {
+    display: grid;
+    gap: 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
     color: inherit;
+    background: transparent;
     text-align: start;
     cursor: pointer;
 }
@@ -98,7 +107,25 @@
 .activity-card-title { font-size: 17px; overflow-wrap: anywhere; }
 .activity-card-description { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
 .activity-card-seats { padding: 5px 8px; border-radius: 8px; background: var(--activities-tint); text-align: end; }
+.activity-card-seats[data-full="true"] { color: #475569; background: #eef0f4; }
 .activity-card-role { padding: 9px; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: 12px; font-weight: 650; text-align: center; }
+
+.activity-card-membership {
+    min-height: 36px;
+    padding: 8px 10px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: #241507;
+    background: var(--activities-accent);
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.activity-card-membership:not([data-joined="true"]):hover:not(:disabled) { background: #ee6b12; }
+.activity-card-membership[data-joined="true"] { border-color: #e2e6ec; color: #475569; background: #eef0f4; }
+.activity-card-membership[data-joined="true"]:hover:not(:disabled) { background: #e5e9ef; }
+.activity-card-membership:disabled { border-color: var(--border); color: var(--muted); background: var(--surface); cursor: default; }
 
 .activities-dialog {
     position: fixed;
@@ -191,8 +218,10 @@
 .activity-action:hover:not(:disabled) { background: #e5edf5; }
 .activity-danger { border-color: #edb9bd; color: #a3343d; background: #fff1f2; }
 .activity-danger:hover:not(:disabled) { background: #ffe4e7; }
-.activity-delete-dialog header { align-items: start; min-height: 118px; padding-block: 6px 26px; }
-.activity-delete-dialog h2 { line-height: 1.4; }
+.activity-delete-dialog header, .activity-membership-dialog header { align-items: start; min-height: 118px; padding-block: 6px 26px; }
+.activity-delete-dialog h2, .activity-membership-dialog h2 { line-height: 1.4; }
+.activity-membership-confirm { border-color: #f0a46b; color: #241507; background: #ff984e; }
+.activity-membership-confirm:hover:not(:disabled) { background: #fc8a3a; }
 
 @media (max-width: 385px) {
     .activity-time-inputs { grid-template-columns: 1fr; }

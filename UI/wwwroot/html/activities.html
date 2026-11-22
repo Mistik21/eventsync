@@ -31,13 +31,14 @@
     </main>
 
     <template id="activity-card-template">
-        <li>
-            <button class="activity-card" type="button" aria-haspopup="dialog">
+        <li class="activity-card">
+            <button class="activity-card-open" type="button" aria-haspopup="dialog">
                 <span class="activity-card-meta"><span class="activity-card-time"></span><span class="activity-card-seats"></span></span>
                 <strong class="activity-card-title"></strong>
                 <span class="activity-card-description"></span>
                 <span class="activity-card-role" hidden>Вы автор</span>
             </button>
+            <button class="activity-card-membership" type="button" aria-haspopup="dialog" hidden></button>
         </li>
     </template>
 
@@ -110,6 +111,15 @@
             <p id="activity-delete-error" class="activities-status" data-error="true" role="alert" hidden></p>
             <button id="activity-delete-cancel" class="activity-action" type="button" autofocus>Отмена</button>
             <button id="activity-delete-confirm" class="activity-action activity-danger" type="button">Удалить</button>
+        </footer>
+    </dialog>
+
+    <dialog id="activity-membership-dialog" class="activities-dialog activity-membership-dialog" aria-labelledby="activity-membership-title">
+        <header><h2 id="activity-membership-title"></h2></header>
+        <footer class="activity-actions">
+            <p id="activity-membership-error" class="activities-status" data-error="true" role="alert" hidden></p>
+            <button id="activity-membership-confirm" class="activity-action activity-membership-confirm" type="button"></button>
+            <button id="activity-membership-cancel" class="activity-action activity-danger" type="button" autofocus>Отмена</button>
         </footer>
     </dialog>
 </body>
