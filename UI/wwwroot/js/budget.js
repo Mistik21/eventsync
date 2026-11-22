@@ -12,14 +12,24 @@ const openButton = find("budget-open");
 const status = find("budget-status");
 const retry = find("budget-retry");
 const addCostButton = find("budget-add-cost");
+const costsTitle = find("budget-costs-title");
+const costDetails = find("budget-cost-details");
+const editCostButton = find("budget-edit-cost");
+const deleteCostButton = find("budget-delete-cost");
 const costDialog = find("budget-cost-dialog");
 const costForm = find("budget-cost-form");
+const costFormTitle = find("budget-cost-dialog-title");
 const costName = find("budget-cost-name");
 const costAmount = find("budget-cost-amount");
 const costError = find("budget-cost-error");
 const saveCostButton = find("budget-save-cost");
 const closeCostButton = find("budget-close-cost");
+const deleteDialog = find("budget-delete-dialog");
+const deleteError = find("budget-delete-error");
+const cancelDeleteButton = find("budget-cancel-delete");
+const confirmDeleteButton = find("budget-confirm-delete");
 let eventDetails;
+let selectedCost;
 let pendingLoad;
 let opening = false;
 let saving = false;
@@ -44,8 +54,8 @@ async function getJson(url) {
     return requireSuccess(await fetchApi(url, { cache: "no-store" })).json();
 }
 
-async function postBudgetAction(action, body) {
-    const options = { method: "POST" };
+async function sendBudgetAction(action, method, body) {
+    const options = { method };
     if (body !== undefined) {
         options.headers = { "Content-Type": "application/json" };
         options.body = JSON.stringify(body);
@@ -92,11 +102,19 @@ function renderParticipant(participant, currentUserId, depositRequired) {
 
 function renderCost(cost) {
     const row = document.createElement("li");
+    const entry = document.createElement(eventDetails.isOrganizer ? "button" : "div");
+    entry.className = "budget-cost-entry";
+    if (eventDetails.isOrganizer) {
+        entry.type = "button";
+        entry.setAttribute("aria-haspopup", "dialog");
+        entry.addEventListener("click", () => openCostDetails(cost));
+    }
     const title = document.createElement("span");
     const amount = document.createElement("strong");
     title.textContent = cost.title;
     amount.textContent = money.format(cost.amount);
-    row.append(title, amount);
+    entry.append(title, amount);
+    row.append(entry);
     return row;
 }
 
@@ -125,7 +143,7 @@ function renderOpenBudget(budget, participants, currentUserId) {
     costs.replaceChildren(...budget.costs.map(renderCost));
     costs.hidden = !budget.costs.length;
     find("budget-no-costs").hidden = !costs.hidden;
-    find("budget-costs-title").textContent = budget.costs.length ? `Траты · ${budget.costs.length}` : "Траты";
+    costsTitle.textContent = budget.costs.length ? `Траты · ${budget.costs.length}` : "Траты";
 
     active.hidden = false;
     find("budget-footer").hidden = !eventDetails.isOrganizer;
@@ -187,7 +205,7 @@ async function markDebtPaid(button) {
     let saved = false;
     try {
         await pendingLoad;
-        await postBudgetAction("pay-debt");
+        await sendBudgetAction("pay-debt", "POST");
         saved = true;
         await loadBudget();
         find("budget-contributions-title").focus();
@@ -201,24 +219,94 @@ async function markDebtPaid(button) {
     }
 }
 
-function showCostError(message) {
-    costError.textContent = message;
-    costError.hidden = !message;
+function showDialogError(field, message) {
+    field.textContent = message;
+    field.hidden = !message;
 }
 
-addCostButton.addEventListener("click", () => {
+function costRequestError(error, fallback) {
+    return error.cause === 404 ? "Трата не найдена." : requestErrorMessage(error, fallback);
+}
+
+function openCostDetails(cost) {
+    if (saving || costDetails.open) {
+        return;
+    }
+    selectedCost = cost;
+    find("budget-cost-details-title").textContent = cost.title;
+    find("budget-cost-details-amount").textContent = money.format(cost.amount);
+    costDetails.showModal();
+}
+
+function openCostForm(cost = null) {
     if (saving || active.hidden || !eventDetails?.isOrganizer || costDialog.open) {
         return;
     }
+    selectedCost = cost;
     costForm.reset();
-    showCostError("");
+    costFormTitle.textContent = cost ? "Редактирование траты" : "Новая запись";
+    costName.value = cost?.title ?? "";
+    costName.readOnly = Boolean(cost);
+    costAmount.value = cost?.amount ?? "";
+    costAmount.min = cost ? "0" : "1";
+    saveCostButton.textContent = cost ? "Сохранить" : "Создать";
+    showDialogError(costError, "");
+    if (cost) {
+        costDetails.close();
+    }
     costDialog.showModal();
+    if (cost) {
+        costAmount.focus();
+    }
+}
+
+function closeCostForm() {
+    costDialog.close();
+    if (selectedCost) {
+        costDetails.showModal();
+        editCostButton.focus();
+    }
+}
+
+function openDeleteConfirmation() {
+    find("budget-delete-title").textContent = `Вы уверены, что хотите удалить позицию: ${selectedCost.title}?`;
+    showDialogError(deleteError, "");
+    costDetails.close();
+    deleteDialog.showModal();
+}
+
+function cancelDeleteConfirmation() {
+    if (saving) {
+        return;
+    }
+    deleteDialog.close();
+    costDetails.showModal();
+    deleteCostButton.focus();
+}
+
+async function refreshCostsAfterSave(dialog) {
+    dialog.close();
+    await loadBudget();
+    costsTitle.focus();
+}
+
+addCostButton.addEventListener("click", () => openCostForm());
+find("budget-close-details").addEventListener("click", () => costDetails.close());
+editCostButton.addEventListener("click", () => openCostForm(selectedCost));
+deleteCostButton.addEventListener("click", openDeleteConfirmation);
+cancelDeleteButton.addEventListener("click", cancelDeleteConfirmation);
+deleteDialog.addEventListener("cancel", event => {
+    event.preventDefault();
+    cancelDeleteConfirmation();
 });
 
-closeCostButton.addEventListener("click", () => costDialog.close());
+closeCostButton.addEventListener("click", closeCostForm);
 costDialog.addEventListener("cancel", event => {
-    if (saveCostButton.disabled) {
+    if (saving) {
         event.preventDefault();
+    } else if (selectedCost) {
+        event.preventDefault();
+        closeCostForm();
     }
 });
 
@@ -228,15 +316,16 @@ costForm.addEventListener("submit", async event => {
         return;
     }
 
+    const cost = selectedCost;
     const title = costName.value.trim();
     const amount = costAmount.valueAsNumber;
-    if (!title) {
-        showCostError("Введите название траты.");
+    if (!cost && !title) {
+        showDialogError(costError, "Введите название траты.");
         costName.focus();
         return;
     }
-    if (!Number.isInteger(amount) || amount < 1 || amount > Number(costAmount.max)) {
-        showCostError("Укажите сумму в целых рублях.");
+    if (!Number.isInteger(amount) || amount < Number(costAmount.min) || amount > Number(costAmount.max)) {
+        showDialogError(costError, "Укажите сумму в целых рублях.");
         costAmount.focus();
         return;
     }
@@ -247,21 +336,52 @@ costForm.addEventListener("submit", async event => {
     closeCostButton.disabled = true;
     costName.readOnly = true;
     costAmount.readOnly = true;
-    showCostError("");
+    showDialogError(costError, "");
     try {
         await pendingLoad;
-        await postBudgetAction("costs", { title, amount });
-        costDialog.close();
-        await loadBudget();
+        if (cost) {
+            await sendBudgetAction(`costs/${encodeURIComponent(cost.id)}`, "PATCH", { amount });
+        } else {
+            await sendBudgetAction("costs", "POST", { title, amount });
+        }
+        await refreshCostsAfterSave(costDialog);
     } catch (error) {
-        showCostError(requestErrorMessage(error, "Не удалось добавить трату."));
+        const message = cost
+            ? costRequestError(error, "Не удалось изменить трату.")
+            : requestErrorMessage(error, "Не удалось добавить трату.");
+        showDialogError(costError, message);
     } finally {
         saving = false;
         saveCostButton.disabled = false;
-        saveCostButton.textContent = "Создать";
+        saveCostButton.textContent = cost ? "Сохранить" : "Создать";
         closeCostButton.disabled = false;
-        costName.readOnly = false;
+        costName.readOnly = Boolean(cost);
         costAmount.readOnly = false;
+    }
+});
+
+confirmDeleteButton.addEventListener("click", async () => {
+    if (saving || !deleteDialog.open || !eventDetails?.isOrganizer) {
+        return;
+    }
+
+    const cost = selectedCost;
+    saving = true;
+    confirmDeleteButton.disabled = true;
+    cancelDeleteButton.disabled = true;
+    confirmDeleteButton.textContent = "Удаляем…";
+    showDialogError(deleteError, "");
+    try {
+        await pendingLoad;
+        await sendBudgetAction(`costs/${encodeURIComponent(cost.id)}`, "DELETE");
+        await refreshCostsAfterSave(deleteDialog);
+    } catch (error) {
+        showDialogError(deleteError, costRequestError(error, "Не удалось удалить трату."));
+    } finally {
+        saving = false;
+        confirmDeleteButton.disabled = false;
+        cancelDeleteButton.disabled = false;
+        confirmDeleteButton.textContent = "Удалить";
     }
 });
 
@@ -277,7 +397,7 @@ openButton.addEventListener("click", async () => {
     try {
         await pendingLoad;
         if (eventDetails.collectionStatus === collectionNotStarted) {
-            await postBudgetAction("collection/open");
+            await sendBudgetAction("collection/open", "POST");
             closed.hidden = true;
             showStatus("Загружаем бюджет…");
         }

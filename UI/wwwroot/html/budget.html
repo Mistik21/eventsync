@@ -47,7 +47,7 @@
             </section>
 
             <section aria-labelledby="budget-costs-title">
-                <h2 id="budget-costs-title" class="budget-section-heading">Траты</h2>
+                <h2 id="budget-costs-title" class="budget-section-heading" tabindex="-1">Траты</h2>
                 <ul id="budget-costs" class="budget-list budget-costs"></ul>
                 <p id="budget-no-costs" class="budget-empty" hidden>Трат пока нет.</p>
             </section>
@@ -66,6 +66,21 @@
             <button type="button" class="budget-button budget-pay" hidden>Я скинул</button>
         </li>
     </template>
+
+    <dialog id="budget-cost-details" class="budget-cost-dialog" aria-labelledby="budget-cost-details-title">
+        <header>
+            <h2 id="budget-cost-details-title"></h2>
+            <button id="budget-close-details" class="budget-close-cost" type="button" aria-label="Закрыть окно">×</button>
+        </header>
+        <dl class="budget-cost-field budget-cost-details-field">
+            <dt>Сумма</dt>
+            <dd id="budget-cost-details-amount"></dd>
+        </dl>
+        <div class="budget-cost-actions">
+            <button id="budget-edit-cost" class="budget-button budget-button-secondary" type="button">Редактировать</button>
+            <button id="budget-delete-cost" class="budget-button budget-button-danger" type="button">Удалить</button>
+        </div>
+    </dialog>
 
     <dialog id="budget-cost-dialog" class="budget-cost-dialog" aria-labelledby="budget-cost-dialog-title">
         <header>
@@ -87,6 +102,15 @@
             <p id="budget-cost-error" class="budget-status" data-error="true" role="alert" hidden></p>
             <button id="budget-save-cost" class="budget-button" type="submit">Создать</button>
         </form>
+    </dialog>
+
+    <dialog id="budget-delete-dialog" class="budget-cost-dialog" aria-labelledby="budget-delete-title">
+        <h2 id="budget-delete-title"></h2>
+        <div class="budget-cost-actions">
+            <p id="budget-delete-error" class="budget-status" data-error="true" role="alert" hidden></p>
+            <button id="budget-cancel-delete" class="budget-button budget-button-secondary" type="button" autofocus>Отмена</button>
+            <button id="budget-confirm-delete" class="budget-button budget-button-danger" type="button">Удалить</button>
+        </div>
     </dialog>
 </body>
 </html>

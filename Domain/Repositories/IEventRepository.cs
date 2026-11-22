@@ -11,5 +11,6 @@ public interface IEventRepository
     void ClearTracking();
     void AddEvent(Event user);
     void RemoveEvent(Event eventDetails);
+    void RemoveCost(Cost cost);
     void RemoveItem(Item item);
 }

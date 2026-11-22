@@ -52,6 +52,11 @@ public class EventRepository : IEventRepository
         db.Items.Remove(item);
     }
     
+    public void RemoveCost(Cost cost)
+    {
+        db.Costs.Remove(cost);
+    }
+    
     public async Task<int> SavedAsync()
     {
         return await db.SaveChangesAsync();

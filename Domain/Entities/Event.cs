@@ -188,10 +188,15 @@ public class Event
 
     public void RemoveCost(Guid costId)
     {
+        expenses.RemoveAll(cost => cost.Id == costId);
     }
 
     public Item GetRequiredItem(Guid itemId)
     {
         return Items.SingleOrDefault(item => item.Id == itemId) ?? throw new KeyNotFoundException();
+    }
+    public Cost GetRequiredCost(Guid costId)
+    {
+        return Expenses.SingleOrDefault(cost => cost.Id == costId) ?? throw new KeyNotFoundException();
     }
 }

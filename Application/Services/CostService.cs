@@ -41,13 +41,22 @@ public class CostService : ICostService
         await eventRepository.SavedAsync();
     }
 
-    public Task UpdateCostAsync(Guid costId, CostUpdateModel data, Guid currentUserId)
+    public async Task UpdateCostAsync(Guid eventId,Guid costId, CostUpdateModel data, Guid currentUserId)
     {
-        throw new NotImplementedException();
+        var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
+        if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+        var cost = eventDetails.GetRequiredCost(costId);
+        cost.ChangeAmount(data.Amount);
+        await eventRepository.SavedAsync();
     }
 
-    public Task DeleteCostAsync(Guid costId, Guid currentUserId)
+    public async Task DeleteCostAsync(Guid eventId, Guid costId, Guid currentUserId)
     {
-        throw new NotImplementedException();
+        var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
+        if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+        var cost = eventDetails.GetRequiredCost(costId);
+        eventDetails.RemoveCost(costId);
+        eventRepository.RemoveCost(cost);
+        await eventRepository.SavedAsync();
     }
 }

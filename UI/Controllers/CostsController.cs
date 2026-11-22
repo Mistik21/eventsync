@@ -51,9 +51,25 @@ public class CostsController : ControllerBase
     }
 
     [HttpPatch("costs/{costId:guid}")]
-    public IActionResult UpdateCost(Guid eventId, Guid costId) => Ok();
+    public async Task<IActionResult> UpdateCost(CostUpdateModel data ,Guid eventId, Guid costId)
+    {
+        if (!User.TryGetCurrentUserId(out var currentUserId))
+        {
+            return Unauthorized();
+        }
+        await costService.UpdateCostAsync(eventId, costId, new CostUpdateModel(data.Amount), currentUserId);
+        return Ok();
+    }
 
     [HttpDelete("costs/{costId:guid}")]
-    public IActionResult DeleteCost(Guid eventId, Guid costId)
-        => NoContent();
+    public async Task<IActionResult> DeleteCost(Guid eventId, Guid costId)
+    {
+        if (!User.TryGetCurrentUserId(out var currentUserId))
+        {
+            return Unauthorized();
+        }
+        
+        await costService.DeleteCostAsync(eventId, costId, currentUserId);
+        return Ok();
+    }
 }

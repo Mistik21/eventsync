@@ -9,7 +9,7 @@ public interface ICostService
 
     Task CreateCostAsync(Guid eventId, CostCreationModel data, Guid currentUserId);
 
-    Task UpdateCostAsync(Guid costId, CostUpdateModel data, Guid currentUserId);
+    Task UpdateCostAsync(Guid eventId, Guid costId, CostUpdateModel data, Guid currentUserId);
 
-    Task DeleteCostAsync(Guid costId, Guid currentUserId);
+    Task DeleteCostAsync(Guid eventId, Guid costId, Guid currentUserId);
 }
