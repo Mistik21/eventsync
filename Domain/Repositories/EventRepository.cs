@@ -15,7 +15,7 @@ public class EventRepository : IEventRepository
 
     public async Task<List<Event>> ListForOrganizerOrParticipantAsync(Guid userId)
     {
-       return await db.Events
+        return await db.Events
             .AsNoTracking()
             .Where(e => e.Organizer == userId || e.Participants.Any(p => p.Id == userId))
             .OrderBy(e => e.EventStartTime)
@@ -27,15 +27,20 @@ public class EventRepository : IEventRepository
     {
         return await db.Events.CountAsync(e => e.Organizer == organizerId);
     }
+    
+    public async Task<int> CountByParticipantAsync(Guid userId)
+    {
+        return await db.Events.CountAsync(e => e.Participants.Any(p => p.Id == userId));
+    }
 
     public async Task<Event> GetEventByIdAsync(Guid eventId)
     {
-        var result=await db.Events
+        var result = await db.Events
             .Include(e => e.Participants)
             .Include(e => e.Expenses)
             .Include(e => e.Items)
             .Include(e => e.Activities)
-                .ThenInclude(activity => activity.Participants)
+            .ThenInclude(activity => activity.Participants)
             .AsSplitQuery()
             .SingleOrDefaultAsync(e => e.Id == eventId);
         return result ?? throw new KeyNotFoundException();
@@ -45,10 +50,25 @@ public class EventRepository : IEventRepository
     {
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
         await db.Database.ExecuteSqlInterpolatedAsync($"""
-            SELECT 1 FROM "Activities"
-            WHERE "Id" = {activityId} AND "EventId" = {eventId}
-            FOR UPDATE
-            """);
+                                                       SELECT 1 FROM "Activities"
+                                                       WHERE "Id" = {activityId} AND "EventId" = {eventId}
+                                                       FOR UPDATE
+                                                       """);
+
+        var eventDetails = await GetEventByIdAsync(eventId);
+        await change(eventDetails);
+        await SavedAsync();
+        await transaction.CommitAsync();
+    }
+
+    public async Task SaveEventChangesAsync(Guid eventId, Func<Event, Task> change)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+                                                       SELECT 1 FROM "Events"
+                                                       WHERE "Id" = {eventId} 
+                                                       FOR UPDATE
+                                                       """);
 
         var eventDetails = await GetEventByIdAsync(eventId);
         await change(eventDetails);
@@ -65,20 +85,22 @@ public class EventRepository : IEventRepository
     {
         db.Events.Remove(eventDetails);
     }
+
     public void RemoveItem(Item item)
     {
         db.Items.Remove(item);
     }
-    
+
     public void RemoveCost(Cost cost)
     {
         db.Costs.Remove(cost);
     }
+
     public void RemoveActivity(Activity activity)
     {
         db.Activities.Remove(activity);
     }
-    
+
     public async Task<int> SavedAsync()
     {
         return await db.SaveChangesAsync();

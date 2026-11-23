@@ -330,7 +330,8 @@ document.querySelector(".event-sections").addEventListener("click", ({ target })
 });
 
 async function loadEvent() {
-    const id = new URLSearchParams(window.location.search).get("id");
+    const id = window.location.pathname.match(/^\/event\/([^/]+)\/?$/i)?.[1]
+        ?? new URLSearchParams(window.location.search).get("id");
     if (!id || !/^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id)) {
         status.textContent = "Событие не выбрано. Вернитесь к списку.";
         return;

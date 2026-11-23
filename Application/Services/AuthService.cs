@@ -27,7 +27,7 @@ public class AuthService : IAuthService
         }
         catch (KeyNotFoundException)
         {
-            var user = new User(Guid.NewGuid(), telegramUser.TelegramId, telegramUser.Name, 0);
+            var user = new User(Guid.NewGuid(), telegramUser.TelegramId, telegramUser.Name);
 
             userRepository.Add(user);
             await userRepository.SavedAsync();

@@ -7,4 +7,5 @@ public interface IUserService
 {
     Task<User> GetMyProfileAsync(Guid currentUserId);
     Task<int> GetCountByOrganizerAsync(Guid currentUserId);
+    Task<int> GetCountByParticipantAsync(Guid userId);
 }

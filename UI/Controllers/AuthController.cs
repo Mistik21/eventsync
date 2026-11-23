@@ -14,10 +14,12 @@ namespace eventsynс.UI.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService authService;
+    private readonly IUserService userService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService,IUserService userService)
     {
         this.authService = authService;
+        this.userService = userService;
     }
 
     [AllowAnonymous]
@@ -36,7 +38,7 @@ public class AuthController : ControllerBase
             CookieAuthenticationDefaults.AuthenticationScheme);
         
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
-
-        return Ok(new UserResponse(user.Id, user.Name, user.AttendedEventCount));
+        var attendedCount = await userService.GetCountByParticipantAsync(user.Id);
+        return Ok(new UserResponse(user.Id, user.Name, attendedCount));
     }
 }

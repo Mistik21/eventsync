@@ -28,6 +28,7 @@ public class UsersController : ControllerBase
 
         var user = await userService.GetMyProfileAsync(currentUserId);
         var organizedCount = await userService.GetCountByOrganizerAsync(currentUserId);
-        return Ok(new UserResponse(user.Id, user.Name, user.AttendedEventCount, organizedCount));
+        var attendedCount = await userService.GetCountByParticipantAsync(user.Id);
+        return Ok(new UserResponse(user.Id, user.Name, attendedCount, organizedCount));
     }
 }

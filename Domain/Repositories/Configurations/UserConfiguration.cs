@@ -21,8 +21,5 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Name)
             .IsRequired()
             .HasMaxLength(100);
-        
-        builder.Property(u => u.AttendedEventCount)
-            .IsRequired();
     }
 }

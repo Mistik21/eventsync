@@ -44,7 +44,6 @@ public class EventService : IEventService
         var user = await userRepository.GetByIdAsync(currentUserId);
         eventNew.AddParticipant(user);
         eventRepository.AddEvent(eventNew);
-        user.IncrementAttendedEventCount();
         await eventRepository.SavedAsync();
     }
 
@@ -65,11 +64,6 @@ public class EventService : IEventService
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
         if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
-        foreach (var participant in eventDetails.Participants)
-        {
-            participant.DecrementAttendedEventCount();
-        }
-
         eventRepository.RemoveEvent(eventDetails);
         await eventRepository.SavedAsync();
         return true;
@@ -79,17 +73,17 @@ public class EventService : IEventService
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
         var organizer = await userRepository.GetByIdAsync(eventDetails.Organizer);
-        return (eventDetails, organizer?.Name);
+        return (eventDetails, organizer.Name);
     }
 
-    public async Task JoinEventAsync(Guid eventId, Guid currentUserId)
+    public Task JoinEventAsync(Guid eventId, Guid currentUserId)
     {
-        var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        var user = await userRepository.GetByIdAsync(currentUserId);
-        if (eventDetails.IsParticipant(currentUserId)) throw DomainConflict.CreateException();
-        eventDetails.AddParticipant(user);
-        user.IncrementAttendedEventCount();
-        await eventRepository.SavedAsync();
+        return eventRepository.SaveEventChangesAsync(eventId, async eventDetails =>
+        {
+            var user = await userRepository.GetByIdAsync(currentUserId);
+            if (eventDetails.IsParticipant(currentUserId)) throw DomainConflict.CreateException();
+            eventDetails.AddParticipant(user);
+        });
     }
 
     public Task LeaveEventAsync(Guid eventId, Guid currentUserId)
@@ -131,11 +125,13 @@ public class EventService : IEventService
         }
     }
 
-    public async Task OpenCollectionAsync(Guid eventId, Guid currentUserId)
+    public Task OpenCollectionAsync(Guid eventId, Guid currentUserId)
     {
-        var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
-        eventDetails.OpenCollection();
-        await eventRepository.SavedAsync();
+        return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
+        {
+            if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+            eventDetails.OpenCollection();
+            return Task.CompletedTask;
+        });
     }
 }

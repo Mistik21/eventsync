@@ -24,4 +24,9 @@ public class UserService: IUserService
     {
         return await eventRepository.CountByOrganizerAsync(currentUserId);
     }
+    
+    public async Task<int> GetCountByParticipantAsync(Guid userId)
+    {
+        return await eventRepository.CountByParticipantAsync(userId);
+    }
 }
