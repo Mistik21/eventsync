@@ -40,7 +40,7 @@ const deleteError = find("activity-delete-error");
 const membershipConfirm = find("activity-membership-confirm");
 const membershipCancel = find("activity-membership-cancel");
 const membershipError = find("activity-membership-error");
-let isOrganizer = false;
+let isParticipant = false;
 let currentUserId;
 let eventStart;
 let selectedActivity;
@@ -200,8 +200,8 @@ function renderActivities(activities) {
 
     find("activities-list").replaceChildren(...sections);
     find("activities-empty").hidden = activities.length !== 0;
-    addEmptyButton.hidden = !isOrganizer;
-    addButton.hidden = !isOrganizer || activities.length === 0;
+    addEmptyButton.hidden = !isParticipant;
+    addButton.hidden = !isParticipant || activities.length === 0;
 }
 
 async function loadPage() {
@@ -212,8 +212,8 @@ async function loadPage() {
             readActivities(),
             fetchCurrentUser().then(response => response.ok ? response.json() : null).catch(() => null),
         ]);
-        isOrganizer = event.isOrganizer === true;
-        currentUserId = viewer?.id ?? (isOrganizer ? event.organizerId : null);
+        isParticipant = event.isParticipant === true;
+        currentUserId = viewer?.id ?? (event.isOrganizer === true ? event.organizerId : null);
         eventStart = parseDate(event.eventStartTime);
         renderActivities(activities);
         showStatus("");
@@ -264,7 +264,7 @@ function updateStepper() {
 }
 
 function openForm(activity = null) {
-    if (saving || !(activity ? isActivityCreator(activity) : isOrganizer)) return;
+    if (saving || !(activity ? isActivityCreator(activity) : isParticipant)) return;
     editingActivity = activity;
     form.reset();
     const minimum = Math.max(1, activity?.count ?? 0);
@@ -418,7 +418,7 @@ limitPlus.addEventListener("click", () => {
 form.addEventListener("submit", async event => {
     event.preventDefault();
     const activity = editingActivity;
-    if (!formDialog.open || saving || !(activity ? isActivityCreator(activity) : isOrganizer)) return;
+    if (!formDialog.open || saving || !(activity ? isActivityCreator(activity) : isParticipant)) return;
     const title = titleInput.value.trim();
     const { start, end } = updateTimeBounds();
     if (!title) {
