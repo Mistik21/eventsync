@@ -76,6 +76,11 @@ public class Event
     public void ChangeStartTime(DateTime startTime)
     {
         if (IsOpenCollection()) throw DomainConflict.CreateException();
+        var shift=startTime-EventStartTime;
+        foreach (var activity in activities)
+        {
+            activity.ChangeTime(activity.АctivityStartTime+shift,activity.АctivityEndTime+shift);
+        }
         EventStartTime = startTime;
     }
 
@@ -103,9 +108,17 @@ public class Event
         if (IsOpenCollection()) throw DomainConflict.CreateException();
         CollectionStatus = CollectionStatus.Open;
         var result = new Dictionary<Guid, int>();
+        var shift = 0;
         foreach (var user in Participants)
         {
-            result.Add(user.Id, Budget / Participants.Count);
+            if((Budget-shift) % Participants.Count==0)
+                result.Add(user.Id, Budget / Participants.Count);
+            else
+            {
+                result.Add(user.Id, Budget / Participants.Count+1);
+                shift++;
+            }
+                
         }
 
         Debts = result;

@@ -5,15 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Активности · EventSync</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/activities.css">
+    <link rel="stylesheet" href="/css/activities.css?v=2">
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
-    <script type="module" src="/js/activities.js"></script>
+    <script type="module" src="/js/activities.js?v=2"></script>
 </head>
 <body>
     <main class="activities-screen">
         <header class="activities-header">
             <a id="activities-back" class="activities-back" href="/" aria-label="Назад к событию">←</a>
             <h1 id="activities-title" tabindex="-1">Активности</h1>
+            <button id="activities-add" class="activities-add" type="button" aria-label="Добавить активность" aria-haspopup="dialog" hidden>Добавить</button>
         </header>
 
         <p id="activities-status" class="activities-status" role="status">Загружаем активности…</p>
@@ -23,11 +24,9 @@
             <div class="activities-empty-circle" aria-hidden="true"></div>
             <h2 id="activities-empty-title">Активностей нет</h2>
             <p>Пока ничего не запланировано</p>
-            <button id="activities-add-empty" class="activities-primary" type="button" aria-haspopup="dialog" hidden>Добавить</button>
         </section>
 
         <div id="activities-list"></div>
-        <button id="activities-add" class="activities-add" type="button" aria-label="Добавить активность" aria-haspopup="dialog" hidden>+</button>
     </main>
 
     <template id="activity-card-template">

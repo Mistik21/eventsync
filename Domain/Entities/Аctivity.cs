@@ -35,7 +35,7 @@ public class Activity
         {
             MaxParticipants = maxParticipants;
         }
-        if (maxParticipants <= 0) throw new ArgumentOutOfRangeException();
+        if (maxParticipants <= 0 || аctivityStartTime>=аctivityEndTime) throw new ArgumentOutOfRangeException();
     }
 
     public void ChangeTitle(string title)
@@ -50,6 +50,7 @@ public class Activity
 
     public void ChangeTime(DateTime startTime, DateTime endTime)
     {
+        if (startTime>=endTime) throw new ArgumentOutOfRangeException();
         АctivityStartTime=startTime;
         АctivityEndTime=endTime;
     }

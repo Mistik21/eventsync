@@ -17,6 +17,13 @@ const coverCaption = form.querySelector(".cover-caption");
 const coverRemove = form.querySelector(".cover-remove");
 const budgetInput = form.querySelector("#event-budget");
 const meetingLocation = setupMeetingLocation(form.querySelector(".meeting-location"));
+const shiftPluralRules = new Intl.PluralRules("ru-RU");
+const shiftUnits = [
+    [86_400, { one: "день", few: "дня", many: "дней" }],
+    [3_600, { one: "час", few: "часа", many: "часов" }],
+    [60, { one: "минуту", few: "минуты", many: "минут" }],
+    [1, { one: "секунду", few: "секунды", many: "секунд" }],
+];
 let previewUrl;
 let savedCover = "";
 let coverRemoved = false;
@@ -152,7 +159,36 @@ async function loadEventForEditing() {
     }
 }
 
+function setupTimeShiftHint() {
+    const hint = form.querySelector("#event-time-shift");
+    if (!hint) return;
+
+    const input = form.elements.eventStartTime;
+    const defaultMessage = hint.textContent;
+    input.addEventListener("input", () => {
+        const shift = new Date(input.value) - new Date(savedEvent?.eventStartTime);
+        if (input.value === savedStartInput || !Number.isFinite(shift) || shift === 0) {
+            hint.textContent = defaultMessage;
+            return;
+        }
+
+        let seconds = Math.floor(Math.abs(shift) / 1000);
+        const parts = [];
+        for (const [unitSeconds, labels] of shiftUnits) {
+            const amount = Math.floor(seconds / unitSeconds);
+            if (amount > 0) parts.push(`${amount} ${labels[shiftPluralRules.select(amount)]}`);
+            seconds %= unitSeconds;
+        }
+
+        const direction = shift > 0 ? "вперёд" : "назад";
+        hint.textContent = parts.length
+            ? `Все активности сдвинутся на ${parts.join(" ")} ${direction}.`
+            : `Все активности сдвинутся ${direction} меньше чем на секунду.`;
+    });
+}
+
 if (editing) {
+    setupTimeShiftHint();
     const negativeSign = /[-−]/;
     budgetInput.addEventListener("keydown", event => {
         if (negativeSign.test(event.key)) {

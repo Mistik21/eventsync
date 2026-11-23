@@ -3,7 +3,6 @@ using eventsynс.Application.Models.Event;
 using eventsynс.Domain;
 using eventsynс.Domain.Entities;
 using eventsynс.Domain.Repositories;
-using Microsoft.EntityFrameworkCore;
 
 namespace eventsynс.Application.Services;
 
@@ -47,17 +46,19 @@ public class EventService : IEventService
         await eventRepository.SavedAsync();
     }
 
-    public async Task UpdateEventAsync(Guid eventId, EventUpdateModel data, Guid currentUserId)
+    public Task UpdateEventAsync(Guid eventId, EventUpdateModel data, Guid currentUserId)
     {
-        var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
-        eventDetails.ChangeTitle(data.Title);
-        eventDetails.ChangeDescription(data.Description);
-        eventDetails.ChangeBudget(data.Budget);
-        eventDetails.ChangeStartTime(data.EventStartTime);
-        eventDetails.ChangeLocation(data.EventLocation);
-        if (data.MainImageUrl != null) eventDetails.ChangeMainImage(data.MainImageUrl);
-        await eventRepository.SavedAsync();
+        return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
+        {
+            if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+            eventDetails.ChangeTitle(data.Title);
+            eventDetails.ChangeDescription(data.Description);
+            eventDetails.ChangeBudget(data.Budget);
+            eventDetails.ChangeStartTime(data.EventStartTime);
+            eventDetails.ChangeLocation(data.EventLocation);
+            if (data.MainImageUrl != null) eventDetails.ChangeMainImage(data.MainImageUrl);
+            return Task.CompletedTask;
+        });
     }
 
     public async Task<bool> DeleteEventAsync(Guid eventId, Guid currentUserId)
@@ -102,27 +103,14 @@ public class EventService : IEventService
         throw new NotImplementedException();
     }
 
-    public async Task PayMyDebtAsync(Guid eventId, Guid currentUserId)
+    public Task PayMyDebtAsync(Guid eventId, Guid currentUserId)
     {
-        const int maxAttempts = 3;
-
-        for (var attempt = 1; ; attempt++)
+        return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
         {
-            var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
             if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
-
             eventDetails.PayDebt(currentUserId);
-
-            try
-            {
-                await eventRepository.SavedAsync();
-                return;
-            }
-            catch (DbUpdateConcurrencyException) when (attempt < maxAttempts)
-            {
-                eventRepository.ClearTracking();
-            }
-        }
+            return Task.CompletedTask;
+        });
     }
 
     public Task OpenCollectionAsync(Guid eventId, Guid currentUserId)

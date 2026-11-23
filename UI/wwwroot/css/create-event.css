@@ -141,6 +141,13 @@
     gap: 6px;
 }
 
+.create-field-hint {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
 .create-field label,
 .create-field-label {
     color: #475569;

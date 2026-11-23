@@ -14,7 +14,6 @@ const pluralRules = new Intl.PluralRules("ru-RU");
 const status = find("activities-status");
 const retry = find("activities-retry");
 const addButton = find("activities-add");
-const addEmptyButton = find("activities-add-empty");
 const formDialog = find("activity-form-dialog");
 const detailsDialog = find("activity-details-dialog");
 const deleteDialog = find("activity-delete-dialog");
@@ -40,7 +39,7 @@ const deleteError = find("activity-delete-error");
 const membershipConfirm = find("activity-membership-confirm");
 const membershipCancel = find("activity-membership-cancel");
 const membershipError = find("activity-membership-error");
-let isParticipant = false;
+let canCreateActivity = false;
 let currentUserId;
 let eventStart;
 let selectedActivity;
@@ -200,8 +199,6 @@ function renderActivities(activities) {
 
     find("activities-list").replaceChildren(...sections);
     find("activities-empty").hidden = activities.length !== 0;
-    addEmptyButton.hidden = !isParticipant;
-    addButton.hidden = !isParticipant || activities.length === 0;
 }
 
 async function loadPage() {
@@ -212,10 +209,11 @@ async function loadPage() {
             readActivities(),
             fetchCurrentUser().then(response => response.ok ? response.json() : null).catch(() => null),
         ]);
-        isParticipant = event.isParticipant === true;
         currentUserId = viewer?.id ?? (event.isOrganizer === true ? event.organizerId : null);
         eventStart = parseDate(event.eventStartTime);
         renderActivities(activities);
+        canCreateActivity = true;
+        addButton.hidden = false;
         showStatus("");
     } catch (error) {
         showStatus(errorMessage(error, "Не удалось загрузить активности."), {
@@ -264,7 +262,7 @@ function updateStepper() {
 }
 
 function openForm(activity = null) {
-    if (saving || !(activity ? isActivityCreator(activity) : isParticipant)) return;
+    if (saving || !(activity ? isActivityCreator(activity) : canCreateActivity)) return;
     editingActivity = activity;
     form.reset();
     const minimum = Math.max(1, activity?.count ?? 0);
@@ -392,7 +390,6 @@ membershipConfirm.addEventListener("click", async () => {
 });
 
 addButton.addEventListener("click", () => openForm());
-addEmptyButton.addEventListener("click", () => openForm());
 editButton.addEventListener("click", () => openForm(selectedActivity));
 formClose.addEventListener("click", closeForm);
 formDialog.addEventListener("cancel", event => {
@@ -418,7 +415,7 @@ limitPlus.addEventListener("click", () => {
 form.addEventListener("submit", async event => {
     event.preventDefault();
     const activity = editingActivity;
-    if (!formDialog.open || saving || !(activity ? isActivityCreator(activity) : isParticipant)) return;
+    if (!formDialog.open || saving || !(activity ? isActivityCreator(activity) : canCreateActivity)) return;
     const title = titleInput.value.trim();
     const { start, end } = updateTimeBounds();
     if (!title) {

@@ -76,7 +76,7 @@ function showRequestError(error, fallback, canRetry = true) {
     showStatus(requestErrorMessage(error, fallback), { error: true, canRetry: canRetry && error.cause !== 401 });
 }
 
-function renderParticipant(participant, currentUserId, depositRequired) {
+function renderParticipant(participant, currentUserId) {
     const row = find("budget-row-template").content.firstElementChild.cloneNode(true);
     const isCurrentUser = participant.id === currentUserId;
     row.querySelector(".budget-avatar").textContent = getInitials(participant.name);
@@ -91,11 +91,11 @@ function renderParticipant(participant, currentUserId, depositRequired) {
     } else if (participant.debt > 0) {
         badge.textContent = "Не внесено";
         badge.dataset.state = "due";
-    } else if (participant.debt === 0 && depositRequired) {
+    } else if (participant.debt === 0) {
         badge.textContent = "✓ Внесено";
         badge.dataset.state = "paid";
     } else {
-        badge.textContent = participant.debt === 0 ? "Без взноса" : "Нет данных";
+        badge.textContent = "Нет данных";
     }
     return row;
 }
@@ -135,7 +135,7 @@ function renderOpenBudget(budget, participants, currentUserId) {
         ? `Внесли ${paid} из ${contributors.length}` : "";
 
     const contributionList = find("budget-contributions");
-    contributionList.replaceChildren(...contributors.map(user => renderParticipant(user, currentUserId, depositRequired)));
+    contributionList.replaceChildren(...contributors.map(user => renderParticipant(user, currentUserId)));
     contributionList.hidden = !contributors.length;
     find("budget-no-contributions").hidden = !contributionList.hidden;
 

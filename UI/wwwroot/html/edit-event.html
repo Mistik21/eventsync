@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#f8f8f7">
     <title>Редактировать событие · EventSync</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/create-event.css">
+    <link rel="stylesheet" href="/css/create-event.css?v=2">
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
-    <script type="module" src="/js/create-event.js"></script>
+    <script type="module" src="/js/create-event.js?v=2"></script>
 </head>
 <body>
     <main class="create-screen edit-screen">
@@ -59,8 +59,9 @@
                              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 4v4m8-4v4M4 10h16m-12 4h2m4 0h2m-8 3h2"/>
                         </svg>
-                        <input id="event-start" name="eventStartTime" type="datetime-local" required>
+                        <input id="event-start" name="eventStartTime" type="datetime-local" aria-describedby="event-time-shift" required>
                     </div>
+                    <p id="event-time-shift" class="create-field-hint" aria-live="polite">При изменении даты или времени все активности сдвинутся на столько же.</p>
                 </div>
 
                 <div class="create-field meeting-location">

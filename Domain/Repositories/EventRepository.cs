@@ -46,21 +46,6 @@ public class EventRepository : IEventRepository
         return result ?? throw new KeyNotFoundException();
     }
 
-    public async Task SaveActivityChangesAsync(Guid eventId, Guid activityId, Func<Event, Task> change)
-    {
-        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
-        await db.Database.ExecuteSqlInterpolatedAsync($"""
-                                                       SELECT 1 FROM "Activities"
-                                                       WHERE "Id" = {activityId} AND "EventId" = {eventId}
-                                                       FOR UPDATE
-                                                       """);
-
-        var eventDetails = await GetEventByIdAsync(eventId);
-        await change(eventDetails);
-        await SavedAsync();
-        await transaction.CommitAsync();
-    }
-
     public async Task SaveEventChangesAsync(Guid eventId, Func<Event, Task> change)
     {
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
@@ -105,6 +90,4 @@ public class EventRepository : IEventRepository
     {
         return await db.SaveChangesAsync();
     }
-
-    public void ClearTracking() => db.ChangeTracker.Clear();
 }

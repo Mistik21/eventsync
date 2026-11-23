@@ -8,7 +8,7 @@
     width: min(100%, 402px);
     min-height: 100dvh;
     margin-inline: auto;
-    padding: max(20px, env(safe-area-inset-top)) 18px calc(104px + env(safe-area-inset-bottom));
+    padding: max(20px, env(safe-area-inset-top)) 18px max(24px, env(safe-area-inset-bottom));
 }
 
 .activities-header {
@@ -51,7 +51,6 @@
 .activities-empty-circle { width: 108px; height: 108px; margin: 0 auto 38px; border-radius: 50%; background: var(--activities-tint); }
 .activities-empty h2 { margin: 0 0 18px; font-size: 24px; }
 .activities-empty p { margin: 0; color: var(--muted); line-height: 1.4; }
-.activities-empty .activities-primary { margin-top: 30px; }
 
 .activities-primary, .activities-add, .activity-stepper button {
     border: 0;
@@ -65,16 +64,12 @@
 .activities-dialog button:disabled { opacity: .6; cursor: default; }
 
 .activities-add {
-    position: fixed;
-    right: max(24px, calc((100% - 402px) / 2 + 24px));
-    bottom: calc(24px + env(safe-area-inset-bottom));
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    box-shadow: 0 4px 8px rgb(23 32 51 / 16%);
-    font-size: 32px;
-    font-weight: 300;
-    line-height: 1;
+    margin-inline-start: auto;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 650;
 }
 
 .activity-day + .activity-day { margin-top: 24px; }
