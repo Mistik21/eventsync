@@ -198,7 +198,9 @@ function renderActivities(activities) {
     });
 
     find("activities-list").replaceChildren(...sections);
-    find("activities-empty").hidden = activities.length !== 0;
+    const hasActivities = activities.length > 0;
+    find("activities-empty").hidden = hasActivities;
+    addButton.hidden = !hasActivities;
 }
 
 async function loadPage() {
@@ -213,7 +215,6 @@ async function loadPage() {
         eventStart = parseDate(event.eventStartTime);
         renderActivities(activities);
         canCreateActivity = true;
-        addButton.hidden = false;
         showStatus("");
     } catch (error) {
         showStatus(errorMessage(error, "Не удалось загрузить активности."), {
@@ -389,7 +390,9 @@ membershipConfirm.addEventListener("click", async () => {
     }
 });
 
-addButton.addEventListener("click", () => openForm());
+for (const button of document.querySelectorAll("[data-add-activity]")) {
+    button.addEventListener("click", () => openForm());
+}
 editButton.addEventListener("click", () => openForm(selectedActivity));
 formClose.addEventListener("click", closeForm);
 formDialog.addEventListener("cancel", event => {
