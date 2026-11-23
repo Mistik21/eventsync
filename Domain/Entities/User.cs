@@ -4,7 +4,7 @@ public class User
 {
     public Guid Id { get; }
     public long TelegramID { get; }
-    public string Name { get; private set; }
+    public string Name { get; private set; } = null!;
     public int AttendedEventCount { get; private set; }
 
     private User()

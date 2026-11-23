@@ -349,8 +349,9 @@ function openMembershipDialog(activity) {
     if (saving) return;
     membershipActivity = activity;
     const joined = isActivityParticipant(activity);
-    const prompt = joined ? "отказаться от активности" : "записаться на активность";
-    find("activity-membership-title").textContent = `Вы уверены, что хотите ${prompt} «${activity.title}»?`;
+    find("activity-membership-title").textContent = joined
+        ? `Вы уверены, что хотите отказаться от активности: ${activity.title}?`
+        : `Вы уверены, что хотите записаться на активность «${activity.title}»?`;
     membershipConfirm.textContent = joined ? "Отказаться" : "Записаться";
     showMessage(membershipError, "");
     membershipDialog.showModal();

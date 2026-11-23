@@ -82,6 +82,12 @@ public class ActivityService : IActivityService
 
     public Task LeaveActivityAsync(Guid eventId, Guid activityId, Guid currentUserId)
     {
-        throw new NotImplementedException();
+        return eventRepository.SaveActivityChangesAsync(eventId, activityId, eventDetails =>
+        {
+            if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+            var activity = eventDetails.GetRequiredActivity(activityId);
+            activity.RemoveParticipant(currentUserId);
+            return Task.CompletedTask;
+        });
     }
 }

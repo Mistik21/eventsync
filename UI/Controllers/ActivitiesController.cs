@@ -107,6 +107,14 @@ public class ActivitiesController : ControllerBase
     }
 
     [HttpPost("{activityId:guid}/leave")]
-    public IActionResult LeaveActivity(Guid eventId, Guid activityId)
-        => NoContent();
+    public async Task<IActionResult> LeaveActivity(Guid eventId, Guid activityId)
+    {
+        if (!User.TryGetCurrentUserId(out var currentUserId))
+        {
+            return Unauthorized();
+        }
+        
+        await activityService.LeaveActivityAsync(eventId, activityId, currentUserId);
+        return Ok();
+    }
 }

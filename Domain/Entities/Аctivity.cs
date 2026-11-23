@@ -72,7 +72,12 @@ public class Activity
         if (!HasAvailableSeats() || IsParticipant(user.Id)) throw DomainConflict.CreateException();
         participants.Add(user);
     }
-    public void RemoveParticipant(Guid userId){}
+
+    public void RemoveParticipant(Guid userId)
+    {
+        if(!IsParticipant(userId) || IsCreator(userId)) throw DomainConflict.CreateException();
+        participants.RemoveAll(x => x.Id == userId);
+    }
 
     public bool IsParticipant(Guid userId)
     {
