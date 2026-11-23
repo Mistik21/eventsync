@@ -23,10 +23,12 @@ jobs:
       - name: Run unit tests
         run: dotnet test tests/EventSync.UnitTests/EventSync.UnitTests.csproj --configuration Release
 
-  deploy:
-    name: Docker smoke test and deploy
+  smoke:
+    name: Docker smoke test
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       IMAGE: eventsync:${{ github.sha }}
     steps:
@@ -60,23 +62,49 @@ jobs:
             test "$status" = 200
           done
 
-      - name: Login to Yandex Container Registry
+      - name: Save verified Docker image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker image save -o "$RUNNER_TEMP/eventsync-image.tar" "$IMAGE"
+
+      - name: Upload verified Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v7
+        with:
+          name: eventsync-image-${{ github.sha }}
+          path: ${{ runner.temp }}/eventsync-image.tar
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Yandex Cloud
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download verified Docker image
+        uses: actions/download-artifact@v8
+        with:
+          name: eventsync-image-${{ github.sha }}
+          path: ${{ runner.temp }}
+
+      - name: Load verified Docker image
+        run: docker image load -i "$RUNNER_TEMP/eventsync-image.tar"
+
+      - name: Login to Yandex Container Registry
         uses: yc-actions/yc-cr-login@v3
         with:
           yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
 
       - name: Push verified Docker image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           REGISTRY_ID: ${{ secrets.YC_REGISTRY_ID }}
         run: |
           registry_image="cr.yandex/$REGISTRY_ID/myapp:$GITHUB_SHA"
-          docker tag "$IMAGE" "$registry_image"
+          docker tag "eventsync:$GITHUB_SHA" "$registry_image"
           docker push "$registry_image"
 
       - name: Deploy new revision
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: yc-actions/yc-sls-container-deploy@v5
         with:
           yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
