@@ -1,16 +1,13 @@
-# .NET build output
 [Bb]in/
 [Oo]bj/
 /publish/
 /TestResults/
 
-# IDE and user settings
 .idea/
 .vs/
 *.user
 *.suo
 
-# Local configuration and credentials
 /appsettings.Development.json
 /appsettings.Local.json
 .env
@@ -19,7 +16,6 @@
 !.env.sample
 !.env.template
 
-# Local databases and logs
 *.db
 *.db-shm
 *.db-wal
@@ -27,6 +23,5 @@
 *.sqlite3
 *.log
 
-# Operating system metadata
 .DS_Store
 Thumbs.db

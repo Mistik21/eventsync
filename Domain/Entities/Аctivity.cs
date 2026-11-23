@@ -57,15 +57,11 @@ public class Activity
 
     public void ChangeMaxParticipants(int? maxParticipants)
     {
-        if (maxParticipants == null)
-        {
-            MaxParticipants = int.MaxValue;
-        }
-        else
-        {
-            MaxParticipants = maxParticipants;
-        }
-        if(maxParticipants <= 0 || maxParticipants<Participants.Count) throw new ArgumentOutOfRangeException();
+        var limit = maxParticipants ?? int.MaxValue;
+        if (limit <= 0 || limit < Participants.Count)
+            throw new ArgumentOutOfRangeException(nameof(maxParticipants));
+
+        MaxParticipants = limit;
     }
 
     public void AddParticipant(User user)
