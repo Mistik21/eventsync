@@ -21,7 +21,8 @@ public interface IEventService
     Task<List<User>?> GetParticipantsAsync(Guid eventId, Guid currentUserId);
     Task RemoveParticipantAsync(Guid eventId, Guid userId, Guid currentUserId);
 
-    Task PayMyDebtAsync(Guid eventId, Guid currentUserId);
+    Task PayMyDebtAsync(Guid eventId, Guid currentUserId, int amount);
     
     Task OpenCollectionAsync(Guid eventId, Guid currentUserId);
+    Task AddSupplementalDebtsAsync(Guid eventId, Guid currentUserId);
 }

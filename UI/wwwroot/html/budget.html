@@ -54,7 +54,11 @@
         </div>
 
         <footer id="budget-footer" class="budget-footer" hidden>
-            <button id="budget-add-cost" class="budget-button" type="button">+ Добавить трату</button>
+            <button id="budget-add-cost" class="budget-button" type="button" hidden>+ Добавить трату</button>
+            <div id="budget-supplemental" hidden>
+                <p class="budget-status">К доплате <strong id="budget-shortfall"></strong></p>
+                <button id="budget-calculate-debt" class="budget-button" type="button">Рассчитать долг</button>
+            </div>
         </footer>
     </main>
 
@@ -63,9 +67,27 @@
             <span class="budget-avatar" aria-hidden="true"></span>
             <div class="budget-person-details"><strong></strong><small></small></div>
             <span class="budget-badge"></span>
-            <button type="button" class="budget-button budget-pay" hidden>Я скинул</button>
+            <button type="button" class="budget-button budget-pay" aria-haspopup="dialog" hidden>Я скинул</button>
         </li>
     </template>
+
+    <dialog id="budget-pay-dialog" class="budget-cost-dialog" aria-labelledby="budget-pay-title">
+        <header>
+            <h2 id="budget-pay-title">Отметить взнос</h2>
+            <button id="budget-close-pay" class="budget-close-cost" type="button" aria-label="Закрыть окно">×</button>
+        </header>
+        <form id="budget-pay-form">
+            <div class="budget-cost-field">
+                <label for="budget-pay-amount">Сумма взноса</label>
+                <div class="budget-amount-field">
+                    <input id="budget-pay-amount" name="amount" type="number" inputmode="numeric" min="0" step="1" required autofocus>
+                    <span aria-hidden="true">₽</span>
+                </div>
+            </div>
+            <p id="budget-pay-error" class="budget-status" data-error="true" role="alert" hidden></p>
+            <button id="budget-save-pay" class="budget-button" type="submit">Отметить</button>
+        </form>
+    </dialog>
 
     <dialog id="budget-cost-details" class="budget-cost-dialog" aria-labelledby="budget-cost-details-title">
         <header>
@@ -76,7 +98,7 @@
             <dt>Сумма</dt>
             <dd id="budget-cost-details-amount"></dd>
         </dl>
-        <div class="budget-cost-actions">
+        <div id="budget-edit-cost-actions" class="budget-cost-actions" hidden>
             <button id="budget-edit-cost" class="budget-button budget-button-secondary" type="button">Редактировать</button>
             <button id="budget-delete-cost" class="budget-button budget-button-danger" type="button">Удалить</button>
         </div>

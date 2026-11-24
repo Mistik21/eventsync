@@ -1,6 +1,7 @@
 using eventsynс.Application.Interfaces.Services;
 using eventsynс.Application.Models;
 using eventsynс.Application.Models.Cost;
+using eventsynс.Domain;
 using eventsynс.Domain.Entities;
 using eventsynс.Domain.Repositories;
 
@@ -29,34 +30,41 @@ public class CostService : ICostService
         );
     }
 
-    public async Task CreateCostAsync(Guid eventId, CostCreationModel data, Guid currentUserId)
+    public Task CreateCostAsync(Guid eventId, CostCreationModel data, Guid currentUserId)
     {
-        var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
-        var cost = new Cost(
-            Guid.Empty,
-            data.Title,
-            data.Amount);
-        eventDetails.AddCost(cost);
-        await eventRepository.SavedAsync();
+        return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
+        {
+            if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+            var cost = new Cost(
+                Guid.Empty,
+                data.Title,
+                data.Amount);
+            eventDetails.AddCost(cost);
+            return Task.CompletedTask;
+        });
     }
 
-    public async Task UpdateCostAsync(Guid eventId,Guid costId, CostUpdateModel data, Guid currentUserId)
+    public Task UpdateCostAsync(Guid eventId,Guid costId, CostUpdateModel data, Guid currentUserId)
     {
-        var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
-        var cost = eventDetails.GetRequiredCost(costId);
-        cost.ChangeAmount(data.Amount);
-        await eventRepository.SavedAsync();
+        return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
+        {
+            if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+            if (eventDetails.EventStartTime <= DateTime.UtcNow) throw DomainConflict.CreateException();
+            var cost = eventDetails.GetRequiredCost(costId);
+            cost.ChangeAmount(data.Amount);
+            return Task.CompletedTask;
+        });
     }
 
-    public async Task DeleteCostAsync(Guid eventId, Guid costId, Guid currentUserId)
+    public Task DeleteCostAsync(Guid eventId, Guid costId, Guid currentUserId)
     {
-        var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
-        var cost = eventDetails.GetRequiredCost(costId);
-        eventDetails.RemoveCost(costId);
-        eventRepository.RemoveCost(cost);
-        await eventRepository.SavedAsync();
+        return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
+        {
+            if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+            var cost = eventDetails.GetRequiredCost(costId);
+            eventDetails.RemoveCost(costId);
+            eventRepository.RemoveCost(cost);
+            return Task.CompletedTask;
+        });
     }
 }

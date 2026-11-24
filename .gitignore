@@ -21,6 +21,7 @@
 *.db-wal
 *.sqlite
 *.sqlite3
+/script.sql
 *.log
 
 .DS_Store

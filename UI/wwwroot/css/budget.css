@@ -74,7 +74,8 @@
 
 .budget-button:hover:not(:disabled) { background: #05a6c0; }
 .budget-button:disabled { opacity: .65; cursor: default; }
-#budget-open:disabled, #budget-save-cost:disabled, #budget-confirm-delete:disabled, .budget-pay:disabled { cursor: wait; }
+#budget-open:disabled, #budget-calculate-debt:disabled, #budget-save-pay:disabled,
+#budget-save-cost:disabled, #budget-confirm-delete:disabled { cursor: wait; }
 .budget-screen :focus-visible, .budget-cost-dialog :focus-visible { outline: 2px solid var(--budget-ink); outline-offset: 3px; }
 
 .budget-active { display: grid; gap: 16px; padding-bottom: 18px; }

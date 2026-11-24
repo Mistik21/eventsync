@@ -2,6 +2,7 @@ using eventsynс.Application.Interfaces.Services;
 using eventsynс.UI.Auth;
 using eventsynс.Application.Models.Event;
 using eventsynс.Domain.Entities;
+using eventsynс.UI.DTOs.Requests.Costs;
 using eventsynс.UI.DTOs.Requests.Events;
 using eventsynс.UI.DTOs.Responses;
 using Microsoft.AspNetCore.Authorization;
@@ -188,14 +189,14 @@ public class EventsController : ControllerBase
         => NoContent();
 
     [HttpPost("{eventId:guid}/pay-debt")]
-    public async Task<IActionResult> PayDebt(Guid eventId)
+    public async Task<IActionResult> PayDebt(PayDebtRequests data, Guid eventId)
     {
         if (!User.TryGetCurrentUserId(out var currentUserId))
         {
             return Unauthorized();
         }
 
-        await eventService.PayMyDebtAsync(eventId, currentUserId);
+        await eventService.PayMyDebtAsync(eventId, currentUserId, data.amount);
         return Ok();
     }
 
@@ -208,6 +209,18 @@ public class EventsController : ControllerBase
         }
 
         await eventService.OpenCollectionAsync(eventId, currentUserId);
+        return Ok();
+    }
+
+    [HttpPost("{eventId:guid}/collection/supplemental")]
+    public async Task<IActionResult> AddSupplementalDebts(Guid eventId)
+    {
+        if (!User.TryGetCurrentUserId(out var currentUserId))
+        {
+            return Unauthorized();
+        }
+
+        await eventService.AddSupplementalDebtsAsync(eventId, currentUserId);
         return Ok();
     }
 }

@@ -5,13 +5,23 @@ const find = id => document.getElementById(id);
 const eventId = window.location.pathname.match(/^\/event\/([\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12})\/budget\/?$/i)?.[1];
 const api = `/api/events/${eventId}`;
 const collectionNotStarted = 0;
+const collectionOpen = 1;
 const money = new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 });
 const closed = find("budget-closed");
 const active = find("budget-active");
 const openButton = find("budget-open");
 const status = find("budget-status");
 const retry = find("budget-retry");
+const footer = find("budget-footer");
 const addCostButton = find("budget-add-cost");
+const supplemental = find("budget-supplemental");
+const calculateDebtButton = find("budget-calculate-debt");
+const payDialog = find("budget-pay-dialog");
+const payForm = find("budget-pay-form");
+const payAmount = find("budget-pay-amount");
+const payError = find("budget-pay-error");
+const savePayButton = find("budget-save-pay");
+const closePayButton = find("budget-close-pay");
 const costsTitle = find("budget-costs-title");
 const costDetails = find("budget-cost-details");
 const editCostButton = find("budget-edit-cost");
@@ -29,8 +39,10 @@ const deleteError = find("budget-delete-error");
 const cancelDeleteButton = find("budget-cancel-delete");
 const confirmDeleteButton = find("budget-confirm-delete");
 let eventDetails;
+let budgetDetails;
 let selectedCost;
 let pendingLoad;
+let startTimer;
 let opening = false;
 let saving = false;
 
@@ -76,6 +88,51 @@ function showRequestError(error, fallback, canRetry = true) {
     showStatus(requestErrorMessage(error, fallback), { error: true, canRetry: canRetry && error.cause !== 401 });
 }
 
+function timeUntilStart() {
+    return Date.parse(eventDetails?.eventStartTime) - Date.now();
+}
+
+function canManageOpenBudget() {
+    return !active.hidden && eventDetails?.isOrganizer && eventDetails.collectionStatus === collectionOpen;
+}
+
+function canEditCosts(untilStart = timeUntilStart()) {
+    return canManageOpenBudget() && untilStart > 0;
+}
+
+function canCalculateDebt(untilStart = timeUntilStart()) {
+    return canManageOpenBudget() && untilStart <= 0 && budgetDetails?.remainingBudget < 0
+        && Object.keys(budgetDetails.debts ?? {}).length > 0;
+}
+
+function updateBudgetActions() {
+    window.clearTimeout(startTimer);
+    const untilStart = timeUntilStart();
+    const editable = canEditCosts(untilStart);
+    const canCalculate = canCalculateDebt(untilStart);
+    addCostButton.hidden = !editable;
+    find("budget-edit-cost-actions").hidden = !editable;
+    supplemental.hidden = !canCalculate;
+    footer.hidden = !editable && !canCalculate;
+
+    if (canCalculate) {
+        find("budget-shortfall").textContent = money.format(-budgetDetails.remainingBudget);
+    }
+    if (editable) {
+        startTimer = window.setTimeout(updateBudgetActions, Math.min(untilStart, 2_147_483_647));
+    } else if (untilStart <= 0) {
+        const message = "Событие уже началось. Траты больше нельзя менять.";
+        if (costDialog.open) {
+            saveCostButton.disabled = true;
+            showDialogError(costError, message);
+        }
+        if (deleteDialog.open) {
+            confirmDeleteButton.disabled = true;
+            showDialogError(deleteError, message);
+        }
+    }
+}
+
 function renderParticipant(participant, currentUserId) {
     const row = find("budget-row-template").content.firstElementChild.cloneNode(true);
     const isCurrentUser = participant.id === currentUserId;
@@ -87,7 +144,7 @@ function renderParticipant(participant, currentUserId) {
         badge.hidden = true;
         const payButton = row.querySelector(".budget-pay");
         payButton.hidden = false;
-        payButton.addEventListener("click", () => markDebtPaid(payButton));
+        payButton.addEventListener("click", () => openPayForm(participant.debt));
     } else if (participant.debt > 0) {
         badge.textContent = "Не внесено";
         badge.dataset.state = "due";
@@ -119,6 +176,7 @@ function renderCost(cost) {
 }
 
 function renderOpenBudget(budget, participants, currentUserId) {
+    budgetDetails = budget;
     find("budget-total").textContent = money.format(budget.budget);
     find("budget-collected").textContent = money.format(budget.collectedBudget);
     find("budget-spent").textContent = money.format(budget.spentAmount);
@@ -146,7 +204,7 @@ function renderOpenBudget(budget, participants, currentUserId) {
     costsTitle.textContent = budget.costs.length ? `Траты · ${budget.costs.length}` : "Траты";
 
     active.hidden = false;
-    find("budget-footer").hidden = !eventDetails.isOrganizer;
+    updateBudgetActions();
     if (opening) {
         find("budget-total").focus();
     }
@@ -160,12 +218,13 @@ async function readBudget(quiet) {
         }
 
         eventDetails = details;
-        const isClosed = details.collectionStatus === collectionNotStarted;
+        const isClosed = details.collectionStatus !== collectionOpen;
         closed.hidden = !isClosed;
-        openButton.hidden = !isClosed || !details.isOrganizer;
+        openButton.hidden = details.collectionStatus !== collectionNotStarted || !details.isOrganizer;
         if (isClosed) {
             active.hidden = true;
-            find("budget-footer").hidden = true;
+            budgetDetails = undefined;
+            updateBudgetActions();
             find("budget-planned").textContent = money.format(details.budget);
         } else {
             if (active.hidden) {
@@ -181,6 +240,8 @@ async function readBudget(quiet) {
         }
         showStatus("");
     } catch (error) {
+        budgetDetails = undefined;
+        updateBudgetActions();
         if (!quiet || eventDetails?.collectionStatus !== collectionNotStarted) {
             showRequestError(error, "Не удалось загрузить бюджет.");
         }
@@ -192,31 +253,15 @@ function loadBudget({ quiet = false } = {}) {
     return pendingLoad;
 }
 
-async function markDebtPaid(button) {
-    if (saving || active.hidden || button.disabled) {
+function openPayForm(debt) {
+    if (saving || active.hidden || payDialog.open || eventDetails?.collectionStatus !== collectionOpen) {
         return;
     }
 
-    saving = true;
-    button.disabled = true;
-    button.textContent = "Отмечаем…";
-    addCostButton.disabled = true;
-    showStatus("");
-    let saved = false;
-    try {
-        await pendingLoad;
-        await sendBudgetAction("pay-debt", "POST");
-        saved = true;
-        await loadBudget();
-        find("budget-contributions-title").focus();
-    } catch (error) {
-        showRequestError(error, "Не удалось отметить взнос.", false);
-    } finally {
-        saving = false;
-        button.disabled = saved;
-        button.textContent = saved ? "✓ Внесено" : "Я скинул";
-        addCostButton.disabled = false;
-    }
+    payAmount.max = String(debt);
+    payAmount.value = String(debt);
+    showDialogError(payError, "");
+    payDialog.showModal();
 }
 
 function showDialogError(field, message) {
@@ -225,6 +270,9 @@ function showDialogError(field, message) {
 }
 
 function costRequestError(error, fallback) {
+    if (error.cause === 409 && timeUntilStart() <= 0) {
+        return "Событие уже началось. Траты больше нельзя менять.";
+    }
     return error.cause === 404 ? "Трата не найдена." : requestErrorMessage(error, fallback);
 }
 
@@ -239,7 +287,7 @@ function openCostDetails(cost) {
 }
 
 function openCostForm(cost = null) {
-    if (saving || active.hidden || !eventDetails?.isOrganizer || costDialog.open) {
+    if (saving || !canEditCosts() || costDialog.open) {
         return;
     }
     selectedCost = cost;
@@ -264,11 +312,14 @@ function closeCostForm() {
     costDialog.close();
     if (selectedCost) {
         costDetails.showModal();
-        editCostButton.focus();
+        (canEditCosts() ? editCostButton : find("budget-close-details")).focus();
     }
 }
 
 function openDeleteConfirmation() {
+    if (saving || !costDetails.open || !selectedCost || !canEditCosts()) {
+        return;
+    }
     find("budget-delete-title").textContent = `Вы уверены, что хотите удалить позицию: ${selectedCost.title}?`;
     showDialogError(deleteError, "");
     costDetails.close();
@@ -281,7 +332,7 @@ function cancelDeleteConfirmation() {
     }
     deleteDialog.close();
     costDetails.showModal();
-    deleteCostButton.focus();
+    (canEditCosts() ? deleteCostButton : find("budget-close-details")).focus();
 }
 
 async function refreshCostsAfterSave(dialog) {
@@ -289,6 +340,98 @@ async function refreshCostsAfterSave(dialog) {
     await loadBudget();
     costsTitle.focus();
 }
+
+async function refreshBudgetAfterConflict(message) {
+    budgetDetails = undefined;
+    updateBudgetActions();
+    await loadBudget();
+    if (status.hidden) {
+        showStatus(message, { error: true });
+    }
+}
+
+calculateDebtButton.addEventListener("click", async () => {
+    if (saving || !canCalculateDebt()) {
+        return;
+    }
+
+    saving = true;
+    calculateDebtButton.disabled = true;
+    calculateDebtButton.textContent = "Рассчитываем…";
+    showStatus("");
+    try {
+        await pendingLoad;
+        if (!canCalculateDebt()) {
+            return;
+        }
+        await sendBudgetAction("collection/supplemental", "POST");
+        budgetDetails = undefined;
+        updateBudgetActions();
+        await loadBudget();
+        if (status.hidden) {
+            showStatus("Доплата начислена.");
+            find("budget-contributions-title").focus();
+        }
+    } catch (error) {
+        if (error.cause === 409) {
+            await refreshBudgetAfterConflict("Не удалось начислить доплату. Проверьте обновлённый бюджет.");
+        } else {
+            showRequestError(error, "Не удалось начислить доплату.", false);
+        }
+    } finally {
+        saving = false;
+        calculateDebtButton.disabled = false;
+        calculateDebtButton.textContent = "Рассчитать долг";
+    }
+});
+
+closePayButton.addEventListener("click", () => payDialog.close());
+payDialog.addEventListener("cancel", event => {
+    if (saving) {
+        event.preventDefault();
+    }
+});
+
+payForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (saving || !payDialog.open || active.hidden || eventDetails?.collectionStatus !== collectionOpen) {
+        return;
+    }
+
+    const amount = payAmount.valueAsNumber;
+    if (!Number.isInteger(amount) || amount < 0 || amount > Number(payAmount.max)) {
+        showDialogError(payError, "Укажите сумму в целых рублях, не превышающую долг.");
+        payAmount.focus();
+        return;
+    }
+
+    saving = true;
+    savePayButton.disabled = true;
+    savePayButton.textContent = "Отмечаем…";
+    closePayButton.disabled = true;
+    payAmount.readOnly = true;
+    showDialogError(payError, "");
+    try {
+        await pendingLoad;
+        await sendBudgetAction("pay-debt", "POST", { amount });
+        payDialog.close();
+        await loadBudget();
+        find("budget-contributions-title").focus();
+    } catch (error) {
+        if (error.cause === 409) {
+            payDialog.close();
+            await refreshBudgetAfterConflict("Взнос не отмечен. Проверьте актуальный остаток долга.");
+        } else {
+            showDialogError(payError, requestErrorMessage(error, "Не удалось отметить взнос."));
+        }
+    } finally {
+        saving = false;
+        savePayButton.disabled = false;
+        savePayButton.textContent = "Отметить";
+        closePayButton.disabled = false;
+        payAmount.readOnly = false;
+    }
+});
 
 addCostButton.addEventListener("click", () => openCostForm());
 find("budget-close-details").addEventListener("click", () => costDetails.close());
@@ -312,7 +455,7 @@ costDialog.addEventListener("cancel", event => {
 
 costForm.addEventListener("submit", async event => {
     event.preventDefault();
-    if (saving || !costDialog.open || active.hidden || !eventDetails?.isOrganizer) {
+    if (saving || !costDialog.open || !canEditCosts()) {
         return;
     }
 
@@ -339,6 +482,10 @@ costForm.addEventListener("submit", async event => {
     showDialogError(costError, "");
     try {
         await pendingLoad;
+        if (!canEditCosts()) {
+            updateBudgetActions();
+            return;
+        }
         if (cost) {
             await sendBudgetAction(`costs/${encodeURIComponent(cost.id)}`, "PATCH", { amount });
         } else {
@@ -346,13 +493,11 @@ costForm.addEventListener("submit", async event => {
         }
         await refreshCostsAfterSave(costDialog);
     } catch (error) {
-        const message = cost
-            ? costRequestError(error, "Не удалось изменить трату.")
-            : requestErrorMessage(error, "Не удалось добавить трату.");
+        const message = costRequestError(error, cost ? "Не удалось изменить трату." : "Не удалось добавить трату.");
         showDialogError(costError, message);
     } finally {
         saving = false;
-        saveCostButton.disabled = false;
+        saveCostButton.disabled = !canEditCosts();
         saveCostButton.textContent = cost ? "Сохранить" : "Создать";
         closeCostButton.disabled = false;
         costName.readOnly = Boolean(cost);
@@ -361,7 +506,7 @@ costForm.addEventListener("submit", async event => {
 });
 
 confirmDeleteButton.addEventListener("click", async () => {
-    if (saving || !deleteDialog.open || !eventDetails?.isOrganizer) {
+    if (saving || !deleteDialog.open || !canEditCosts()) {
         return;
     }
 
@@ -373,13 +518,17 @@ confirmDeleteButton.addEventListener("click", async () => {
     showDialogError(deleteError, "");
     try {
         await pendingLoad;
+        if (!canEditCosts()) {
+            updateBudgetActions();
+            return;
+        }
         await sendBudgetAction(`costs/${encodeURIComponent(cost.id)}`, "DELETE");
         await refreshCostsAfterSave(deleteDialog);
     } catch (error) {
         showDialogError(deleteError, costRequestError(error, "Не удалось удалить трату."));
     } finally {
         saving = false;
-        confirmDeleteButton.disabled = false;
+        confirmDeleteButton.disabled = !canEditCosts();
         cancelDeleteButton.disabled = false;
         confirmDeleteButton.textContent = "Удалить";
     }
@@ -419,6 +568,11 @@ if (eventId) {
     window.addEventListener("pageshow", event => {
         if (event.persisted) {
             void loadBudget();
+        }
+    });
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+            updateBudgetActions();
         }
     });
     window.setInterval(() => {

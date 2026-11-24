@@ -143,11 +143,11 @@ public class Event
         Participants = Participants.Append(user).ToList();
     }
 
-    public void PayDebt(Guid userId)
+    public void PayDebt(Guid userId,int amount)
     {
-        if (!IsOpenCollection()) throw DomainConflict.CreateException();
-        CollectedBudget += Debts[userId];
-        Debts = new Dictionary<Guid, int>(Debts) { [userId] = 0 };
+        if (!IsOpenCollection() || amount<0 || amount>Debts[userId]) throw DomainConflict.CreateException();
+        CollectedBudget += amount;
+        Debts = new Dictionary<Guid, int>(Debts) { [userId] = Debts[userId]-amount };
     }
 
     public void RemoveParticipant(Guid userId)
@@ -194,12 +194,13 @@ public class Event
 
     public void AddCost(Cost cost)
     {
-        if (!IsOpenCollection()) throw DomainConflict.CreateException();
+        if (!IsOpenCollection() || EventStartTime<=DateTime.UtcNow) throw DomainConflict.CreateException();
         expenses.Add(cost);
     }
 
     public void RemoveCost(Guid costId)
     {
+        if (EventStartTime<=DateTime.UtcNow) throw DomainConflict.CreateException();
         expenses.RemoveAll(cost => cost.Id == costId);
     }
 
@@ -214,5 +215,25 @@ public class Event
     public Activity GetRequiredActivity(Guid activityId)
     {
         return Activities.SingleOrDefault(activity => activity.Id == activityId) ?? throw new KeyNotFoundException();
+    }
+
+    public void AddSupplementalDebts()
+    {
+        var shortfall =Budget - SpentAmount();
+        if (!IsOpenCollection() || DateTime.UtcNow < EventStartTime || shortfall >= 0)
+            throw DomainConflict.CreateException();
+
+        var share = Math.Abs(shortfall) / Debts.Count;
+        var remainder = Math.Abs(shortfall) % Debts.Count;
+        var updatedDebts = new Dictionary<Guid, int>(Debts.Count);
+
+        foreach (var (userId, debt) in Debts)
+        {
+            var extraRuble = updatedDebts.Count < remainder ? 1 : 0;
+            updatedDebts.Add(userId, debt + share + extraRuble);
+        }
+
+        Debts = updatedDebts;
+        Budget = SpentAmount();
     }
 }

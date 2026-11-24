@@ -103,12 +103,12 @@ public class EventService : IEventService
         throw new NotImplementedException();
     }
 
-    public Task PayMyDebtAsync(Guid eventId, Guid currentUserId)
+    public Task PayMyDebtAsync(Guid eventId, Guid currentUserId, int amount)
     {
         return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
         {
             if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
-            eventDetails.PayDebt(currentUserId);
+            eventDetails.PayDebt(currentUserId, amount);
             return Task.CompletedTask;
         });
     }
@@ -119,6 +119,16 @@ public class EventService : IEventService
         {
             if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
             eventDetails.OpenCollection();
+            return Task.CompletedTask;
+        });
+    }
+
+    public Task AddSupplementalDebtsAsync(Guid eventId, Guid currentUserId)
+    {
+        return eventRepository.SaveEventChangesAsync(eventId,  eventDetails =>
+        {
+            if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+            eventDetails.AddSupplementalDebts();
             return Task.CompletedTask;
         });
     }

@@ -8,6 +8,8 @@ internal sealed class InMemoryEventRepository(params Event[] events) : IEventRep
     public List<Event> Events { get; } = [.. events];
     public List<Activity> RemovedActivities { get; } = [];
     public List<Item> RemovedItems { get; } = [];
+    public List<Cost> RemovedCosts { get; } = [];
+    public List<Guid> EventChangeRequests { get; } = [];
     public int SaveCount { get; private set; }
 
     public Task<Event> GetEventByIdAsync(Guid id) =>
@@ -30,7 +32,7 @@ internal sealed class InMemoryEventRepository(params Event[] events) : IEventRep
 
     public void RemoveItem(Item item) => RemovedItems.Add(item);
 
-    public void RemoveCost(Cost cost) => throw new NotSupportedException();
+    public void RemoveCost(Cost cost) => RemovedCosts.Add(cost);
 
     public Task<int> SavedAsync()
     {
@@ -40,6 +42,7 @@ internal sealed class InMemoryEventRepository(params Event[] events) : IEventRep
 
     public async Task SaveEventChangesAsync(Guid eventId, Func<Event, Task> change)
     {
+        EventChangeRequests.Add(eventId);
         await change(await GetEventByIdAsync(eventId));
         await SavedAsync();
     }
