@@ -114,6 +114,9 @@ jobs:
           revision-image-url: cr.yandex/${{ secrets.YC_REGISTRY_ID }}/myapp:${{ github.sha }}
           revision-memory: 512MB
           revision-cores: 1
+          revision-execution-timeout: '8'
+          revision-concurrency: '3'
+          revision-provisioned: '1'
           revision-network-id: enphqfrmf1asvafuao75
           revision-env: |
             ASPNETCORE_ENVIRONMENT=Production

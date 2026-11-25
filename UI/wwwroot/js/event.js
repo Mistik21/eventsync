@@ -1,7 +1,7 @@
 import { canDisplayCover } from "./events-list.js";
 import { fetchCurrentUser, getInitials } from "./current-user.js";
 import { fetchApi, getSessionErrorMessage } from "./session.js";
-import { preloadEventSections } from "./event-section-preload.js";
+import { mountEventSections } from "./event-sections.js";
 import { loadMapGl, lookupAddress, parseCoordinates } from "./two-gis.js";
 
 const find = id => document.getElementById(id);
@@ -21,6 +21,8 @@ const participantFormat = new Intl.PluralRules("ru-RU");
 const participantLabels = { one: "участник", few: "участника", many: "участников" };
 const collectionNotStarted = 0;
 let eventDetails;
+let sectionNavigation;
+let sectionReturnScroll = 0;
 let previewMap;
 let participantsLoading = false;
 
@@ -206,15 +208,24 @@ function showEventScreen() {
     const isInformation = window.location.hash === "#information";
     const overview = find("event-overview");
     const information = find("event-information");
-    if (!isInformation && information.hidden) {
+    const previousSection = sectionNavigation?.current;
+    const previousScroll = window.scrollY;
+    if (sectionNavigation?.show(window.location.hash.slice(1))) {
+        if (!overview.hidden) sectionReturnScroll = previousScroll;
+        overview.hidden = true;
+        information.hidden = true;
+        return;
+    }
+    if (overview.hidden === isInformation && information.hidden === !isInformation) {
         return;
     }
     overview.hidden = isInformation;
     information.hidden = !isInformation;
     find(isInformation ? "event-info-location" : "event-map-preview").append(find("event-map"));
     previewMap?.invalidateSize();
-    window.scrollTo(0, 0);
-    find(isInformation ? "event-info-title" : "event-info").focus();
+    window.scrollTo(0, previousSection && !isInformation ? sectionReturnScroll : 0);
+    const focusTarget = isInformation ? "event-info-title" : previousSection ? `event-${previousSection}-link` : "event-info";
+    find(focusTarget).focus({ preventScroll: true });
     if (isInformation) {
         void loadParticipants();
     }
@@ -223,6 +234,7 @@ function showEventScreen() {
 find("event-info").addEventListener("click", () => { window.location.hash = "information"; });
 find("event-info-retry").addEventListener("click", loadParticipants);
 window.addEventListener("hashchange", showEventScreen);
+window.addEventListener("popstate", showEventScreen);
 
 inviteButton.addEventListener("click", () => {
     if (inviteButton.hidden) {
@@ -351,7 +363,12 @@ async function loadEvent() {
         }
         const event = await response.json();
         renderEvent(event);
-        void preloadEventSections(event);
+        sectionNavigation = mountEventSections(event, showEventScreen, details => {
+            eventDetails = { ...eventDetails, ...details };
+            inviteButton.hidden = eventDetails.collectionStatus !== collectionNotStarted;
+            find("event-edit").hidden = !eventDetails.isOrganizer || inviteButton.hidden;
+        });
+        showEventScreen();
     } catch {
         status.textContent = "Не удалось загрузить событие. Обновите страницу.";
     }

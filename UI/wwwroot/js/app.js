@@ -18,8 +18,6 @@ async function loadProfileBadge() {
 
         const { name } = await response.json();
         badge.textContent = getInitials(name);
-        badge.href = "/profile";
-        badge.removeAttribute("aria-disabled");
     } catch {
         message.textContent = "Не удалось загрузить профиль.";
         message.hidden = false;
