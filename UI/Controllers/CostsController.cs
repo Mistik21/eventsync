@@ -49,10 +49,11 @@ public class CostsController : ControllerBase
         await costService.CreateCostAsync(eventId, new CostCreationModel(data.Title, data.Amount), currentUserId);
         return Ok();
     }
-
+    
     [HttpPatch("costs/{costId:guid}")]
     public async Task<IActionResult> UpdateCost(CostUpdateModel data ,Guid eventId, Guid costId)
     {
+        
         if (!User.TryGetCurrentUserId(out var currentUserId))
         {
             return Unauthorized();

@@ -1,5 +1,6 @@
 import { fetchCurrentUser } from "./current-user.js";
 import { fetchApi, getSessionErrorMessage } from "./session.js";
+import { takePreloadedEventSection } from "./event-section-preload.js";
 
 const find = id => document.getElementById(id);
 const eventId = window.location.pathname.match(/^\/event\/([\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12})\/activities\/?$/i)?.[1];
@@ -203,14 +204,18 @@ function renderActivities(activities) {
     addButton.hidden = !hasActivities;
 }
 
-async function loadPage() {
-    showStatus("Загружаем активности…");
+async function loadPage(prepared) {
+    if (!prepared) {
+        showStatus("Загружаем активности…");
+    }
     try {
-        const [event, activities, viewer] = await Promise.all([
-            request(eventUrl, { cache: "no-store" }).then(response => response.json()),
-            readActivities(),
-            fetchCurrentUser().then(response => response.ok ? response.json() : null).catch(() => null),
-        ]);
+        const [event, activities, viewer] = prepared
+            ? [prepared.event, prepared.activities.map(normalizeActivity), prepared.viewer]
+            : await Promise.all([
+                request(eventUrl, { cache: "no-store" }).then(response => response.json()),
+                readActivities(),
+                fetchCurrentUser().then(response => response.ok ? response.json() : null).catch(() => null),
+            ]);
         currentUserId = viewer?.id ?? (event.isOrganizer === true ? event.organizerId : null);
         eventStart = parseDate(event.eventStartTime);
         renderActivities(activities);
@@ -494,10 +499,10 @@ deleteConfirm.addEventListener("click", async () => {
     }
 });
 
-retry.addEventListener("click", loadPage);
+retry.addEventListener("click", () => void loadPage());
 if (eventId) {
     find("activities-back").href = `/html/event.html?id=${encodeURIComponent(eventId)}`;
-    void loadPage();
+    void loadPage(takePreloadedEventSection(eventId, "activities"));
 } else {
     showStatus("Событие не выбрано. Вернитесь к списку.", { error: true });
 }

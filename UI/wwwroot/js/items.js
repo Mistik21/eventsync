@@ -1,5 +1,6 @@
 import { fetchCurrentUser } from "./current-user.js";
 import { fetchApi, getSessionErrorMessage } from "./session.js";
+import { takePreloadedEventSection } from "./event-section-preload.js";
 
 const find = id => document.getElementById(id);
 const eventId = window.location.pathname.match(/^\/event\/([\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12})\/items\/?$/i)?.[1];
@@ -128,27 +129,39 @@ function renderItem(item, participants, currentUserId) {
     return card;
 }
 
-async function loadItems({ fallback = "Не удалось загрузить чек-лист.", mutationError = "" } = {}) {
+async function loadItems({ fallback = "Не удалось загрузить чек-лист.", mutationError = "", prepared } = {}) {
     empty.hidden = true;
     content.hidden = true;
-    showStatus("Загружаем чек-лист…");
+    if (!prepared) {
+        showStatus("Загружаем чек-лист…");
+    }
     try {
-        const response = await fetchApi(itemsApi, { cache: "no-store" });
-        if (!response.ok) {
-            showStatus(getRequestError(response, fallback), {
-                error: true,
-                canRetry: ![401, 403, 404].includes(response.status),
-            });
-            return;
+        let items = prepared?.items;
+        if (!items) {
+            const response = await fetchApi(itemsApi, { cache: "no-store" });
+            if (!response.ok) {
+                showStatus(getRequestError(response, fallback), {
+                    error: true,
+                    canRetry: ![401, 403, 404].includes(response.status),
+                });
+                return;
+            }
+            items = await response.json();
         }
 
-        const items = await response.json();
         const taken = items.filter(getResponsibleId).length;
         if (items.length) {
-            const [participants, currentUser] = taken ? await Promise.all([
-                getParticipantNames(),
-                fetchCurrentUser().then(response => response.ok ? response.json() : null).catch(() => null),
-            ]) : [new Map(), null];
+            let participants = new Map();
+            let currentUser = null;
+            if (prepared) {
+                participants = new Map(prepared.participants.map(({ id, name }) => [id, name]));
+                currentUser = prepared.viewer;
+            } else if (taken) {
+                [participants, currentUser] = await Promise.all([
+                    getParticipantNames(),
+                    fetchCurrentUser().then(response => response.ok ? response.json() : null).catch(() => null),
+                ]);
+            }
             list.replaceChildren(...items.map(item => renderItem(item, participants, currentUser?.id)));
             const subject = items.length === 1 ? "предмета" : "предметов";
             find("items-progress-label").textContent = `Взято ${taken} из ${items.length} ${subject}`;
@@ -362,7 +375,7 @@ form.addEventListener("submit", async event => {
 retry.addEventListener("click", () => void loadItems());
 if (eventId) {
     find("items-back").href = `/html/event.html?id=${eventId}`;
-    void loadItems();
+    void loadItems({ prepared: takePreloadedEventSection(eventId, "items") });
 } else {
     showStatus("Событие не выбрано. Вернитесь к списку событий.", { error: true });
 }

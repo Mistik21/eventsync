@@ -32,9 +32,11 @@ public class EventRepository : IEventRepository
     {
         return await db.Events.CountAsync(e => e.Participants.Any(p => p.Id == userId));
     }
-
+    
+    
     public async Task<Event> GetEventByIdAsync(Guid eventId)
     {
+        
         var result = await db.Events
             .Include(e => e.Participants)
             .Include(e => e.Expenses)

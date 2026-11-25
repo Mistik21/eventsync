@@ -1,6 +1,7 @@
 import { canDisplayCover } from "./events-list.js";
 import { fetchCurrentUser, getInitials } from "./current-user.js";
 import { fetchApi, getSessionErrorMessage } from "./session.js";
+import { preloadEventSections } from "./event-section-preload.js";
 import { loadMapGl, lookupAddress, parseCoordinates } from "./two-gis.js";
 
 const find = id => document.getElementById(id);
@@ -348,7 +349,9 @@ async function loadEvent() {
             status.textContent = messages[response.status] ?? "Не удалось загрузить событие.";
             return;
         }
-        renderEvent(await response.json());
+        const event = await response.json();
+        renderEvent(event);
+        void preloadEventSections(event);
     } catch {
         status.textContent = "Не удалось загрузить событие. Обновите страницу.";
     }

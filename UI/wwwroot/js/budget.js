@@ -1,5 +1,6 @@
 import { fetchCurrentUser, getInitials } from "./current-user.js";
 import { fetchApi, getSessionErrorMessage } from "./session.js";
+import { takePreloadedEventSection } from "./event-section-preload.js";
 
 const find = id => document.getElementById(id);
 const eventId = window.location.pathname.match(/^\/event\/([\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12})\/budget\/?$/i)?.[1];
@@ -210,9 +211,9 @@ function renderOpenBudget(budget, participants, currentUserId) {
     }
 }
 
-async function readBudget(quiet) {
+async function readBudget(quiet, prepared) {
     try {
-        const details = await getJson(api);
+        const details = prepared?.event ?? await getJson(api);
         if (quiet && details.collectionStatus === eventDetails?.collectionStatus) {
             return;
         }
@@ -227,14 +228,16 @@ async function readBudget(quiet) {
             updateBudgetActions();
             find("budget-planned").textContent = money.format(details.budget);
         } else {
-            if (active.hidden) {
+            if (active.hidden && !prepared) {
                 showStatus("Загружаем бюджет…");
             }
-            const [budget, participants, viewer] = await Promise.all([
-                getJson(`${api}/budget`),
-                getJson(`${api}/participants`),
-                fetchCurrentUser().then(requireSuccess).then(response => response.json()).catch(() => null),
-            ]);
+            const [budget, participants, viewer] = prepared
+                ? [prepared.budget, prepared.participants, prepared.viewer]
+                : await Promise.all([
+                    getJson(`${api}/budget`),
+                    getJson(`${api}/participants`),
+                    fetchCurrentUser().then(requireSuccess).then(response => response.json()).catch(() => null),
+                ]);
             const currentUserId = viewer?.id ?? (details.isOrganizer ? details.organizerId : null);
             renderOpenBudget(budget, participants, currentUserId);
         }
@@ -248,8 +251,8 @@ async function readBudget(quiet) {
     }
 }
 
-function loadBudget({ quiet = false } = {}) {
-    pendingLoad ??= readBudget(quiet).finally(() => { pendingLoad = undefined; });
+function loadBudget({ quiet = false, prepared } = {}) {
+    pendingLoad ??= readBudget(quiet, prepared).finally(() => { pendingLoad = undefined; });
     return pendingLoad;
 }
 
@@ -564,7 +567,7 @@ retry.addEventListener("click", () => void loadBudget());
 
 if (eventId) {
     find("budget-back").href = `/html/event.html?id=${eventId}`;
-    void loadBudget();
+    void loadBudget({ prepared: takePreloadedEventSection(eventId, "budget") });
     window.addEventListener("pageshow", event => {
         if (event.persisted) {
             void loadBudget();
