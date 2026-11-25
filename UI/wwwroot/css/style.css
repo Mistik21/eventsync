@@ -30,6 +30,15 @@ select {
     display: none !important;
 }
 
+[data-loading-status] {
+    visibility: hidden;
+    animation: reveal-loading-status 0s 1.2s forwards;
+}
+
+@keyframes reveal-loading-status {
+    to { visibility: visible; }
+}
+
 button:disabled,
 input:disabled {
     opacity: 1;

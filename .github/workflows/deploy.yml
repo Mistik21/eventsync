@@ -56,7 +56,9 @@ jobs:
             sleep 1
           done
 
-          for path in / /css/style.css; do
+          entry="$(curl -fsS "$url/" | sed -n 's/.*src="\(\/react\/assets\/[^\"]*\.js\)".*/\1/p')"
+          test -n "$entry"
+          for path in / /profile "$entry"; do
             status="$(curl -sS --max-time 5 -o /dev/null -w '%{http_code}' "$url$path")"
             echo "$path returned HTTP $status"
             test "$status" = 200

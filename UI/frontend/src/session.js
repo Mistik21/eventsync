@@ -1,9 +1,8 @@
 let renewal;
 let verifiedInitData;
 
-window.Telegram?.WebApp?.ready();
-
 async function signInWithTelegram() {
+    if (!window.Telegram?.WebApp) await window.eventSyncTelegram;
     const initData = window.Telegram?.WebApp?.initData;
     if (!initData) {
         return;
@@ -33,9 +32,9 @@ function renewSession() {
     return renewal;
 }
 
-export async function fetchApi(input, options) {
+export async function fetchApi(input, options, initialResponse) {
     const request = new Request(input, options);
-    const response = await fetch(request.clone());
+    const response = (await initialResponse) ?? await fetch(request.clone());
 
     if (response.status !== 401) {
         return response;

@@ -44,7 +44,10 @@ async function initializeMapGl() {
 }
 
 export function loadMapGl() {
-    maps ??= initializeMapGl();
+    maps ??= initializeMapGl().catch(error => {
+        maps = undefined;
+        throw error;
+    });
     return maps;
 }
 

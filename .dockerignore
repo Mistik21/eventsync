@@ -1,3 +1,5 @@
 tests/
 **/bin/
 **/obj/
+UI/frontend/node_modules/
+UI/wwwroot/react/

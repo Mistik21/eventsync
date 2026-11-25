@@ -26,3 +26,5 @@
 
 .DS_Store
 Thumbs.db
+/UI/frontend/node_modules/
+/UI/wwwroot/react/

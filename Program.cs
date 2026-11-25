@@ -60,6 +60,7 @@ builder.Services.AddAuthentication("EventSync")
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
+builder.Services.AddResponseCompression(options => options.EnableForHttps = true);
 builder.Services.AddHttpClient("TwoGisGeocoder", client =>
 {
     client.BaseAddress = new Uri("https://catalog.api.2gis.com/");
@@ -94,7 +95,15 @@ app.UseExceptionHandler(new ExceptionHandlerOptions
 
 app.UseHttpsRedirection();
 
-app.UseStaticFiles();
+app.UseWhen(context => context.Request.Path.StartsWithSegments("/react/assets"), assets => assets.UseResponseCompression());
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = context =>
+    {
+        if (context.Context.Request.Path.StartsWithSegments("/react/assets"))
+            context.Context.Response.Headers.CacheControl = "public,max-age=31536000,immutable";
+    }
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
