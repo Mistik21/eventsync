@@ -31,16 +31,31 @@ function ActivityForm({ event, item, save, close }) {
         if (Date.parse(activityStartTime) < Date.parse(event.eventStartTime)) throw invalid("Активность должна начинаться не раньше события.");
         return save({ title, description: values.get("description").trim(), activityStartTime, activityEndTime, maxParticipants: limited ? Number(limit) : null });
     }}>
-        <label htmlFor="activity-title">Название</label><input id="activity-title" name="title" required maxLength={120} defaultValue={item?.title} />
-        <label htmlFor="activity-start">Начало</label><input id="activity-start" type="datetime-local" min={item ? undefined : earliestStart} required value={start} onChange={e => setStart(e.target.value)} />
-        <label htmlFor="activity-end">Окончание</label><input id="activity-end" type="datetime-local" name="end" required min={start} defaultValue={local(endOf(item ?? {}))} />
-        <label><input type="checkbox" checked={limited} onChange={e => setLimited(e.target.checked)} /> Ограничить количество участников</label>
+        <label className="activity-field">Название
+            <input id="activity-title" name="title" required maxLength={120} defaultValue={item?.title} placeholder="Введите текст…" />
+        </label>
+        <fieldset className="activity-time-fields">
+            <legend>Время</legend>
+            <div className="activity-time-inputs">
+                <label className="activity-field">Начало
+                    <input id="activity-start" type="datetime-local" min={item ? undefined : earliestStart} required value={start} onChange={e => setStart(e.target.value)} />
+                </label>
+                <label className="activity-field">Окончание
+                    <input id="activity-end" type="datetime-local" name="end" required min={start} defaultValue={local(endOf(item ?? {}))} />
+                </label>
+            </div>
+        </fieldset>
+        <label className="activity-limit-switch">Ограничить количество участников
+            <input type="checkbox" role="switch" checked={limited} onChange={e => setLimited(e.target.checked)} />
+        </label>
         {limited && <div className="activity-stepper">
             <button type="button" aria-label="Уменьшить лимит" onClick={() => setLimit(String(Math.max(1, Number(limit) - 1)))}>−</button>
             <input type="number" aria-label="Лимит участников" min="1" max="2147483646" required value={limit} onChange={e => setLimit(e.target.value)} />
             <button type="button" aria-label="Увеличить лимит" onClick={() => setLimit(String(Math.min(unlimited - 1, Number(limit) + 1)))}>+</button>
         </div>}
-        <label htmlFor="activity-description">Описание</label><textarea id="activity-description" name="description" rows={3} maxLength={1000} defaultValue={item?.description} />
+        <label className="activity-field">Описание
+            <textarea id="activity-description" name="description" rows={3} maxLength={1000} defaultValue={item?.description} placeholder="Добавить детали…" />
+        </label>
     </ActionDialog>;
 }
 
@@ -86,16 +101,18 @@ export default function Activities({ event, path, url }) {
 
     return <main className="activities-screen">
         <header className="activities-header"><Back className="activities-back" to={path} /><h1>Активности</h1></header>
-        <ResourceStatus resource={resource} url={activitiesUrl} className="activities-status" loading="Загружаем активности…" fallback="Не удалось загрузить активности." />
+        <ResourceStatus resource={resource} url={activitiesUrl} className="activities-status" retryClassName="activities-retry" loading="Загружаем активности…" fallback="Не удалось загрузить активности." />
         {resource.data && (groups.size ? <>
             <div className="activities-list">{Array.from(groups, ([day, activities]) => <section className="activity-day" key={day}>
                 <header><h2>{day}</h2><span className="activity-day-count">{activities.length}</span></header>
                 <ul>{activities.map(item => <li className="activity-card" key={item.id}>
                     <button type="button" className="activity-card-open" onClick={() => setPanel({ type: "details", item })}>
-                        <span className="activity-card-time">{[startOf(item), endOf(item)].filter(value => Number.isFinite(Date.parse(value))).map(value => timeFormat.format(new Date(value))).join("–") || "Время не указано"}</span>
+                        <span className="activity-card-meta">
+                            <span className="activity-card-time">{[startOf(item), endOf(item)].filter(value => Number.isFinite(Date.parse(value))).map(value => timeFormat.format(new Date(value))).join("–") || "Время не указано"}</span>
+                            <span className="activity-card-seats" data-full={full(item)}>{item.maxParticipants > 0 && item.maxParticipants < unlimited ? `Занято ${item.participants?.length ?? 0} из ${item.maxParticipants}` : "Без лимита"}</span>
+                        </span>
                         <strong className="activity-card-title">{item.title}</strong>
                         {item.description && <span className="activity-card-description">{item.description}</span>}
-                        <span className="activity-card-seats" data-full={full(item)}>{item.maxParticipants > 0 && item.maxParticipants < unlimited ? `Занято ${item.participants?.length ?? 0} из ${item.maxParticipants}` : "Без лимита"}</span>
                         {creator(item) && <span className="activity-card-role">Вы автор</span>}
                     </button>{membership(item)}
                 </li>)}</ul>
@@ -103,20 +120,25 @@ export default function Activities({ event, path, url }) {
             <button type="button" className="activities-add activities-add-floating" aria-label="Добавить активность" onClick={() => setPanel({ type: "form" })}>＋</button>
         </> : <section className="activities-empty"><div className="activities-empty-circle" aria-hidden="true" />
             <h2>Активностей пока нет</h2><p>Добавьте первую активность события.</p>
-            <button type="button" className="activities-add" onClick={() => setPanel({ type: "form" })}>Добавить активность</button>
+            <button type="button" className="activities-add activities-add-empty" onClick={() => setPanel({ type: "form" })}>Добавить активность</button>
         </section>)}
         {panel?.type === "form" && <ActivityForm event={event} item={panel.item} close={close} save={data => change(panel.item ? `/${panel.item.id}` : "", panel.item ? "PATCH" : "POST", data)} />}
         {panel?.type === "details" && <Modal className="activities-dialog" title={panel.item.title} onClose={close}>
-            <header><h2>{panel.item.title}</h2><button type="button" className="items-close" aria-label="Закрыть" onClick={close}>×</button></header>
-            <dl className="activity-detail-times"><dt>Начало</dt><dd>{dateTime(startOf(panel.item))}</dd><dt>Окончание</dt><dd>{dateTime(endOf(panel.item))}</dd></dl>
-            {panel.item.description && <p className="activity-description">{panel.item.description}</p>}
-            <section><h3>Участники</h3>{panel.item.participants?.length ? <ul className="activity-participants">{panel.item.participants.map(person => <li key={person.id}>{person.name}{viewer === person.id ? " · Вы" : ""}</li>)}</ul> : <p>Пока никто не записался.</p>}</section>
+            <header><h2>{panel.item.title}</h2><button type="button" className="activities-close" aria-label="Закрыть" onClick={close}>×</button></header>
+            <div className="activity-details">
+                <dl className="activity-detail-times">
+                    <div><dt>Начало</dt><dd>{dateTime(startOf(panel.item))}</dd></div>
+                    <div><dt>Окончание</dt><dd>{dateTime(endOf(panel.item))}</dd></div>
+                </dl>
+                {panel.item.description && <p className="activity-description">{panel.item.description}</p>}
+                <section><h3>Участники</h3>{panel.item.participants?.length ? <ul className="activity-participants">{panel.item.participants.map(person => <li key={person.id}>{person.name}{viewer === person.id ? " · Вы" : ""}</li>)}</ul> : <p className="activity-participants-note">Пока никто не записался.</p>}</section>
+            </div>
             <footer className="activity-actions">{creator(panel.item) ? <>
-                <button type="button" onClick={() => setPanel({ ...panel, type: "form" })}>Редактировать</button>
-                <button type="button" onClick={() => setPanel({ ...panel, type: "delete" })}>Удалить</button>
+                <button className="activity-action" type="button" onClick={() => setPanel({ ...panel, type: "form" })}>Редактировать</button>
+                <button className="activity-action activity-danger" type="button" onClick={() => setPanel({ ...panel, type: "delete" })}>Удалить</button>
             </> : membership(panel.item)}</footer>
         </Modal>}
-        {panel?.type === "delete" && <ActionDialog title={`Удалить «${panel.item.title}»?`} className="activities-dialog" close={close} submitText="Удалить" fallback="Не удалось удалить активность." submit={() => change(`/${panel.item.id}`, "DELETE")} />}
-        {panel?.type === "membership" && <ActionDialog title={panel.leaving ? "Отказаться от участия?" : "Записаться на активность?"} className="activities-dialog" close={close} submitText={panel.leaving ? "Отказаться" : "Записаться"} fallback="Не удалось изменить участие." submit={() => change(`/${panel.item.id}/${panel.leaving ? "leave" : "join"}`, "POST")} />}
+        {panel?.type === "delete" && <ActionDialog title={`Удалить «${panel.item.title}»?`} className="activities-dialog activity-delete-dialog" close={close} danger submitText="Удалить" fallback="Не удалось удалить активность." submit={() => change(`/${panel.item.id}`, "DELETE")} />}
+        {panel?.type === "membership" && <ActionDialog title={panel.leaving ? "Отказаться от участия?" : "Записаться на активность?"} className="activities-dialog activity-membership-dialog" close={close} danger={panel.leaving} submitText={panel.leaving ? "Отказаться" : "Записаться"} fallback="Не удалось изменить участие." submit={() => change(`/${panel.item.id}/${panel.leaving ? "leave" : "join"}`, "POST")} />}
     </main>;
 }

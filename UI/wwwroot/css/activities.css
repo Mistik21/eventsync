@@ -203,7 +203,7 @@
 .activity-fields input[type="datetime-local"] { padding-inline: 7px; font-size: 14px; }
 .activity-fields textarea { min-height: 76px; resize: vertical; }
 
-.activity-limit-switch { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.activity-limit-switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
 .activity-limit-switch input {
     position: relative;
     flex: 0 0 50px;
@@ -232,6 +232,7 @@
 .activity-details h3 { margin: 0 0 9px; font-size: 15px; }
 .activity-participants, .activity-participants-note { margin: 0; padding: 14px; color: var(--muted); font-size: 13px; }
 .activity-participants { display: grid; gap: 8px; list-style: none; overflow-wrap: anywhere; }
+.activity-participants li { padding: 8px 10px; border-radius: 8px; color: #172033; background: var(--activities-tint); }
 
 .activity-actions { display: grid; gap: 12px; }
 .activity-action { min-height: 52px; padding: 10px 14px; border: 1px solid #bcc6d3; border-radius: 14px; color: #475569; background: #f0f4f8; font-weight: 650; cursor: pointer; }

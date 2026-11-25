@@ -11,9 +11,22 @@ function CostForm({ cost, close, save }) {
         if (!title || !Number.isInteger(amount) || amount < (cost ? 0 : 1)) throw invalid("Проверьте название и сумму траты.");
         return save(cost ? { amount } : { title, amount });
     }}>
-        <label htmlFor="cost-title">Название</label><input id="cost-title" name="title" required readOnly={Boolean(cost)} defaultValue={cost?.title} maxLength={120} />
-        <label htmlFor="cost-amount">Сумма, ₽</label><input id="cost-amount" name="amount" type="number" min={cost ? 0 : 1} max="2147483647" required defaultValue={cost?.amount} />
+        <div className="budget-cost-field">
+            <label htmlFor="cost-title">На что потратили</label>
+            <input id="cost-title" name="title" required readOnly={Boolean(cost)} defaultValue={cost?.title} maxLength={120} placeholder="Введите текст…" />
+        </div>
+        <AmountField id="cost-amount" label="Сумма" min={cost ? 0 : 1} max={2147483647} amount={cost?.amount} />
     </ActionDialog>;
+}
+
+function AmountField({ id, label, min, max, amount }) {
+    return <div className="budget-cost-field">
+        <label htmlFor={id}>{label}</label>
+        <div className="budget-amount-field">
+            <input id={id} name="amount" type="number" inputMode="numeric" min={min} max={max} step={1} defaultValue={amount} placeholder="0" required />
+            <span aria-hidden="true">₽</span>
+        </div>
+    </div>;
 }
 
 export default function Budget({ event, path, url }) {
@@ -72,10 +85,10 @@ export default function Budget({ event, path, url }) {
         <header className="budget-header"><Back to={path} className="budget-back" /><h1>Бюджет</h1></header>
         {error && <p className="budget-status" data-error="true" role="alert">{error}</p>}
         {!open ? <section className="budget-closed">
-            <div className="budget-circle" aria-hidden="true">₽</div><h2>Сбор пока закрыт</h2><p>Планируемый бюджет: {money.format(event.budget)}</p>
+            <div className="budget-circle" aria-hidden="true" /><h2>Сбор пока закрыт</h2><p>Планируемый бюджет: {money.format(event.budget)}</p>
             {event.isOrganizer && event.collectionStatus === 0 && <button className="budget-button" type="button" disabled={opening} onClick={() => void openCollection()}>{opening ? "Открываем…" : "Открыть сбор"}</button>}
         </section> : <>
-            <ResourceStatus resource={resource} url={budgetUrl} className="budget-status" loading="Загружаем бюджет…" fallback="Не удалось загрузить бюджет." />
+            <ResourceStatus resource={resource} url={budgetUrl} className="budget-status" retryClassName="budget-retry" loading="Загружаем бюджет…" fallback="Не удалось загрузить бюджет." />
             {budget && <div className="budget-active">
                 <section className="budget-summary" aria-label="Сводка бюджета"><h2>{money.format(budget.budget)}</h2>
                     <progress value={budget.collectedBudget} max={Math.max(1, budget.budget)} />
@@ -86,8 +99,8 @@ export default function Budget({ event, path, url }) {
                     </dl>
                 </section>
                 <section><div className="budget-section-heading"><h2>Взносы</h2>{contributors.some(person => person.id in debts) && <span>Внесли {paid} из {contributors.length}</span>}</div>
-                    <ResourceStatus resource={people} url={peopleUrl} className="budget-status" loading="Загружаем участников…" fallback="Не удалось загрузить взносы." />
-                    {people.data && (contributors.length ? <ul className="budget-list">{contributors.map(person => {
+                    <ResourceStatus resource={people} url={peopleUrl} className="budget-status" retryClassName="budget-retry" loading="Загружаем участников…" fallback="Не удалось загрузить взносы." />
+                    {people.data && (contributors.length ? <ul className="budget-list budget-people">{contributors.map(person => {
                         const debt = debts[person.id];
                         const mine = person.id === viewer;
                         return <li className="budget-person" key={person.id}>
@@ -104,11 +117,11 @@ export default function Budget({ event, path, url }) {
                             : <div className="budget-cost-entry"><span>{cost.title}</span><strong>{money.format(cost.amount)}</strong></div>}
                     </li>)}</ul> : <p className="budget-empty">Трат пока нет.</p>}
                 </section>
-                {(canEdit || supplemental) && <footer className="budget-footer">
-                    {canEdit && <button className="budget-button" type="button" onClick={() => setPanel({ type: "form" })}>Добавить трату</button>}
-                    {supplemental && <button className="budget-button" type="button" onClick={() => setPanel({ type: "supplemental" })}>Распределить перерасход · {money.format(-budget.remainingBudget)}</button>}
-                </footer>}
             </div>}
+            {budget && (canEdit || supplemental) && <footer className="budget-footer">
+                {canEdit && <button className="budget-button" type="button" onClick={() => setPanel({ type: "form" })}>Добавить трату</button>}
+                {supplemental && <button className="budget-button" type="button" onClick={() => setPanel({ type: "supplemental" })}>Распределить перерасход · {money.format(-budget.remainingBudget)}</button>}
+            </footer>}
         </>}
         {panel?.type === "form" && <CostForm cost={panel.cost} close={close} save={amount => change(panel.cost ? `costs/${panel.cost.id}` : "costs", panel.cost ? "PATCH" : "POST", amount)} />}
         {panel?.type === "details" && <Modal className="budget-cost-dialog" title={panel.cost.title} onClose={close}>
@@ -119,9 +132,9 @@ export default function Budget({ event, path, url }) {
                 <button className="budget-button budget-button-danger" type="button" onClick={() => setPanel({ ...panel, type: "delete" })}>Удалить</button>
             </footer>}
         </Modal>}
-        {panel?.type === "delete" && <ActionDialog className="budget-cost-dialog" title="Удалить трату?" close={close} submitText="Удалить" fallback="Не удалось удалить трату." submit={() => change(`costs/${panel.cost.id}`, "DELETE")} />}
+        {panel?.type === "delete" && <ActionDialog className="budget-cost-dialog" title="Удалить трату?" close={close} danger submitText="Удалить" fallback="Не удалось удалить трату." submit={() => change(`costs/${panel.cost.id}`, "DELETE")} />}
         {panel?.type === "pay" && <ActionDialog className="budget-cost-dialog" title="Внести взнос" close={close} submitText="Отметить взнос" fallback="Не удалось отметить взнос." submit={values => change("pay-debt", "POST", { amount: Number(values.get("amount")) })}>
-            <label htmlFor="pay-amount">Сумма, ₽</label><input id="pay-amount" name="amount" type="number" min="0" max={panel.debt} defaultValue={panel.debt} required />
+            <AmountField id="pay-amount" label="Сумма взноса" min={0} max={panel.debt} amount={panel.debt} />
         </ActionDialog>}
         {panel?.type === "supplemental" && <ActionDialog className="budget-cost-dialog" title="Распределить перерасход?" close={close} submitText="Начислить доплату" fallback="Не удалось начислить доплату." submit={() => change("collection/supplemental", "POST")} />}
     </main>;

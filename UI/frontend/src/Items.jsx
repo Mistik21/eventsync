@@ -59,7 +59,7 @@ export default function Items({ event, url, path }) {
 
     return <main className="items-screen">
         <header className="items-header"><Back to={path} className="items-back" /><h1>Чек-лист</h1></header>
-        <ResourceStatus resource={resource} url={itemsUrl} className="items-status" loading="Загружаем чек-лист…" fallback="Не удалось загрузить чек-лист." />
+        <ResourceStatus resource={resource} url={itemsUrl} className="items-status" retryClassName="items-retry" loading="Загружаем чек-лист…" fallback="Не удалось загрузить чек-лист." />
         {error && <p role="alert" className="items-status" data-error="true">{error}</p>}
         {resource.data && (items.length ? <>
             <section className="items-progress" aria-label="Прогресс чек-листа">
@@ -94,6 +94,6 @@ export default function Items({ event, url, path }) {
                 <button className="item-details-button item-delete" type="button" onClick={() => setPanel({ ...panel, type: "delete" })}>Удалить</button>
             </footer>
         </Modal>}
-        {panel?.type === "delete" && <ActionDialog title={`Удалить «${panel.item.title}»?`} className="items-dialog item-delete-dialog" close={close} submitText="Удалить" fallback="Не удалось удалить предмет." submit={() => change(`/${panel.item.id}`, "DELETE")} />}
+        {panel?.type === "delete" && <ActionDialog title={`Удалить «${panel.item.title}»?`} className="items-dialog item-delete-dialog" close={close} danger submitText="Удалить" fallback="Не удалось удалить предмет." submit={() => change(`/${panel.item.id}`, "DELETE")} />}
     </main>;
 }

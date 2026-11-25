@@ -41,6 +41,7 @@
 
 .event-icon-button {
     display: grid;
+    flex: 0 0 auto;
     place-items: center;
     width: 40px;
     height: 40px;
@@ -74,6 +75,7 @@
     background: none;
     border: 0;
     font-weight: 700;
+    text-decoration: none;
     cursor: pointer;
 }
 
@@ -101,8 +103,9 @@
 }
 
 .event-facts li { display: flex; gap: 8px; }
-.event-facts li > :first-child { color: #7441d0; }
-#event-map-preview { position: relative; z-index: 0; }
+.event-facts li > :first-child { flex: 0 0 auto; color: #7441d0; }
+.event-facts li > :last-child { min-width: 0; }
+.event-map-preview { position: relative; z-index: 0; }
 .event-map { height: 170px; margin-top: 10px; border-radius: 12px; overflow: hidden; }
 
 .event-sections {
@@ -163,7 +166,7 @@
     text-align: center;
 }
 
-.event-membership-action:enabled, #event-delete-form button:enabled { cursor: pointer; }
+.event-membership-action:enabled, .event-dialog-action:enabled { cursor: pointer; }
 
 .event-dialog {
     width: min(calc(100% - 24px), 416px);
@@ -221,7 +224,7 @@
 
 .event-info-box p { margin: 0; }
 .event-info-box small { display: block; color: var(--muted); }
-#event-info-month { margin-bottom: 8px; font-weight: 600; text-transform: capitalize; }
+.event-info-box .event-info-month { margin-bottom: 8px; font-weight: 600; text-transform: capitalize; }
 .event-info-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; }
 .event-info-week > div { padding: 5px 0; border-radius: 8px; }
 .event-info-day-selected { color: #6941bb; background: var(--purple-light); font-weight: 700; }
@@ -229,10 +232,21 @@
 .event-info-description { white-space: pre-wrap; }
 .event-information .event-map { height: 200px; }
 
-.event-info-people { padding-block: 0; list-style: none; }
-.event-info-people li { display: flex; align-items: center; gap: 10px; min-height: 58px; }
-.event-info-people li + li { border-top: 1px solid var(--border); }
+.event-info-people { display: grid; gap: 8px; list-style: none; }
+.event-info-people li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 8px 10px;
+    border: 1px solid #e6def4;
+    border-radius: 10px;
+    background: #f3eefb;
+}
 .event-info-people li > div { min-width: 0; }
+
+.event-photos { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.event-photos img { display: block; width: 100%; border-radius: 12px; }
 
 .event-invite-button {
     width: 100%;
@@ -280,7 +294,7 @@
     height: 34px;
     border-radius: 50%;
     color: #6941bb;
-    background: var(--purple-light);
+    background: #e8dafb;
     font-size: 12px;
     font-weight: 700;
 }

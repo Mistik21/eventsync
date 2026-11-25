@@ -125,6 +125,7 @@
 
 .budget-list { margin: 0; padding: 6px 10px; list-style: none; }
 .budget-list li + li { border-top: 1px solid #f0f1f3; }
+.budget-people { display: grid; gap: 6px; padding: 8px; }
 
 .budget-person {
     display: grid;
@@ -132,8 +133,12 @@
     align-items: center;
     gap: 9px;
     min-height: 50px;
-    padding-block: 5px;
+    padding: 5px 8px;
+    border: 1px solid #dcecef;
+    border-radius: 10px;
+    background: #f0f9fa;
 }
+.budget-people li + li { border-top-color: #dcecef; }
 
 .budget-avatar {
     display: grid;
@@ -268,6 +273,7 @@ button.budget-cost-entry:hover { background: #f3fbfc; }
 }
 
 .budget-cost-dialog form { display: grid; gap: 16px; margin-top: 10px; }
+.budget-cost-dialog form.action-confirmation { margin-top: 0; }
 .budget-fields { display: grid; min-width: 0; gap: 10px; border: 0; margin: 0; padding: 0; }
 .budget-cost-field { display: grid; gap: 6px; }
 .budget-cost-field label { color: var(--muted); font-size: 12px; }
@@ -289,3 +295,5 @@ button.budget-cost-entry:hover { background: #f3fbfc; }
 .budget-amount-field span { position: absolute; inset-inline-end: 12px; top: 50%; translate: 0 -50%; color: var(--muted); pointer-events: none; }
 .budget-cost-dialog .budget-status { margin: 0; }
 .budget-cost-dialog form .budget-button { margin-top: 6px; }
+.budget-cost-dialog form footer > .budget-button { width: 100%; }
+.budget-cost-dialog .budget-cost-actions .budget-button { margin-top: 0; }

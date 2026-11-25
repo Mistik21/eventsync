@@ -133,12 +133,16 @@ function Fields({ id, event }) {
 
     const original = !removed && event?.mainImageUrl;
     const shift = editing ? new Date(start) - new Date(event.eventStartTime) : 0;
+    const hasCover = Boolean(preview || original);
     return <form className="create-form" onSubmit={save}>
         <fieldset className="create-fields" disabled={saving}>
             <div className="cover-control">
-                <label className="cover-picker" htmlFor="event-cover">
-                    <span className="cover-label">{preview || original ? "Изменить обложку" : "Добавить обложку"}</span>
+                <label className={`cover-picker${hasCover ? " cover-picker--filled" : ""}`} htmlFor="event-cover">
                     {preview ? <img className="cover-preview" src={preview} alt="" /> : <Cover className="cover-preview" src={original} />}
+                    <span className="cover-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6m4 3h6m-3-3v6M4 16l5-5 5 5 2-2 4 4" /></svg>
+                        {hasCover ? "Изменить обложку" : "Добавить обложку"}
+                    </span>
                     <input ref={fileInput} id="event-cover" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => {
                         const file = e.target.files[0];
                         if (!file) return;
@@ -147,7 +151,7 @@ function Fields({ id, event }) {
                         setError("");
                     }} />
                 </label>
-                {(preview || original) && <button className="cover-remove" type="button" aria-label="Удалить обложку" onClick={() => {
+                {hasCover && <button className="cover-remove" type="button" aria-label="Удалить обложку" onClick={() => {
                     fileInput.current.value = "";
                     setPreview(null);
                     setRemoved(true);
@@ -155,21 +159,34 @@ function Fields({ id, event }) {
             </div>
             <div className="create-field"><label htmlFor="event-title">Название события *</label><input id="event-title" name="title" required defaultValue={event?.title} /></div>
             <div className="create-field"><label htmlFor="event-description">Описание *</label><textarea id="event-description" name="description" rows={3} required defaultValue={event?.description} /></div>
-            <div className="create-field"><label htmlFor="event-start">Дата и время *</label><input id="event-start" type="datetime-local" required value={start} onChange={e => setStart(e.target.value)} />
-                {editing && start !== savedStart && Number.isFinite(shift) && shift !== 0 && <small>Активности сдвинутся {shift > 0 ? "вперёд" : "назад"} вместе с событием.</small>}
+            <div className="create-field">
+                <label htmlFor="event-start">Дата и время *</label>
+                <div className="create-input-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 4v4m8-4v4M4 10h16m-12 4h2m4 0h2m-8 3h2"/></svg>
+                    <input id="event-start" type="datetime-local" required value={start} onChange={e => setStart(e.target.value)} />
+                </div>
+                {editing && start !== savedStart && Number.isFinite(shift) && shift !== 0 && <small className="create-field-hint">Активности сдвинутся {shift > 0 ? "вперёд" : "назад"} вместе с событием.</small>}
             </div>
             <div className="create-field meeting-location">
                 <label htmlFor="meeting-address">Место встречи *</label>
-                <input id="meeting-address" value={location.address} placeholder={location.coordinates ? "Определяем адрес…" : "Введите адрес места встречи"} onChange={e => {
-                    selection.current = null;
-                    setLocation({ address: e.target.value, coordinates: "" });
-                }} />
-                <button className="meeting-map-toggle" type="button" aria-expanded={mapOpen} onClick={() => { setMapError(false); setMapOpen(!mapOpen); }}>Выбрать на карте 2ГИС</button>
+                <div className="create-input-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M19 10c0 5-7 10-7 10s-7-5-7-10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                    <input id="meeting-address" value={location.address} placeholder={location.coordinates ? "Определяем адрес…" : "Введите адрес места встречи"} onChange={e => {
+                        selection.current = null;
+                        setLocation({ address: e.target.value, coordinates: "" });
+                    }} />
+                </div>
+                <button className={editing ? "meeting-map-toggle edit-map-toggle" : "meeting-map-toggle"} type="button" aria-expanded={mapOpen} onClick={() => { setMapError(false); setMapOpen(!mapOpen); }}>Выбрать на карте 2ГИС</button>
                 {mapError && <p className="meeting-location-status" role="status">Карта недоступна. Укажите адрес вручную.</p>}
                 {mapOpen && <MapPicker previous={location.coordinates} confirm={choosePoint} unavailable={() => { setMapError(true); setMapOpen(false); }} />}
             </div>
-            <div className="create-field"><label htmlFor="event-budget">Общий бюджет мероприятия</label>
-                <input id="event-budget" type="number" name="budget" min="0" max="2147483647" step="1" placeholder="0" defaultValue={event?.budget} />
+            <div className="create-field">
+                <label htmlFor="event-budget">Общий бюджет мероприятия</label>
+                <div className="create-input-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true"><path d="M19 8V6a2 2 0 0 0-2-2H7a3 3 0 0 0 0 6h13v8a2 2 0 0 1-2 2H7a3 3 0 0 1-3-3V7m16 6h-5v4h5"/></svg>
+                    <input id="event-budget" type="number" name="budget" inputMode="numeric" min="0" max="2147483647" step="1" placeholder="0" defaultValue={event?.budget} />
+                    <span className="budget-currency" aria-hidden="true">₽</span>
+                </div>
             </div>
         </fieldset>
         {error && <p className="create-status create-status--error" role="alert">{error}</p>}

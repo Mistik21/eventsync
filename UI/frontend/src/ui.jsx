@@ -34,10 +34,10 @@ export function Loading({ children = "Загружаем…", className }) {
     return <p role="status" className={className} data-loading-status="">{children}</p>;
 }
 
-export function ResourceStatus({ resource, url, loading, fallback, className }) {
+export function ResourceStatus({ resource, url, loading, fallback, className, retryClassName }) {
     if (resource.error) return <>
         <p role="status" className={className} data-error="true">{message(resource.error, fallback)}</p>
-        {![401, 403, 404].includes(resource.error.status) && url && <button type="button" onClick={() => void refresh(url, true)}>Повторить</button>}
+        {![401, 403, 404].includes(resource.error.status) && url && <button type="button" className={retryClassName} onClick={() => void refresh(url, true)}>Повторить</button>}
     </>;
     if (resource.data === undefined) return <Loading className={className}>{loading}</Loading>;
     return null;
@@ -57,7 +57,13 @@ export function Modal({ className, title, children, onClose, busy = false }) {
     }}>{children}</dialog>;
 }
 
-export function ActionDialog({ title, className, close, submit, submitText = "Сохранить", fallback, children }) {
+const actionDialogStyles = {
+    items: { close: "items-close", fields: "items-fields", status: "items-status", actions: "item-details-actions", submit: "items-primary", cancel: "item-details-button", confirm: "item-details-button", danger: "item-details-button item-delete" },
+    activities: { close: "activities-close", fields: "activity-fields", status: "activities-status", actions: "activity-actions", submit: "activities-primary", cancel: "activity-action", confirm: "activity-action activity-membership-confirm", danger: "activity-action activity-danger" },
+    budget: { close: "budget-close-cost", fields: "budget-fields", status: "budget-status", actions: "budget-cost-actions", submit: "budget-button", cancel: "budget-button budget-button-secondary", confirm: "budget-button", danger: "budget-button budget-button-danger" },
+};
+
+export function ActionDialog({ title, className, close, submit, submitText = "Сохранить", fallback, danger = false, children }) {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState("");
     const submitting = useRef(false);
@@ -80,14 +86,18 @@ export function ActionDialog({ title, className, close, submit, submitText = "С
     }
 
     const family = className.split("-")[0];
-    const buttonClass = { items: "items-primary", activities: "activities-primary", budget: "budget-button" }[family];
-    const fieldsClass = { items: "items-fields", activities: "activity-fields", budget: "budget-fields" }[family];
+    const styles = actionDialogStyles[family];
+    const confirmation = !children;
+    let submitClass = styles.submit;
+    if (confirmation) submitClass = danger ? styles.danger : styles.confirm;
     return <Modal title={title} className={className} onClose={close} busy={busy}>
-        <header><h2>{title}</h2><button type="button" className="items-close" aria-label="Закрыть" disabled={busy} onClick={close}>×</button></header>
-        <form onSubmit={save}>
-            {children && <fieldset className={fieldsClass} disabled={busy}>{children}</fieldset>}
-            <footer>{error && <p role="alert" data-error="true">{error}</p>}
-                <button type="submit" className={buttonClass} disabled={busy}>{busy ? "Сохраняем…" : submitText}</button>
+        <header><h2>{title}</h2>{!confirmation && <button type="button" className={styles.close} aria-label="Закрыть" disabled={busy} onClick={close}>×</button>}</header>
+        <form className={confirmation ? "action-confirmation" : undefined} onSubmit={save}>
+            {children && <fieldset className={styles.fields} disabled={busy}>{children}</fieldset>}
+            <footer className={confirmation ? styles.actions : undefined}>
+                {error && <p className={styles.status} role="alert" data-error="true">{error}</p>}
+                {confirmation && <button type="button" className={styles.cancel} disabled={busy} onClick={close}>Отмена</button>}
+                <button type="submit" className={submitClass} disabled={busy}>{busy ? "Сохраняем…" : submitText}</button>
             </footer>
         </form>
     </Modal>;
