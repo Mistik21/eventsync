@@ -40,7 +40,7 @@ public class EventServiceTests
         var service = CreateService();
 
         Assert.Same(meetup, await service.GetEventAsync(meetup.Id, organizer.Id));
-        Assert.Same(organizer, Assert.Single((await service.GetParticipantsAsync(meetup.Id, organizer.Id))!));
+        Assert.Same(organizer, Assert.Single(await service.GetParticipantsAsync(meetup.Id, organizer.Id)));
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.GetEventAsync(meetup.Id, attendee.Id));
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.GetParticipantsAsync(meetup.Id, attendee.Id));
     }
@@ -65,9 +65,8 @@ public class EventServiceTests
 
         var invitation = await CreateService().GetInvitationAsync(meetup.Id);
 
-        Assert.True(invitation.HasValue);
-        Assert.Same(meetup, invitation.Value.Event);
-        Assert.Equal(organizer.Name, invitation.Value.OrganizerName);
+        Assert.Same(meetup, invitation.Event);
+        Assert.Equal(organizer.Name, invitation.OrganizerName);
     }
 
     [Theory]

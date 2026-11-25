@@ -1,6 +1,6 @@
+using eventsynс.Application.Access;
 using eventsynс.Application.Interfaces.Services;
 using eventsynс.Application.Models.Event;
-using eventsynс.Domain;
 using eventsynс.Domain.Entities;
 using eventsynс.Domain.Repositories;
 
@@ -25,7 +25,7 @@ public class EventService : IEventService
     public async Task<Event> GetEventAsync(Guid eventId, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+        EventAccess.RequireParticipant(eventDetails, currentUserId);
         return eventDetails;
     }
 
@@ -50,7 +50,7 @@ public class EventService : IEventService
     {
         return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
         {
-            if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+            EventAccess.RequireOrganizer(eventDetails, currentUserId);
             eventDetails.ChangeTitle(data.Title);
             eventDetails.ChangeDescription(data.Description);
             eventDetails.ChangeBudget(data.Budget);
@@ -64,13 +64,13 @@ public class EventService : IEventService
     public async Task<bool> DeleteEventAsync(Guid eventId, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+        EventAccess.RequireOrganizer(eventDetails, currentUserId);
         eventRepository.RemoveEvent(eventDetails);
         await eventRepository.SavedAsync();
         return true;
     }
 
-    public async Task<(Event Event, string? OrganizerName)?> GetInvitationAsync(Guid eventId)
+    public async Task<(Event Event, string? OrganizerName)> GetInvitationAsync(Guid eventId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
         var organizer = await userRepository.GetByIdAsync(eventDetails.Organizer);
@@ -82,7 +82,6 @@ public class EventService : IEventService
         return eventRepository.SaveEventChangesAsync(eventId, async eventDetails =>
         {
             var user = await userRepository.GetByIdAsync(currentUserId);
-            if (eventDetails.IsParticipant(currentUserId)) throw DomainConflict.CreateException();
             eventDetails.AddParticipant(user);
         });
     }
@@ -92,7 +91,7 @@ public class EventService : IEventService
         throw new NotImplementedException();
     }
 
-    public async Task<List<User>?> GetParticipantsAsync(Guid eventId, Guid currentUserId)
+    public async Task<List<User>> GetParticipantsAsync(Guid eventId, Guid currentUserId)
     {
         var eventDetails = await GetEventAsync(eventId, currentUserId);
         return eventDetails.Participants.ToList();
@@ -107,7 +106,7 @@ public class EventService : IEventService
     {
         return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
         {
-            if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+            EventAccess.RequireParticipant(eventDetails, currentUserId);
             eventDetails.PayDebt(currentUserId, amount);
             return Task.CompletedTask;
         });
@@ -117,7 +116,7 @@ public class EventService : IEventService
     {
         return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
         {
-            if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+            EventAccess.RequireOrganizer(eventDetails, currentUserId);
             eventDetails.OpenCollection();
             return Task.CompletedTask;
         });
@@ -127,7 +126,7 @@ public class EventService : IEventService
     {
         return eventRepository.SaveEventChangesAsync(eventId,  eventDetails =>
         {
-            if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+            EventAccess.RequireOrganizer(eventDetails, currentUserId);
             eventDetails.AddSupplementalDebts();
             return Task.CompletedTask;
         });

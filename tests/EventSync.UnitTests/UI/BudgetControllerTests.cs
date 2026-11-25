@@ -112,24 +112,6 @@ public class BudgetControllerTests
         Assert.Equal(50, meetup.Debts[organizer.Id]);
     }
 
-    [Fact]
-    public async Task BudgetActions_RejectInvalidUserId()
-    {
-        var eventId = Guid.NewGuid();
-        var costId = Guid.NewGuid();
-        var costsController = CostsControllerFor(null);
-        var eventsController = EventsControllerFor(null);
-
-        Assert.IsType<UnauthorizedResult>(await costsController.GetBudget(eventId));
-        Assert.IsType<UnauthorizedResult>(await costsController.CreateCost(new CreateCostRequest("Food", 40), eventId));
-        Assert.IsType<UnauthorizedResult>(await costsController.UpdateCost(new CostUpdateModel(55), eventId, costId));
-        Assert.IsType<UnauthorizedResult>(await costsController.DeleteCost(eventId, costId));
-        Assert.IsType<UnauthorizedResult>(await eventsController.OpenCollection(eventId));
-        Assert.IsType<UnauthorizedResult>(await eventsController.PayDebt(new PayDebtRequests(30), eventId));
-        Assert.IsType<UnauthorizedResult>(await eventsController.AddSupplementalDebts(eventId));
-        Assert.Empty(events.EventChangeRequests);
-    }
-
     private Event AddEvent(bool started = false)
     {
         var meetup = TestData.CreateEvent(organizer, DateTime.UtcNow.AddDays(started ? -1 : 1), 100, attendee);
@@ -137,23 +119,23 @@ public class BudgetControllerTests
         return meetup;
     }
 
-    private CostsController CostsControllerFor(Guid? userId) => new(new CostService(events))
+    private CostsController CostsControllerFor(Guid userId) => new(new CostService(events))
     {
         ControllerContext = ContextFor(userId)
     };
 
-    private EventsController EventsControllerFor(Guid? userId) =>
+    private EventsController EventsControllerFor(Guid userId) =>
         new(new EventService(new InMemoryUserRepository(organizer, attendee), events))
         {
             ControllerContext = ContextFor(userId)
         };
 
-    private static ControllerContext ContextFor(Guid? userId) => new()
+    private static ControllerContext ContextFor(Guid userId) => new()
     {
         HttpContext = new DefaultHttpContext
         {
             User = new ClaimsPrincipal(new ClaimsIdentity(
-                [new Claim(ClaimTypes.NameIdentifier, userId?.ToString() ?? "invalid")], "test"))
+                [new Claim(ClaimTypes.NameIdentifier, userId.ToString())], "test"))
         }
     };
 }

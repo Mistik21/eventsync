@@ -1,3 +1,4 @@
+using eventsynс.Application.Access;
 using eventsynс.Application.Interfaces.Services;
 using eventsynс.Application.Models;
 using eventsynс.Application.Models.Cost;
@@ -19,7 +20,7 @@ public class CostService : ICostService
     public async Task<BudgetData> GetBudgetAsync(Guid eventId, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+        EventAccess.RequireParticipant(eventDetails, currentUserId);
         return new BudgetData(
             eventDetails.Budget,
             eventDetails.CollectedBudget,
@@ -34,7 +35,7 @@ public class CostService : ICostService
     {
         return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
         {
-            if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+            EventAccess.RequireOrganizer(eventDetails, currentUserId);
             var cost = new Cost(
                 Guid.Empty,
                 data.Title,
@@ -48,8 +49,8 @@ public class CostService : ICostService
     {
         return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
         {
-            if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
-            if (eventDetails.EventStartTime <= DateTime.UtcNow) throw DomainConflict.CreateException();
+            EventAccess.RequireOrganizer(eventDetails, currentUserId);
+            if (eventDetails.EventStartTime <= DateTime.UtcNow) throw new InvalidOperationException();
             var cost = eventDetails.GetRequiredCost(costId);
             cost.ChangeAmount(data.Amount);
             return Task.CompletedTask;
@@ -60,7 +61,7 @@ public class CostService : ICostService
     {
         return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
         {
-            if (!eventDetails.IsOrganizer(currentUserId)) throw new UnauthorizedAccessException();
+            EventAccess.RequireOrganizer(eventDetails, currentUserId);
             var cost = eventDetails.GetRequiredCost(costId);
             eventDetails.RemoveCost(costId);
             eventRepository.RemoveCost(cost);

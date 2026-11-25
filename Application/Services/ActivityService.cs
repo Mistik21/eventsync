@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using eventsynс.Application.Access;
 using eventsynс.Application.Interfaces.Services;
 using eventsynс.Application.Models.Activity;
 using eventsynс.Domain.Repositories;
@@ -20,7 +21,7 @@ public class ActivityService : IActivityService
     public async Task<List<Activity>> GetActivitiesAsync(Guid eventId, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+        EventAccess.RequireParticipant(eventDetails, currentUserId);
         return eventDetails.Activities.ToList();
     }
 
@@ -29,8 +30,7 @@ public class ActivityService : IActivityService
         return eventRepository.SaveEventChangesAsync(eventId, async eventDetails =>
         {
             var user = await userRepository.GetByIdAsync(currentUserId);
-            if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
-            if (data.ActivityStartTime < eventDetails.EventStartTime) throw new ArgumentOutOfRangeException();
+            EventAccess.RequireParticipant(eventDetails, currentUserId);
             var activity = new Activity(
                 Guid.Empty,
                 data.Title,
@@ -49,10 +49,10 @@ public class ActivityService : IActivityService
     {
         return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
         {
-            if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+            EventAccess.RequireParticipant(eventDetails, currentUserId);
             var activity = eventDetails.GetRequiredActivity(activityId);
-            if (!activity.IsCreator(currentUserId)) throw new UnauthorizedAccessException();
-            if (data.ActivityStartTime < eventDetails.EventStartTime) throw new ArgumentOutOfRangeException();
+            ActivityAccess.RequireCreator(activity, currentUserId);
+            eventDetails.ValidateActivityStartTime(data.ActivityStartTime);
             activity.ChangeTitle(data.Title);
             activity.ChangeDescription(data.Description);
             activity.ChangeTime(data.ActivityStartTime, data.ActivityEndTime);
@@ -65,9 +65,9 @@ public class ActivityService : IActivityService
     {
         return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
         {
-            if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+            EventAccess.RequireParticipant(eventDetails, currentUserId);
             var activity = eventDetails.GetRequiredActivity(activityId);
-            if (!activity.IsCreator(currentUserId)) throw new UnauthorizedAccessException();
+            ActivityAccess.RequireCreator(activity, currentUserId);
             eventDetails.RemoveActivity(activityId);
             eventRepository.RemoveActivity(activity);
             return Task.CompletedTask;
@@ -79,7 +79,7 @@ public class ActivityService : IActivityService
         return eventRepository.SaveEventChangesAsync(eventId, async eventDetails =>
         {
             var user = await userRepository.GetByIdAsync(currentUserId);
-            if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+            EventAccess.RequireParticipant(eventDetails, currentUserId);
             var activity = eventDetails.GetRequiredActivity(activityId);
             activity.AddParticipant(user);
         });
@@ -89,7 +89,7 @@ public class ActivityService : IActivityService
     {
         return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
         {
-            if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+            EventAccess.RequireParticipant(eventDetails, currentUserId);
             var activity = eventDetails.GetRequiredActivity(activityId);
             activity.RemoveParticipant(currentUserId);
             return Task.CompletedTask;

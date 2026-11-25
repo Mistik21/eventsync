@@ -1,3 +1,4 @@
+using eventsynс.Domain.Entities;
 using EventSync.UnitTests.TestSupport;
 using Xunit;
 
@@ -5,6 +6,18 @@ namespace EventSync.UnitTests.Domain;
 
 public class EventTests
 {
+    [Fact]
+    public void AddParticipant_RejectsDifferentInstanceWithSameUserId()
+    {
+        var organizer = TestData.CreateUser(1);
+        var participant = TestData.CreateUser(2);
+        var meetup = TestData.CreateEvent(organizer, participant);
+        var duplicate = new User(participant.Id, participant.TelegramID, participant.Name);
+
+        Assert.Throws<InvalidOperationException>(() => meetup.AddParticipant(duplicate));
+        Assert.Equal(new[] { organizer, participant }, meetup.Participants);
+    }
+
     [Theory]
     [InlineData(-1)]
     [InlineData(1)]

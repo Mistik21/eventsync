@@ -22,10 +22,7 @@ public class ActivitiesController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetActivities(Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
+        var currentUserId = User.GetCurrentUserId();
 
         var result = await activityService.GetActivitiesAsync(eventId, currentUserId);
         return Ok(result.Select(activity => new
@@ -44,10 +41,7 @@ public class ActivitiesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateActivity(CreateActivityRequest data, Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
+        var currentUserId = User.GetCurrentUserId();
         await activityService.CreateActivityAsync(
             eventId,
             new ActivityCreationModel(
@@ -63,10 +57,7 @@ public class ActivitiesController : ControllerBase
     [HttpPatch("{activityId:guid}")]
     public async Task<IActionResult> UpdateActivity(UpdateActivityRequest data,Guid eventId, Guid activityId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
+        var currentUserId = User.GetCurrentUserId();
 
         await activityService.UpdateActivityAsync(
             eventId,
@@ -85,10 +76,7 @@ public class ActivitiesController : ControllerBase
     [HttpDelete("{activityId:guid}")]
     public async Task<IActionResult> DeleteActivity(Guid eventId, Guid activityId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
+        var currentUserId = User.GetCurrentUserId();
         
         await activityService.DeleteActivityAsync(eventId, activityId, currentUserId);
         return Ok();
@@ -97,10 +85,7 @@ public class ActivitiesController : ControllerBase
     [HttpPost("{activityId:guid}/join")]
     public async Task<IActionResult> JoinActivity(Guid eventId, Guid activityId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
+        var currentUserId = User.GetCurrentUserId();
         
         await activityService.JoinActivityAsync(eventId, activityId, currentUserId);
         return Ok();
@@ -109,10 +94,7 @@ public class ActivitiesController : ControllerBase
     [HttpPost("{activityId:guid}/leave")]
     public async Task<IActionResult> LeaveActivity(Guid eventId, Guid activityId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
+        var currentUserId = User.GetCurrentUserId();
         
         await activityService.LeaveActivityAsync(eventId, activityId, currentUserId);
         return Ok();

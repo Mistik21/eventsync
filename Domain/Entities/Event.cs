@@ -139,7 +139,7 @@ public class Event
 
     public void AddParticipant(User user)
     {
-        if (Participants.Contains(user) || IsOpenCollection()) throw DomainConflict.CreateException();
+        if (IsParticipant(user.Id) || IsOpenCollection()) throw DomainConflict.CreateException();
         Participants = Participants.Append(user).ToList();
     }
 
@@ -169,8 +169,15 @@ public class Event
         Items = Items.Where(item => item.Id != itemId).ToList();
     }
 
+    public void ValidateActivityStartTime(DateTime startTime)
+    {
+        if (startTime < EventStartTime)
+            throw new ArgumentOutOfRangeException(nameof(startTime));
+    }
+
     public void AddActivity(Activity activity)
     {
+        ValidateActivityStartTime(activity.АctivityStartTime);
         activities.Add(activity);
     }
 

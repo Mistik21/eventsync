@@ -1,3 +1,4 @@
+using eventsynс.Application.Access;
 using eventsynс.Application.Interfaces.Services;
 using eventsynс.Application.Models.Item;
 using eventsynс.Domain.Entities;
@@ -17,14 +18,14 @@ public class ItemService : IItemService
     public async Task<List<Item>> GetItemsAsync(Guid eventId, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+        EventAccess.RequireParticipant(eventDetails, currentUserId);
         return eventDetails.Items.ToList();
     }
 
     public async Task CreateItemAsync(Guid eventId, ItemCreationModel data, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+        EventAccess.RequireParticipant(eventDetails, currentUserId);
         var item = new Item(
             Guid.Empty,
             data.Title,
@@ -39,7 +40,7 @@ public class ItemService : IItemService
     public async Task UpdateItemAsync(Guid eventId, Guid itemId, ItemUpdateModel data, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+        EventAccess.RequireParticipant(eventDetails, currentUserId);
         var item = eventDetails.GetRequiredItem(itemId);
         item.ChangeCount(data.Count);
         item.ChangeTitle(data.Title);
@@ -51,7 +52,7 @@ public class ItemService : IItemService
     public async Task DeleteItemAsync(Guid eventId, Guid itemId, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+        EventAccess.RequireParticipant(eventDetails, currentUserId);
         var item = eventDetails.GetRequiredItem(itemId);
         eventDetails.RemoveItem(itemId);
         eventRepository.RemoveItem(item);
@@ -61,7 +62,7 @@ public class ItemService : IItemService
     public async Task AssignItemAsync(Guid eventId, Guid itemId, Guid currentUserId)
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
-        if (!eventDetails.IsParticipant(currentUserId)) throw new UnauthorizedAccessException();
+        EventAccess.RequireParticipant(eventDetails, currentUserId);
         var item = eventDetails.GetRequiredItem(itemId);
         item.AssignTo(currentUserId);
         await eventRepository.SavedAsync();
@@ -71,11 +72,8 @@ public class ItemService : IItemService
     {
         var eventDetails = await eventRepository.GetEventByIdAsync(eventId);
         var item = eventDetails.GetRequiredItem(itemId);
-        if (!eventDetails.IsParticipant(currentUserId) || !item.IsResponsible(currentUserId))
-        {
-            throw new UnauthorizedAccessException();
-        }
-
+        EventAccess.RequireParticipant(eventDetails, currentUserId);
+        ItemAccess.RequireResponsible(item, currentUserId);
         item.UnassignTo();
         await eventRepository.SavedAsync();
     }

@@ -25,10 +25,7 @@ public class EventsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<EventListItemResponse>>> GetMyEvents()
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
+        var currentUserId = User.GetCurrentUserId();
 
         var events = await eventService.GetMyEventsAsync(currentUserId);
         return Ok(events.Select(e => new EventListItemResponse(
@@ -44,10 +41,7 @@ public class EventsController : ControllerBase
     [HttpGet("{eventId:guid}")]
     public async Task<IActionResult> GetEvent(Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
+        var currentUserId = User.GetCurrentUserId();
 
         var result = await eventService.GetEventAsync(eventId, currentUserId);
         return Ok(new EventResponse(
@@ -70,10 +64,7 @@ public class EventsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateEvent(CreateEventRequest request)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
+        var currentUserId = User.GetCurrentUserId();
 
         await eventService.CreateEventAsync(new EventCreationModel(
             request.Title,
@@ -88,11 +79,7 @@ public class EventsController : ControllerBase
     [HttpPatch("{eventId:guid}")]
     public async Task<IActionResult> UpdateEvent(UpdateEventRequest data, Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         await eventService.UpdateEventAsync(
             eventId,
             new EventUpdateModel(
@@ -109,11 +96,7 @@ public class EventsController : ControllerBase
     [HttpDelete("{eventId:guid}")]
     public async Task<IActionResult> DeleteEvent(Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         var deleted = await eventService.DeleteEventAsync(eventId, currentUserId);
         return deleted ? NoContent() : NotFound();
     }
@@ -121,18 +104,8 @@ public class EventsController : ControllerBase
     [HttpGet("{eventId:guid}/invitation")]
     public async Task<IActionResult> GetInvitation(Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
-        var invitation = await eventService.GetInvitationAsync(eventId);
-        if (invitation is null)
-        {
-            return NotFound();
-        }
-
-        var (eventDetails, organizerName) = invitation.Value;
+        var currentUserId = User.GetCurrentUserId();
+        var (eventDetails, organizerName) = await eventService.GetInvitationAsync(eventId);
         var isParticipant = eventDetails.IsParticipant(currentUserId);
         if (!isParticipant && eventDetails.IsOpenCollection())
         {
@@ -155,11 +128,7 @@ public class EventsController : ControllerBase
     [HttpPost("{eventId:guid}/join")]
     public async Task<IActionResult> JoinEvent(Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         await eventService.JoinEventAsync(eventId, currentUserId);
         return Ok();
     }
@@ -170,18 +139,9 @@ public class EventsController : ControllerBase
     [HttpGet("{eventId:guid}/participants")]
     public async Task<IActionResult> GetParticipants(Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
-        var result = await eventService.GetParticipantsAsync(eventId, currentUserId);
-        if (result == null)
-        {
-            return NotFound();
-        }
-
-        return Ok(result.Select(user => new { user.Id, user.Name }));
+        var currentUserId = User.GetCurrentUserId();
+        var participants = await eventService.GetParticipantsAsync(eventId, currentUserId);
+        return Ok(participants.Select(user => new { user.Id, user.Name }));
     }
 
     [HttpDelete("{eventId:guid}/participants/{userId:guid}")]
@@ -191,11 +151,7 @@ public class EventsController : ControllerBase
     [HttpPost("{eventId:guid}/pay-debt")]
     public async Task<IActionResult> PayDebt(PayDebtRequests data, Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         await eventService.PayMyDebtAsync(eventId, currentUserId, data.amount);
         return Ok();
     }
@@ -203,11 +159,7 @@ public class EventsController : ControllerBase
     [HttpPost("{eventId:guid}/collection/open")]
     public async Task<IActionResult> OpenCollection(Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         await eventService.OpenCollectionAsync(eventId, currentUserId);
         return Ok();
     }
@@ -215,11 +167,7 @@ public class EventsController : ControllerBase
     [HttpPost("{eventId:guid}/collection/supplemental")]
     public async Task<IActionResult> AddSupplementalDebts(Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         await eventService.AddSupplementalDebtsAsync(eventId, currentUserId);
         return Ok();
     }

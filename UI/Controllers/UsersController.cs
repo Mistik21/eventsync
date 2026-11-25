@@ -21,11 +21,7 @@ public class UsersController : ControllerBase
     [HttpGet("me")]
     public async Task<IActionResult> GetMyProfile()
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         var user = await userService.GetMyProfileAsync(currentUserId);
         var organizedCount = await userService.GetCountByOrganizerAsync(currentUserId);
         var attendedCount = await userService.GetCountByParticipantAsync(user.Id);

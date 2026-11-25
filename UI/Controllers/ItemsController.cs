@@ -23,11 +23,7 @@ public class ItemsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetItems(Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         var result = await itemService.GetItemsAsync(eventId, currentUserId);
         return Ok(result);
     }
@@ -35,11 +31,7 @@ public class ItemsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateItem(CreateItemRequest data ,Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         await itemService.CreateItemAsync(
             eventId,
             new ItemCreationModel(data.Title, data.Description, data.Count, data.UrlShop),
@@ -50,11 +42,7 @@ public class ItemsController : ControllerBase
     [HttpPatch("{itemId:guid}")]
     public async Task<IActionResult> UpdateItem(UpdateItemRequest data,Guid eventId, Guid itemId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         await itemService.UpdateItemAsync(
             eventId,
             itemId,
@@ -66,11 +54,7 @@ public class ItemsController : ControllerBase
     [HttpDelete("{itemId:guid}")]
     public async Task<IActionResult> DeleteItem(Guid eventId, Guid itemId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         await itemService.DeleteItemAsync(eventId, itemId, currentUserId);
         return Ok();
     }
@@ -78,11 +62,7 @@ public class ItemsController : ControllerBase
     [HttpPost("{itemId:guid}/assign")]
     public async Task<IActionResult> AssignItem(Guid eventId, Guid itemId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         await itemService.AssignItemAsync(eventId, itemId, currentUserId);
         return Ok();
     }
@@ -90,11 +70,7 @@ public class ItemsController : ControllerBase
     [HttpPost("{itemId:guid}/unassign")]
     public async Task<IActionResult> UnassignItem(Guid eventId, Guid itemId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         await itemService.UnassignItemAsync(eventId, itemId, currentUserId);
         return Ok();
     }

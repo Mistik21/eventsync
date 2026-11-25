@@ -23,11 +23,7 @@ public class CostsController : ControllerBase
     [HttpGet("budget")]
     public async Task<IActionResult> GetBudget(Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         var result = await costService.GetBudgetAsync(eventId, currentUserId);
         return Ok(new BudgetResponse(
             result.Budget,
@@ -41,11 +37,7 @@ public class CostsController : ControllerBase
     [HttpPost("costs")]
     public async Task<IActionResult> CreateCost(CreateCostRequest data,Guid eventId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-
+        var currentUserId = User.GetCurrentUserId();
         await costService.CreateCostAsync(eventId, new CostCreationModel(data.Title, data.Amount), currentUserId);
         return Ok();
     }
@@ -53,11 +45,7 @@ public class CostsController : ControllerBase
     [HttpPatch("costs/{costId:guid}")]
     public async Task<IActionResult> UpdateCost(CostUpdateModel data ,Guid eventId, Guid costId)
     {
-        
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
+        var currentUserId = User.GetCurrentUserId();
         await costService.UpdateCostAsync(eventId, costId, new CostUpdateModel(data.Amount), currentUserId);
         return Ok();
     }
@@ -65,11 +53,7 @@ public class CostsController : ControllerBase
     [HttpDelete("costs/{costId:guid}")]
     public async Task<IActionResult> DeleteCost(Guid eventId, Guid costId)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-        {
-            return Unauthorized();
-        }
-        
+        var currentUserId = User.GetCurrentUserId();
         await costService.DeleteCostAsync(eventId, costId, currentUserId);
         return Ok();
     }

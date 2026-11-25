@@ -34,21 +34,4 @@ public class UsersControllerTests
 
         Assert.Equal(new UserResponse(user.Id, user.Name, 2, 1), Assert.IsType<UserResponse>(result.Value));
     }
-
-    [Fact]
-    public async Task GetMyProfile_RejectsMalformedUserId()
-    {
-        var controller = new UsersController(new UserService(new InMemoryUserRepository(), new InMemoryEventRepository()))
-        {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = new DefaultHttpContext
-                {
-                    User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "invalid")]))
-                }
-            }
-        };
-
-        Assert.IsType<UnauthorizedResult>(await controller.GetMyProfile());
-    }
 }
