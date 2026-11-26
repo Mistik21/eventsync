@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net;
 using eventsynс.Application.Interfaces.Notifications;
 using eventsynс.Application.Interfaces.Services;
+using eventsynс.Application.Services;
 using eventsynс.UI.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -68,7 +69,12 @@ public class TelegramController : ControllerBase
                     title: "Сервис отправки не дождался ответа Telegram."),
                 HttpStatusCode.BadGateway => Problem(
                     statusCode: StatusCodes.Status502BadGateway,
-                    title: "Сервис отправки не подтвердил доставку сообщения в Telegram."),
+                    title: error is TelegramRelayException relay
+                        ? DescribeRelayFailure(relay)
+                        : "Telegram вернул HTTP 502."),
+                HttpStatusCode.ServiceUnavailable when error is TelegramRelayException relay => Problem(
+                    statusCode: StatusCodes.Status503ServiceUnavailable,
+                    title: DescribeRelayFailure(relay)),
                 null => Problem(
                     statusCode: StatusCodes.Status502BadGateway,
                     title: "Сервер EventSync не смог подключиться к сервису отправки Telegram."),
@@ -92,6 +98,23 @@ public class TelegramController : ControllerBase
                 title: "Отправка Telegram не настроена на сервере EventSync.");
         }
     }
+
+    private static string DescribeRelayFailure(TelegramRelayException error) => error.TelegramResult switch
+    {
+        "invalid-token" => "Неверный формат TELEGRAM_BOT_TOKEN в Cloudflare. Укажите токен из BotFather целиком.",
+        "401" or "404" => "Telegram отклонил токен бота. Проверьте TELEGRAM_BOT_TOKEN в Cloudflare.",
+        "unreachable" => "Cloudflare Worker не смог подключиться к api.telegram.org.",
+        "200" => "Telegram Bot API вернул HTTP 200 без подтверждения отправки.",
+        string result when int.TryParse(result, out var status) && status is >= 100 and <= 599
+            => $"Telegram Bot API вернул HTTP {status}.",
+        _ => error.RelayStatusCode switch
+        {
+            HttpStatusCode.Unauthorized => "Cloudflare Worker отклонил запрос. Проверьте, совпадают ли секреты в Cloudflare и Lockbox.",
+            HttpStatusCode.NotFound => "Маршрут Cloudflare Worker не найден. Проверьте адрес с /send в TELEGRAM_RELAY_URL.",
+            HttpStatusCode.ServiceUnavailable => "Cloudflare Worker недоступен или в нём не настроены секреты (HTTP 503).",
+            _ => $"Cloudflare Worker вернул HTTP {(int)error.RelayStatusCode} без подтверждения отправки в Telegram."
+        }
+    };
 
     private static async Task<ConnectionProbe> ProbeAsync(HttpClient client, Uri address, CancellationToken cancellationToken)
     {

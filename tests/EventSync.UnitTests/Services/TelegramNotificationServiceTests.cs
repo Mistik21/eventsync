@@ -24,12 +24,14 @@ public class TelegramNotificationServiceTests
     }
 
     [Theory]
-    [InlineData(HttpStatusCode.NoContent, null)]
-    [InlineData(HttpStatusCode.OK, HttpStatusCode.BadGateway)]
-    [InlineData(HttpStatusCode.UnprocessableEntity, HttpStatusCode.UnprocessableEntity)]
-    [InlineData(HttpStatusCode.GatewayTimeout, HttpStatusCode.GatewayTimeout)]
+    [InlineData(HttpStatusCode.NoContent, null, null)]
+    [InlineData(HttpStatusCode.OK, HttpStatusCode.BadGateway, null)]
+    [InlineData(HttpStatusCode.BadGateway, HttpStatusCode.BadGateway, "401")]
+    [InlineData(HttpStatusCode.Unauthorized, HttpStatusCode.ServiceUnavailable, null)]
+    [InlineData(HttpStatusCode.UnprocessableEntity, HttpStatusCode.UnprocessableEntity, "403")]
+    [InlineData(HttpStatusCode.GatewayTimeout, HttpStatusCode.GatewayTimeout, null)]
     public async Task SendMessageAsync_UsesRelayAndRequiresDeliveryConfirmation(
-        HttpStatusCode relayStatus, HttpStatusCode? expectedError)
+        HttpStatusCode relayStatus, HttpStatusCode? expectedError, string? telegramResult)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -37,7 +39,7 @@ public class TelegramNotificationServiceTests
                 ["Telegram:RelayUrl"] = "https://eventsync.example/send",
                 ["Telegram:RelaySecret"] = "relay-secret"
             }).Build();
-        using var client = new HttpClient(new RelayHandler(relayStatus));
+        using var client = new HttpClient(new RelayHandler(relayStatus, telegramResult));
         var service = new TelegramNotificationService(client, configuration);
 
         if (expectedError is null)
@@ -46,9 +48,11 @@ public class TelegramNotificationServiceTests
             return;
         }
 
-        var error = await Assert.ThrowsAsync<HttpRequestException>(
+        var error = await Assert.ThrowsAsync<TelegramRelayException>(
             () => service.SendMessageAsync(12345678901L, "Тестовое сообщение"));
         Assert.Equal(expectedError, error.StatusCode);
+        Assert.Equal(relayStatus, error.RelayStatusCode);
+        Assert.Equal(telegramResult, error.TelegramResult);
     }
 
     private sealed class TelegramHandler : HttpMessageHandler
@@ -66,7 +70,7 @@ public class TelegramNotificationServiceTests
         }
     }
 
-    private sealed class RelayHandler(HttpStatusCode statusCode) : HttpMessageHandler
+    private sealed class RelayHandler(HttpStatusCode statusCode, string? telegramResult) : HttpMessageHandler
     {
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
@@ -78,7 +82,10 @@ public class TelegramNotificationServiceTests
             Assert.Equal(12345678901L, body.RootElement.GetProperty("chatId").GetInt64());
             Assert.Equal("Тестовое сообщение", body.RootElement.GetProperty("text").GetString());
 
-            return new HttpResponseMessage(statusCode);
+            var response = new HttpResponseMessage(statusCode);
+            if (telegramResult is not null)
+                response.Headers.Add("X-EventSync-Telegram-Result", telegramResult);
+            return response;
         }
     }
 }

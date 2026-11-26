@@ -53,18 +53,17 @@ public class TelegramNotificationService : ITelegramNotificationService
         if (response.StatusCode == HttpStatusCode.NoContent)
             return;
 
-        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or
-            HttpStatusCode.ServiceUnavailable)
-        {
-            throw new InvalidOperationException("Проверьте настройки сервиса отправки Telegram.");
-        }
-
         var statusCode = response.StatusCode switch
         {
             HttpStatusCode.UnprocessableEntity or HttpStatusCode.TooManyRequests or HttpStatusCode.GatewayTimeout
                 => response.StatusCode,
+            HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.ServiceUnavailable
+                => HttpStatusCode.ServiceUnavailable,
             _ => HttpStatusCode.BadGateway
         };
-        throw new HttpRequestException("Сервис отправки Telegram не подтвердил доставку.", null, statusCode);
+        var telegramResult = response.Headers.TryGetValues("X-EventSync-Telegram-Result", out var values)
+            ? values.FirstOrDefault()
+            : null;
+        throw new TelegramRelayException(statusCode, response.StatusCode, telegramResult);
     }
 }
