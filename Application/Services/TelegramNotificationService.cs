@@ -20,7 +20,7 @@ public class TelegramNotificationService : ITelegramNotificationService
         if (string.IsNullOrWhiteSpace(token)) throw new InvalidOperationException();
 
         using var response = await client.PostAsJsonAsync(
-            $"bot{token}/sendMessage",
+            $"/bot{token}/sendMessage",
             new { chat_id = telegramId, text = message });
         response.EnsureSuccessStatusCode();
     }
