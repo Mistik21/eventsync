@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { eventsUrl, message, useResource, write } from "./api";
+import { eventsUrl, message, useResource } from "./api";
 import { eventPath, Link } from "./navigation";
+import { fetchApi } from "./session.js";
 import { Cover, dateTime, ResourceStatus, useAddress } from "./ui";
 import { getInitials } from "./current-user.js";
 
 const groups = { active: "Активные", organizing: "Я организую", archive: "Архив" };
 const emptyTitles = { active: "Нет активных событий", organizing: "Нет событий, которые вы организуете", archive: "В архиве пока пусто" };
+const notificationError = "Не удалось отправить тестовое уведомление.";
 
 function EventCard({ event, prepare, active, onAddress }) {
     const card = useRef(null);
@@ -70,12 +72,15 @@ export function Home({ active, prepareEvent, prepareProfile }) {
         setSendingNotification(true);
         setNotificationStatus("");
         try {
-            await write("/api/telegram/test-message", "POST");
-            setNotificationStatus("Тестовое уведомление отправлено.");
-        } catch (error) {
-            setNotificationStatus(error.status === 422
-                ? "Откройте чат с ботом EventSync, нажмите «Старт» и попробуйте ещё раз."
-                : message(error, "Не удалось отправить тестовое уведомление."));
+            const response = await fetchApi("/api/telegram/test-message", { method: "POST" });
+            if (response.ok) {
+                setNotificationStatus("Тестовое уведомление отправлено.");
+            } else {
+                const problem = await response.json().catch(() => null);
+                setNotificationStatus(message(response, problem?.title || notificationError));
+            }
+        } catch {
+            setNotificationStatus(notificationError);
         } finally {
             setSendingNotification(false);
         }

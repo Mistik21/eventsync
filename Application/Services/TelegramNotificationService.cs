@@ -16,7 +16,7 @@ public class TelegramNotificationService : ITelegramNotificationService
 
     public async Task SendMessageAsync(long telegramId, string message)
     {
-        var token = configuration["Telegram:BotToken"];
+        var token = configuration["Telegram:BotToken"]?.Trim();
         if (string.IsNullOrWhiteSpace(token)) throw new InvalidOperationException();
 
         using var response = await client.PostAsJsonAsync(
