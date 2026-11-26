@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { eventsUrl, message, readJson, useResource } from "./api";
+import { eventsUrl, useResource } from "./api";
 import { eventPath, Link } from "./navigation";
-import { fetchApi } from "./session.js";
 import { Cover, dateTime, ResourceStatus, useAddress } from "./ui";
 import { getInitials } from "./current-user.js";
 
 const groups = { active: "Активные", organizing: "Я организую", archive: "Архив" };
 const emptyTitles = { active: "Нет активных событий", organizing: "Нет событий, которые вы организуете", archive: "В архиве пока пусто" };
-const notificationError = "Не удалось отправить тестовое уведомление.";
 
 function EventCard({ event, prepare, active, onAddress }) {
     const card = useRef(null);
@@ -48,10 +46,6 @@ export function Home({ active, prepareEvent, prepareProfile }) {
     const [search, setSearch] = useState("");
     const [order, setOrder] = useState("ascending");
     const [initials, setInitials] = useState("П");
-    const [sendingNotification, setSendingNotification] = useState(false);
-    const [notificationStatus, setNotificationStatus] = useState("");
-    const [checkingConnection, setCheckingConnection] = useState(false);
-    const [connectionStatus, setConnectionStatus] = useState("");
     const addresses = useRef(new Map());
     const filter = useRef(null);
     const events = resource.data ?? [];
@@ -70,57 +64,12 @@ export function Home({ active, prepareEvent, prepareProfile }) {
         });
     }, []);
 
-    async function sendTestNotification() {
-        setSendingNotification(true);
-        setNotificationStatus("");
-        try {
-            const response = await fetchApi("/api/telegram/test-message", { method: "POST" });
-            if (response.ok) {
-                setNotificationStatus("Тестовое уведомление отправлено.");
-            } else {
-                const problem = await response.json().catch(() => null);
-                setNotificationStatus(message(response, problem?.title || notificationError));
-            }
-        } catch {
-            setNotificationStatus(notificationError);
-        } finally {
-            setSendingNotification(false);
-        }
-    }
-
-    async function checkTelegramConnection() {
-        setCheckingConnection(true);
-        setConnectionStatus("");
-        try {
-            const results = await readJson("/api/telegram/diagnostics");
-            setConnectionStatus(results.map(result =>
-                `${result.host} — ${result.error ?? `HTTP ${result.httpStatus}`} (${result.elapsedMs} мс)`
-            ).join("\n"));
-        } catch (error) {
-            setConnectionStatus(message(error, "Не удалось запустить проверку связи."));
-        } finally {
-            setCheckingConnection(false);
-        }
-    }
-
     return <main className="events-screen" hidden={!active}>
         <header className="events-header">
             <span className="events-mark" aria-hidden="true">▣</span>
             <h1>Мои события</h1>
             <Link className="profile-badge" to="/profile" aria-label="Открыть профиль" intent={prepareProfile}>{initials}</Link>
         </header>
-        <div className="events-telegram-test">
-            <div className="events-telegram-actions">
-                <button className="event-group" type="button" disabled={sendingNotification} onClick={sendTestNotification}>
-                    {sendingNotification ? "Отправляем…" : "Отправить тест в Telegram"}
-                </button>
-                <button className="event-group" type="button" disabled={checkingConnection} onClick={checkTelegramConnection}>
-                    {checkingConnection ? "Проверяем…" : "Проверить связь"}
-                </button>
-            </div>
-            <p role="status">{notificationStatus}</p>
-            <p role="status">{connectionStatus}</p>
-        </div>
         <ul className="event-groups" aria-label="Группы событий">
             {Object.entries(groups).map(([key, label]) => <li key={key}>
                 <button className={`event-group event-group--${key}`} type="button" aria-pressed={group === key} onClick={() => {

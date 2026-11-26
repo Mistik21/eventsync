@@ -62,31 +62,6 @@ input:disabled {
     gap: 10px;
 }
 
-.events-telegram-test {
-    margin-top: 12px;
-}
-
-.events-telegram-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.events-telegram-test button {
-    min-height: 44px;
-}
-
-.events-telegram-test p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 14px;
-    white-space: pre-line;
-}
-
-.events-telegram-test p:not(:empty) {
-    margin-top: 6px;
-}
-
 .events-header h1 {
     margin: 0;
     font-size: 20px;
