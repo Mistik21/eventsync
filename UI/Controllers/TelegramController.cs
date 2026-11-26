@@ -54,7 +54,7 @@ public class TelegramController : ControllerBase
 
             return error.StatusCode switch
             {
-                HttpStatusCode.BadRequest or HttpStatusCode.Forbidden => Problem(
+                HttpStatusCode.BadRequest or HttpStatusCode.Forbidden or HttpStatusCode.UnprocessableEntity => Problem(
                     statusCode: StatusCodes.Status422UnprocessableEntity,
                     title: "Откройте личный чат с ботом EventSync, нажмите «Старт» и попробуйте ещё раз."),
                 HttpStatusCode.Unauthorized or HttpStatusCode.NotFound => Problem(
@@ -63,9 +63,15 @@ public class TelegramController : ControllerBase
                 HttpStatusCode.TooManyRequests => Problem(
                     statusCode: StatusCodes.Status429TooManyRequests,
                     title: "Telegram временно ограничил отправку. Попробуйте чуть позже."),
+                HttpStatusCode.GatewayTimeout => Problem(
+                    statusCode: StatusCodes.Status504GatewayTimeout,
+                    title: "Сервис отправки не дождался ответа Telegram."),
+                HttpStatusCode.BadGateway => Problem(
+                    statusCode: StatusCodes.Status502BadGateway,
+                    title: "Сервис отправки не подтвердил доставку сообщения в Telegram."),
                 null => Problem(
                     statusCode: StatusCodes.Status502BadGateway,
-                    title: "Сервер EventSync не смог подключиться к Telegram."),
+                    title: "Сервер EventSync не смог подключиться к сервису отправки Telegram."),
                 _ => Problem(
                     statusCode: StatusCodes.Status502BadGateway,
                     title: $"Telegram вернул HTTP {(int)error.StatusCode.Value}.")
@@ -76,7 +82,7 @@ public class TelegramController : ControllerBase
             logger.LogWarning("Telegram test message timed out.");
             return Problem(
                 statusCode: StatusCodes.Status504GatewayTimeout,
-                title: "Сервер EventSync не дождался ответа Telegram.");
+                title: "Сервер EventSync не дождался ответа сервиса отправки Telegram.");
         }
         catch (InvalidOperationException)
         {

@@ -39,6 +39,7 @@ builder.Services.AddHttpClient<ITelegramNotificationService, TelegramNotificatio
         client.BaseAddress = new Uri("https://api.telegram.org/");
         client.Timeout = TimeSpan.FromSeconds(5);
     })
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false })
     .RemoveAllLoggers();
 
 builder.Services.AddHttpClient("TelegramDiagnostics", client => client.Timeout = TimeSpan.FromSeconds(5))
