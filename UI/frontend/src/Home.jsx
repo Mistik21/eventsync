@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { eventsUrl, message, useResource } from "./api";
+import { eventsUrl, message, readJson, useResource } from "./api";
 import { eventPath, Link } from "./navigation";
 import { fetchApi } from "./session.js";
 import { Cover, dateTime, ResourceStatus, useAddress } from "./ui";
@@ -50,6 +50,8 @@ export function Home({ active, prepareEvent, prepareProfile }) {
     const [initials, setInitials] = useState("П");
     const [sendingNotification, setSendingNotification] = useState(false);
     const [notificationStatus, setNotificationStatus] = useState("");
+    const [checkingConnection, setCheckingConnection] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState("");
     const addresses = useRef(new Map());
     const filter = useRef(null);
     const events = resource.data ?? [];
@@ -86,6 +88,21 @@ export function Home({ active, prepareEvent, prepareProfile }) {
         }
     }
 
+    async function checkTelegramConnection() {
+        setCheckingConnection(true);
+        setConnectionStatus("");
+        try {
+            const results = await readJson("/api/telegram/diagnostics");
+            setConnectionStatus(results.map(result =>
+                `${result.host} — ${result.error ?? `HTTP ${result.httpStatus}`} (${result.elapsedMs} мс)`
+            ).join("\n"));
+        } catch (error) {
+            setConnectionStatus(message(error, "Не удалось запустить проверку связи."));
+        } finally {
+            setCheckingConnection(false);
+        }
+    }
+
     return <main className="events-screen" hidden={!active}>
         <header className="events-header">
             <span className="events-mark" aria-hidden="true">▣</span>
@@ -93,10 +110,16 @@ export function Home({ active, prepareEvent, prepareProfile }) {
             <Link className="profile-badge" to="/profile" aria-label="Открыть профиль" intent={prepareProfile}>{initials}</Link>
         </header>
         <div className="events-telegram-test">
-            <button className="event-group" type="button" disabled={sendingNotification} onClick={sendTestNotification}>
-                {sendingNotification ? "Отправляем…" : "Отправить тест в Telegram"}
-            </button>
+            <div className="events-telegram-actions">
+                <button className="event-group" type="button" disabled={sendingNotification} onClick={sendTestNotification}>
+                    {sendingNotification ? "Отправляем…" : "Отправить тест в Telegram"}
+                </button>
+                <button className="event-group" type="button" disabled={checkingConnection} onClick={checkTelegramConnection}>
+                    {checkingConnection ? "Проверяем…" : "Проверить связь"}
+                </button>
+            </div>
             <p role="status">{notificationStatus}</p>
+            <p role="status">{connectionStatus}</p>
         </div>
         <ul className="event-groups" aria-label="Группы событий">
             {Object.entries(groups).map(([key, label]) => <li key={key}>

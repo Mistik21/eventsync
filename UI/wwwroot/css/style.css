@@ -66,6 +66,12 @@ input:disabled {
     margin-top: 12px;
 }
 
+.events-telegram-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
 .events-telegram-test button {
     min-height: 44px;
 }
@@ -74,6 +80,7 @@ input:disabled {
     margin: 0;
     color: var(--muted);
     font-size: 14px;
+    white-space: pre-line;
 }
 
 .events-telegram-test p:not(:empty) {

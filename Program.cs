@@ -41,6 +41,10 @@ builder.Services.AddHttpClient<ITelegramNotificationService, TelegramNotificatio
     })
     .RemoveAllLoggers();
 
+builder.Services.AddHttpClient("TelegramDiagnostics", client => client.Timeout = TimeSpan.FromSeconds(5))
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false })
+    .RemoveAllLoggers();
+
 builder.Services.AddAuthentication("EventSync")
     .AddPolicyScheme("EventSync", null, options =>
     {

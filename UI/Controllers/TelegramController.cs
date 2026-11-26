@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using eventsynс.Application.Interfaces.Notifications;
 using eventsynс.Application.Interfaces.Services;
@@ -14,14 +15,27 @@ public class TelegramController : ControllerBase
 {
     private readonly IUserService users;
     private readonly ITelegramNotificationService notifications;
+    private readonly IHttpClientFactory httpClients;
     private readonly ILogger<TelegramController> logger;
 
     public TelegramController(IUserService users, ITelegramNotificationService notifications,
-        ILogger<TelegramController> logger)
+        IHttpClientFactory httpClients, ILogger<TelegramController> logger)
     {
         this.users = users;
         this.notifications = notifications;
+        this.httpClients = httpClients;
         this.logger = logger;
+    }
+
+    [HttpGet("diagnostics")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<IActionResult> CheckConnection(CancellationToken cancellationToken)
+    {
+        using var client = httpClients.CreateClient("TelegramDiagnostics");
+        var results = await Task.WhenAll(
+            ProbeAsync(client, new Uri("https://api.telegram.org/"), cancellationToken),
+            ProbeAsync(client, new Uri("https://example.com/"), cancellationToken));
+        return Ok(results);
     }
 
     [HttpPost("test-message")]
@@ -72,4 +86,34 @@ public class TelegramController : ControllerBase
                 title: "Отправка Telegram не настроена на сервере EventSync.");
         }
     }
+
+    private static async Task<ConnectionProbe> ProbeAsync(HttpClient client, Uri address, CancellationToken cancellationToken)
+    {
+        var started = Stopwatch.GetTimestamp();
+        try
+        {
+            using var response = await client.GetAsync(address, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            return new ConnectionProbe(address.Host, (int)response.StatusCode, null,
+                (long)Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new ConnectionProbe(address.Host, null, "Таймаут",
+                (long)Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        }
+        catch (HttpRequestException exception)
+        {
+            var error = exception.HttpRequestError switch
+            {
+                HttpRequestError.NameResolutionError => "Ошибка DNS",
+                HttpRequestError.ConnectionError => "Ошибка соединения",
+                HttpRequestError.SecureConnectionError => "Ошибка TLS",
+                _ => "Ошибка HTTPS"
+            };
+            return new ConnectionProbe(address.Host, null, error,
+                (long)Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        }
+    }
+
+    private sealed record ConnectionProbe(string Host, int? HttpStatus, string? Error, long ElapsedMs);
 }
