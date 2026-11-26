@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using eventsynс.Application.Models.Cost;
 using eventsynс.Application.Services;
 using eventsynс.Domain.Entities;
 using eventsynс.UI.Controllers;
@@ -74,7 +73,7 @@ public class BudgetControllerTests
         Assert.Equal("Food", cost.Title);
         Assert.Equal(40, cost.Amount);
 
-        Assert.IsType<OkResult>(await controller.UpdateCost(new CostUpdateModel(55), meetup.Id, cost.Id));
+        Assert.IsType<OkResult>(await controller.UpdateCost(new UpdateCostRequest(55), meetup.Id, cost.Id));
         Assert.Equal(55, cost.Amount);
 
         Assert.IsType<OkResult>(await controller.DeleteCost(meetup.Id, cost.Id));

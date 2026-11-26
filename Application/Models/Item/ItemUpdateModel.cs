@@ -1,6 +1,6 @@
 namespace eventsynс.Application.Models.Item;
 
-public record class ItemUpdateModel(
+public record ItemUpdateModel(
     string Title,
     string Description,
     int Count,

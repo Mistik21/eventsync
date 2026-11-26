@@ -1,6 +1,6 @@
 namespace eventsynс.Application.Models.Activity;
 
-public record class ActivityCreationModel(
+public record ActivityCreationModel(
     string Title,
     string Description,
     DateTime ActivityStartTime,

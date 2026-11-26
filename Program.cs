@@ -62,11 +62,6 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddResponseCompression(options => options.EnableForHttps = true);
-builder.Services.AddHttpClient("TwoGisGeocoder", client =>
-{
-    client.BaseAddress = new Uri("https://catalog.api.2gis.com/");
-    client.Timeout = TimeSpan.FromSeconds(2.5);
-}).RemoveAllLoggers();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

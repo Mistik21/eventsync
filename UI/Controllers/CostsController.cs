@@ -43,7 +43,7 @@ public class CostsController : ControllerBase
     }
     
     [HttpPatch("costs/{costId:guid}")]
-    public async Task<IActionResult> UpdateCost(CostUpdateModel data ,Guid eventId, Guid costId)
+    public async Task<IActionResult> UpdateCost(UpdateCostRequest data ,Guid eventId, Guid costId)
     {
         var currentUserId = User.GetCurrentUserId();
         await costService.UpdateCostAsync(eventId, costId, new CostUpdateModel(data.Amount), currentUserId);

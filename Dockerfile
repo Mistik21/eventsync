@@ -10,6 +10,7 @@ COPY UI/frontend/package.json UI/frontend/pnpm-lock.yaml UI/frontend/pnpm-worksp
 RUN pnpm install --frozen-lockfile
 COPY UI/frontend ./
 COPY UI/wwwroot ../wwwroot
+ARG VITE_2GIS_API_KEY
 RUN pnpm build
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build

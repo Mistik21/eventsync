@@ -33,7 +33,6 @@ public class EventRepository : IEventRepository
         return await db.Events.CountAsync(e => e.Participants.Any(p => p.Id == userId));
     }
     
-    
     public async Task<Event> GetEventByIdAsync(Guid eventId)
     {
         
@@ -63,9 +62,9 @@ public class EventRepository : IEventRepository
         await transaction.CommitAsync();
     }
 
-    public void AddEvent(Event @event)
+    public void AddEvent(Event eventDetails)
     {
-        db.Events.Add(@event);
+        db.Events.Add(eventDetails);
     }
 
     public void RemoveEvent(Event eventDetails)

@@ -1,5 +1,5 @@
 namespace eventsynс.Application.Models.Cost;
 
-public record class CostUpdateModel(
+public record CostUpdateModel(
     int Amount
 );

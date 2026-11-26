@@ -152,7 +152,7 @@ public class EventsController : ControllerBase
     public async Task<IActionResult> PayDebt(PayDebtRequests data, Guid eventId)
     {
         var currentUserId = User.GetCurrentUserId();
-        await eventService.PayMyDebtAsync(eventId, currentUserId, data.amount);
+        await eventService.PayMyDebtAsync(eventId, currentUserId, data.Amount);
         return Ok();
     }
 

@@ -36,7 +36,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t "$IMAGE" .
+        env:
+          VITE_2GIS_API_KEY: ${{ github.event_name == 'push' && secrets.DGIS_API_KEY || '' }}
+        run: docker build --build-arg VITE_2GIS_API_KEY -t "$IMAGE" .
 
       - name: Run Docker smoke test
         shell: bash
@@ -122,7 +124,6 @@ jobs:
           revision-network-id: enphqfrmf1asvafuao75
           revision-env: |
             ASPNETCORE_ENVIRONMENT=Production
-            ${{ secrets.DGIS_API_KEY && format('TwoGis__ApiKey={0}', secrets.DGIS_API_KEY) || '' }}
           revision-secrets: |
             ConnectionStrings__DefaultConnection=e6q5g00uaq06cn37ojug/e6qo494pb2964cb94cfq/db-connection-string
             Telegram__BotToken=e6q5g00uaq06cn37ojug/e6qo494pb2964cb94cfq/telegram-bot-token

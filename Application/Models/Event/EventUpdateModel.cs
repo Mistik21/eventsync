@@ -3,7 +3,7 @@ using eventsynс.Domain.Entities;
 
 namespace eventsynс.Application.Models.Event;
 
-public record class EventUpdateModel(
+public record EventUpdateModel(
     string Title,
     string Description,
     DateTime EventStartTime,

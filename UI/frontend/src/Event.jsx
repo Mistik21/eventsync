@@ -38,6 +38,7 @@ function EventMap({ coordinates, visible = true }) {
 }
 
 function Information({ event, url, path }) {
+    const [inviteOpen, setInviteOpen] = useState(false);
     const participants = useResource(`${url}/participants`);
     const viewer = useResource(event.isOrganizer ? null : profileUrl).data?.id ?? (event.isOrganizer ? event.organizerId : null);
     const address = useAddress(event.eventLocation);
@@ -76,6 +77,10 @@ function Information({ event, url, path }) {
                 </div>
             </li>)}</ul>}
             {participants.data?.length === 0 && <p>Участников пока нет.</p>}
+            {event.collectionStatus === 0 && <>
+                <button type="button" className="event-invite-button" onClick={() => setInviteOpen(true)}>Пригласить участников</button>
+                {inviteOpen && <Invite event={event} close={() => setInviteOpen(false)} />}
+            </>}
         </section>
     </main>;
 }
@@ -107,13 +112,13 @@ function Invite({ event, close }) {
 
 function Overview({ event, url, path, visible }) {
     const { navigate } = useNavigation();
-    const [panel, setPanel] = useState(null);
+    const [deleteOpen, setDeleteOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState("");
     const address = useAddress(event.eventLocation);
     const count = event.participantsCount;
-    const close = () => setPanel(null);
-    useEffect(() => { if (!visible) setPanel(null); }, [visible]);
+    const close = () => setDeleteOpen(false);
+    useEffect(() => { if (!visible) setDeleteOpen(false); }, [visible]);
 
     async function deleteEvent() {
         setDeleting(true);
@@ -155,11 +160,9 @@ function Overview({ event, url, path, visible }) {
             <Link data-section="items" to={`${path}/items`}><span aria-hidden="true">✓</span>Чек-лист</Link>
             <Link data-section="photos" to={`${path}#photos`}><span aria-hidden="true">▧</span>Фото</Link>
         </nav>
-        {event.collectionStatus === 0 && <button type="button" className="event-invite-button" onClick={() => setPanel("invite")}>Пригласить участников</button>}
-        <button type="button" className="event-membership-action" disabled={!event.isOrganizer} onClick={() => { setError(""); setPanel("delete"); }}>{event.isOrganizer ? "Удалить событие" : "Покинуть событие"}</button>
+        <button type="button" className="event-membership-action" disabled={!event.isOrganizer} onClick={() => { setError(""); setDeleteOpen(true); }}>{event.isOrganizer ? "Удалить событие" : "Покинуть событие"}</button>
         {!event.isOrganizer && <p className="event-membership-hint">Действие пока недоступно.</p>}
-        {panel === "invite" && <Invite event={event} close={close} />}
-        {panel === "delete" && <Modal className="event-dialog" title="Удалить событие?" onClose={close} busy={deleting}>
+        {deleteOpen && <Modal className="event-dialog" title="Удалить событие?" onClose={close} busy={deleting}>
             <h2>Удалить событие?</h2><p>Событие «{event.title}» будет удалено.</p>
             {error && <p className="event-delete-status" role="alert">{error}</p>}
             <button type="button" className="event-dialog-action" disabled={deleting} onClick={close}>Отмена</button>

@@ -1,6 +1,6 @@
 namespace eventsynс.Application.Models.Auth;
 
-public record class TelegramUserModel(
+public record TelegramUserModel(
     long TelegramId,
     string Name
 );

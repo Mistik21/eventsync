@@ -1,6 +1,6 @@
 namespace eventsynс.Application.Models.Item;
 
-public record class ItemCreationModel(
+public record ItemCreationModel(
     string Title,
     string Description,
     int Count,

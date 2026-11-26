@@ -3,7 +3,7 @@ using eventsynс.Domain.Entities;
 
 namespace eventsynс.Application.Models.Event;
 
-public record class EventCreationModel(
+public record EventCreationModel(
     string Title,
     string Description,
     DateTime EventStartTime,

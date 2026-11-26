@@ -211,7 +211,7 @@
 .event-information > header a { color: #6941bb; background: var(--purple-light); }
 .event-information h1 { margin: 0; font-size: 22px; }
 .event-information section { margin-top: 16px; }
-.event-information h2 { margin: 0 0 8px; font-size: 16px; }
+.event-information > section > h2 { margin: 0 0 8px; font-size: 16px; }
 
 .event-info-box {
     margin: 0;

@@ -1,6 +1,6 @@
 namespace eventsynс.Application.Models.Cost;
 
-public record class CostCreationModel(
+public record CostCreationModel(
     string Title,
     int Amount
 );

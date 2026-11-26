@@ -1,13 +1,7 @@
-import { fetchApi } from "./session.js";
-
+const apiKey = import.meta.env.VITE_2GIS_API_KEY?.trim();
 let maps;
 
 async function initializeMapGl() {
-    const response = await fetchApi("/api/maps/config", { cache: "no-store" });
-    if (!response.ok || response.status === 204) {
-        throw new Error("Карта 2ГИС недоступна.");
-    }
-    const { apiKey } = await response.json();
     if (!apiKey) {
         throw new Error("Карта 2ГИС недоступна.");
     }
@@ -52,16 +46,39 @@ export function loadMapGl() {
 }
 
 export async function lookupAddress({ lat, lng }) {
-    const query = new URLSearchParams({ lat: lat.toFixed(6), lng: lng.toFixed(6) });
-    const response = await fetchApi(`/api/maps/reverse?${query}`, { cache: "no-store" });
-    if (!response.ok) {
+    if (!apiKey) {
         throw new Error("Не удалось получить адрес из 2ГИС.");
     }
-    if (response.status === 204) {
-        return "";
+
+    const url = new URL("https://catalog.api.2gis.com/3.0/items/geocode");
+    url.search = new URLSearchParams({
+        lat: lat.toFixed(6),
+        lon: lng.toFixed(6),
+        fields: "items.adm_div,items.address",
+        key: apiKey,
+    }).toString();
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2500);
+    try {
+        const response = await fetch(url, { cache: "no-store", signal: controller.signal });
+        if (!response.ok) {
+            throw new Error("Не удалось получить адрес из 2ГИС.");
+        }
+
+        const { meta, result } = await response.json();
+        if (meta?.code === 404) {
+            return "";
+        }
+        if (meta?.code !== 200) {
+            throw new Error("Не удалось получить адрес из 2ГИС.");
+        }
+
+        const item = result?.items?.[0];
+        return item?.full_name?.trim() || item?.address_name?.trim() || "";
+    } finally {
+        clearTimeout(timeout);
     }
-    const { address } = await response.json();
-    return address ?? "";
 }
 
 export function parseCoordinates(value) {

@@ -3,7 +3,7 @@ using eventsynс.Domain.Entities;
 
 namespace eventsynс.Application.Models.Car;
 
-public record class CarUpdateModel(
+public record CarUpdateModel(
     string Description,
     int MaxNumberSeats,
     Location LocationEnd
