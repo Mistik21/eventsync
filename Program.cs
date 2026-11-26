@@ -34,8 +34,11 @@ builder.Services.AddScoped<ITelegramAuthValidator, TelegramAuthValidatorService>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 
-builder.Services.AddHttpClient<ITelegramNotificationService, TelegramNotificationService>(
-        client => client.BaseAddress = new Uri("https://api.telegram.org/"))
+builder.Services.AddHttpClient<ITelegramNotificationService, TelegramNotificationService>(client =>
+    {
+        client.BaseAddress = new Uri("https://api.telegram.org/");
+        client.Timeout = TimeSpan.FromSeconds(5);
+    })
     .RemoveAllLoggers();
 
 builder.Services.AddAuthentication("EventSync")
@@ -110,9 +113,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers().RequireAuthorization();
-
-var notifications = app.Services.GetRequiredService<ITelegramNotificationService>();
-await notifications.SendMessageAsync(1664540300, "Тестовое уведомление EventSync");
 
 app.Run();
 

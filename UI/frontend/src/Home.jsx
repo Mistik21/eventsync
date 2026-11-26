@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { eventsUrl, useResource } from "./api";
+import { eventsUrl, message, useResource, write } from "./api";
 import { eventPath, Link } from "./navigation";
 import { Cover, dateTime, ResourceStatus, useAddress } from "./ui";
 import { getInitials } from "./current-user.js";
@@ -46,6 +46,8 @@ export function Home({ active, prepareEvent, prepareProfile }) {
     const [search, setSearch] = useState("");
     const [order, setOrder] = useState("ascending");
     const [initials, setInitials] = useState("П");
+    const [sendingNotification, setSendingNotification] = useState(false);
+    const [notificationStatus, setNotificationStatus] = useState("");
     const addresses = useRef(new Map());
     const filter = useRef(null);
     const events = resource.data ?? [];
@@ -64,12 +66,33 @@ export function Home({ active, prepareEvent, prepareProfile }) {
         });
     }, []);
 
+    async function sendTestNotification() {
+        setSendingNotification(true);
+        setNotificationStatus("");
+        try {
+            await write("/api/telegram/test-message", "POST");
+            setNotificationStatus("Тестовое уведомление отправлено.");
+        } catch (error) {
+            setNotificationStatus(error.status === 422
+                ? "Откройте чат с ботом EventSync, нажмите «Старт» и попробуйте ещё раз."
+                : message(error, "Не удалось отправить тестовое уведомление."));
+        } finally {
+            setSendingNotification(false);
+        }
+    }
+
     return <main className="events-screen" hidden={!active}>
         <header className="events-header">
             <span className="events-mark" aria-hidden="true">▣</span>
             <h1>Мои события</h1>
             <Link className="profile-badge" to="/profile" aria-label="Открыть профиль" intent={prepareProfile}>{initials}</Link>
         </header>
+        <div className="events-telegram-test">
+            <button className="event-group" type="button" disabled={sendingNotification} onClick={sendTestNotification}>
+                {sendingNotification ? "Отправляем…" : "Отправить тест в Telegram"}
+            </button>
+            <p role="status">{notificationStatus}</p>
+        </div>
         <ul className="event-groups" aria-label="Группы событий">
             {Object.entries(groups).map(([key, label]) => <li key={key}>
                 <button className={`event-group event-group--${key}`} type="button" aria-pressed={group === key} onClick={() => {
