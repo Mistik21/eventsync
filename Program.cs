@@ -8,6 +8,7 @@ using eventsynс.UI.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Authentication;
+using eventsynс.Application.Interfaces.Notifications;
 
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
@@ -32,6 +33,10 @@ builder.Services.AddScoped<ITelegramAuthValidator, TelegramAuthValidatorService>
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
+
+builder.Services.AddHttpClient<ITelegramNotificationService, TelegramNotificationService>(
+        client => client.BaseAddress = new Uri("https://api.telegram.org/"))
+    .RemoveAllLoggers();
 
 builder.Services.AddAuthentication("EventSync")
     .AddPolicyScheme("EventSync", null, options =>
@@ -105,6 +110,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers().RequireAuthorization();
+
+var notifications = app.Services.GetRequiredService<ITelegramNotificationService>();
+await notifications.SendMessageAsync(1664540300, "Тестовое уведомление EventSync");
 
 app.Run();
 
