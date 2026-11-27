@@ -6,6 +6,7 @@ public interface IUserRepository
 {
     Task<User> GetByIdAsync(Guid id);
     Task<User> GetByTelegramIdAsync(long telegramId);
+    Task<Dictionary<long, List<(string EventTitle, int Amount)>>> ListDebtorsAsync();
     Task<int> SavedAsync();
     void Add(User user);
 }

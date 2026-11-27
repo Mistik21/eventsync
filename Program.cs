@@ -34,15 +34,8 @@ builder.Services.AddScoped<ITelegramAuthValidator, TelegramAuthValidatorService>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 
-builder.Services.AddHttpClient<ITelegramNotificationService, TelegramNotificationService>(client =>
-    {
-        client.BaseAddress = new Uri("https://api.telegram.org/");
-        client.Timeout = TimeSpan.FromSeconds(5);
-    })
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false })
-    .RemoveAllLoggers();
-
-builder.Services.AddHttpClient("TelegramDiagnostics", client => client.Timeout = TimeSpan.FromSeconds(5))
+builder.Services.AddHttpClient<ITelegramNotificationService, TelegramNotificationService>(
+        client => client.Timeout = TimeSpan.FromSeconds(5))
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false })
     .RemoveAllLoggers();
 

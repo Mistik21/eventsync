@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using eventsynс.Application.Services;
+using EventSync.UnitTests.TestSupport;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 
@@ -8,70 +9,131 @@ namespace EventSync.UnitTests.Services;
 
 public class TelegramNotificationServiceTests
 {
-    [Fact]
-    public async Task SendMessageAsync_UsesTelegramBaseAddressWithColonInBotToken()
-    {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Telegram:BotToken"] = "123456:fake_key" })
-            .Build();
-        using var client = new HttpClient(new TelegramHandler())
+    private readonly IConfiguration configuration = new ConfigurationBuilder()
+        .AddInMemoryCollection(new Dictionary<string, string?>
         {
-            BaseAddress = new Uri("https://api.telegram.org/")
-        };
-        var service = new TelegramNotificationService(client, configuration);
-
-        await service.SendMessageAsync(12345678901L, "Тестовое сообщение");
-    }
+            ["Telegram:RelayUrl"] = "https://eventsync.example/send",
+            ["Telegram:RelaySecret"] = "relay-secret"
+        }).Build();
 
     [Theory]
-    [InlineData(HttpStatusCode.NoContent, null, null)]
-    [InlineData(HttpStatusCode.OK, HttpStatusCode.BadGateway, null)]
-    [InlineData(HttpStatusCode.BadGateway, HttpStatusCode.BadGateway, "401")]
-    [InlineData(HttpStatusCode.Unauthorized, HttpStatusCode.ServiceUnavailable, null)]
-    [InlineData(HttpStatusCode.UnprocessableEntity, HttpStatusCode.UnprocessableEntity, "403")]
-    [InlineData(HttpStatusCode.GatewayTimeout, HttpStatusCode.GatewayTimeout, null)]
-    public async Task SendMessageAsync_UsesRelayAndRequiresDeliveryConfirmation(
-        HttpStatusCode relayStatus, HttpStatusCode? expectedError, string? telegramResult)
+    [InlineData(HttpStatusCode.NoContent)]
+    [InlineData(HttpStatusCode.OK)]
+    [InlineData(HttpStatusCode.BadGateway)]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.UnprocessableEntity)]
+    [InlineData(HttpStatusCode.GatewayTimeout)]
+    public async Task SendMessageAsync_UsesRelayAndRequiresDeliveryConfirmation(HttpStatusCode relayStatus)
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Telegram:RelayUrl"] = "https://eventsync.example/send",
-                ["Telegram:RelaySecret"] = "relay-secret"
-            }).Build();
-        using var client = new HttpClient(new RelayHandler(relayStatus, telegramResult));
-        var service = new TelegramNotificationService(client, configuration);
+        using var client = new HttpClient(new RelayHandler(relayStatus, "Тестовое сообщение"));
+        var service = new TelegramNotificationService(client, configuration, new InMemoryUserRepository());
 
-        if (expectedError is null)
+        if (relayStatus == HttpStatusCode.NoContent)
         {
             await service.SendMessageAsync(12345678901L, "Тестовое сообщение");
             return;
         }
 
-        var error = await Assert.ThrowsAsync<TelegramRelayException>(
+        var error = await Assert.ThrowsAsync<HttpRequestException>(
             () => service.SendMessageAsync(12345678901L, "Тестовое сообщение"));
-        Assert.Equal(expectedError, error.StatusCode);
-        Assert.Equal(relayStatus, error.RelayStatusCode);
-        Assert.Equal(telegramResult, error.TelegramResult);
+        Assert.Equal("Не доставлено", error.Message);
     }
 
-    private sealed class TelegramHandler : HttpMessageHandler
+    [Fact]
+    public async Task SendMessageAsync_RejectsHttpRelayWithoutMakingRequest()
     {
-        protected override async Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, CancellationToken cancellationToken)
+        configuration["Telegram:RelayUrl"] = "http://eventsync.example/send";
+        var handler = new RelayHandler();
+        using var client = new HttpClient(handler);
+        var service = new TelegramNotificationService(client, configuration, new InMemoryUserRepository());
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.SendMessageAsync(12345678901L, "Тестовое сообщение"));
+
+        Assert.Equal(0, handler.RequestCount);
+    }
+
+    [Fact]
+    public async Task SendPaymentRemindersAsync_SendsEachDebtInOneMessage()
+    {
+        var users = new InMemoryUserRepository
         {
-            Assert.Equal(HttpMethod.Post, request.Method);
-            Assert.Equal("https://api.telegram.org/bot123456:fake_key/sendMessage", request.RequestUri?.AbsoluteUri);
-            using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
-            Assert.Equal(12345678901L, body.RootElement.GetProperty("chat_id").GetInt64());
-            Assert.Equal("Тестовое сообщение", body.RootElement.GetProperty("text").GetString());
+            DebtsByTelegramId = new()
+            {
+                [12345678901L] = [("Поход", 500), ("Пикник", 150)]
+            }
+        };
+        var handler = new RelayHandler(HttpStatusCode.NoContent,
+            "У вас долг по событию Поход: 500 ₽\nУ вас долг по событию Пикник: 150 ₽");
+        using var client = new HttpClient(handler);
+        var service = new TelegramNotificationService(client, configuration, users);
 
-            return new HttpResponseMessage(HttpStatusCode.OK);
-        }
+        await service.SendPaymentRemindersAsync();
+
+        Assert.Equal(1, handler.RequestCount);
     }
 
-    private sealed class RelayHandler(HttpStatusCode statusCode, string? telegramResult) : HttpMessageHandler
+    [Fact]
+    public async Task SendPaymentRemindersAsync_SendsAtMostTenDebtsPerMessage()
     {
+        var users = new InMemoryUserRepository
+        {
+            DebtsByTelegramId = new()
+            {
+                [12345678901L] = Enumerable.Range(1, 21).Select(number => ($"Событие {number}", number)).ToList()
+            }
+        };
+        var handler = new RelayHandler(HttpStatusCode.NoContent,
+            string.Join("\n", Enumerable.Range(1, 10).Select(number => $"У вас долг по событию Событие {number}: {number} ₽")),
+            string.Join("\n", Enumerable.Range(11, 10).Select(number => $"У вас долг по событию Событие {number}: {number} ₽")),
+            "У вас долг по событию Событие 21: 21 ₽");
+        using var client = new HttpClient(handler);
+        var service = new TelegramNotificationService(client, configuration, users);
+
+        await service.SendPaymentRemindersAsync();
+
+        Assert.Equal(3, handler.RequestCount);
+    }
+
+    [Fact]
+    public async Task SendPaymentRemindersAsync_ContinuesSendingAndReportsAllFailures()
+    {
+        var users = new InMemoryUserRepository
+        {
+            DebtsByTelegramId = new()
+            {
+                [101L] = [("Поход", 500)],
+                [202L] = [("Пикник", 150)],
+                [303L] = [("Экскурсия", 200)]
+            }
+        };
+        var handler = new RelayHandler(
+            (101L, "У вас долг по событию Поход: 500 ₽", HttpStatusCode.UnprocessableEntity),
+            (202L, "У вас долг по событию Пикник: 150 ₽", HttpStatusCode.NoContent),
+            (303L, "У вас долг по событию Экскурсия: 200 ₽", HttpStatusCode.TooManyRequests));
+        using var client = new HttpClient(handler);
+        var service = new TelegramNotificationService(client, configuration, users);
+
+        var error = await Assert.ThrowsAsync<AggregateException>(service.SendPaymentRemindersAsync);
+
+        Assert.Equal(3, handler.RequestCount);
+        Assert.Equal(new[]
+        {
+            "Не удалось отправить напоминание пользователю Telegram 101.",
+            "Не удалось отправить напоминание пользователю Telegram 303."
+        }, error.InnerExceptions.Select(failure => failure.Message));
+    }
+
+    private sealed class RelayHandler(params (long ChatId, string Text, HttpStatusCode StatusCode)[] expectedRequests)
+        : HttpMessageHandler
+    {
+        public int RequestCount { get; private set; }
+
+        public RelayHandler(HttpStatusCode statusCode, params string[] expectedMessages)
+            : this(expectedMessages.Select(message => (12345678901L, message, statusCode)).ToArray())
+        {
+        }
+
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -79,13 +141,12 @@ public class TelegramNotificationServiceTests
             Assert.Equal("https://eventsync.example/send", request.RequestUri?.AbsoluteUri);
             Assert.Equal("Bearer relay-secret", request.Headers.Authorization?.ToString());
             using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
-            Assert.Equal(12345678901L, body.RootElement.GetProperty("chatId").GetInt64());
-            Assert.Equal("Тестовое сообщение", body.RootElement.GetProperty("text").GetString());
+            var expected = expectedRequests[RequestCount];
+            Assert.Equal(expected.ChatId, body.RootElement.GetProperty("chatId").GetInt64());
+            Assert.Equal(expected.Text, body.RootElement.GetProperty("text").GetString());
+            RequestCount++;
 
-            var response = new HttpResponseMessage(statusCode);
-            if (telegramResult is not null)
-                response.Headers.Add("X-EventSync-Telegram-Result", telegramResult);
-            return response;
+            return new HttpResponseMessage(expected.StatusCode);
         }
     }
 }

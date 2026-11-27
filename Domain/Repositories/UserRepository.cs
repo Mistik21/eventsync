@@ -24,6 +24,28 @@ public class UserRepository : IUserRepository
             ?? throw new KeyNotFoundException();
     }
 
+    public async Task<Dictionary<long, List<(string EventTitle, int Amount)>>> ListDebtorsAsync()
+    {
+        var events = await db.Events
+            .Select(e => new { e.Title, e.Debts })
+            .ToListAsync();
+        var debtsByUser = events
+            .SelectMany(e => e.Debts,
+                (e, debt) => (UserId: debt.Key, EventTitle: e.Title, Amount: debt.Value))
+            .Where(debt => debt.Amount > 0)
+            .GroupBy(debt => debt.UserId, debt => (debt.EventTitle, debt.Amount))
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        if (debtsByUser.Count == 0)
+            return [];
+
+        var debtorIds = debtsByUser.Keys.ToArray();
+        return await db.Users
+            .Where(user => debtorIds.Contains(user.Id))
+            .Select(user => new { user.Id, user.TelegramID })
+            .ToDictionaryAsync(user => user.TelegramID, user => debtsByUser[user.Id]);
+    }
+
     public async Task<int> SavedAsync()
     {
         return await db.SaveChangesAsync();

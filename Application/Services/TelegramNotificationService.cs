@@ -1,69 +1,53 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using eventsynс.Application.Interfaces.Notifications;
+using eventsynс.Domain.Repositories;
 
 namespace eventsynс.Application.Services;
 
-public class TelegramNotificationService : ITelegramNotificationService
+public class TelegramNotificationService(HttpClient client, IConfiguration configuration,IUserRepository userRepository) : ITelegramNotificationService
 {
-    private readonly HttpClient client;
-    private readonly IConfiguration configuration;
-
-    public TelegramNotificationService(HttpClient client, IConfiguration configuration)
-    {
-        this.client = client;
-        this.configuration = configuration;
-    }
-
     public async Task SendMessageAsync(long telegramId, string message)
     {
         var relayUrl = configuration["Telegram:RelayUrl"]?.Trim();
+        if (!Uri.TryCreate(relayUrl, UriKind.Absolute, out var relayAddress) || relayAddress.Scheme != Uri.UriSchemeHttps)
+            throw new InvalidOperationException("Для отправки в Telegram укажите HTTPS-адрес relay.");
+
         var relaySecret = configuration["Telegram:RelaySecret"]?.Trim();
-        if (!string.IsNullOrEmpty(relayUrl) || !string.IsNullOrEmpty(relaySecret))
-        {
-            await SendViaRelayAsync(relayUrl, relaySecret, telegramId, message);
-            return;
-        }
 
-        var token = configuration["Telegram:BotToken"]?.Trim();
-        if (string.IsNullOrWhiteSpace(token)) throw new InvalidOperationException();
-
-        using var response = await client.PostAsJsonAsync(
-            $"/bot{token}/sendMessage",
-            new { chat_id = telegramId, text = message });
-        response.EnsureSuccessStatusCode();
-    }
-
-    private async Task SendViaRelayAsync(string? url, string? secret, long telegramId, string message)
-    {
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var address) ||
-            address.Scheme != Uri.UriSchemeHttps || string.IsNullOrEmpty(secret))
-        {
-            throw new InvalidOperationException("Настройте HTTPS-адрес и секрет сервиса отправки Telegram.");
-        }
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, address)
+        using var request = new HttpRequestMessage(HttpMethod.Post, relayAddress)
         {
             Content = JsonContent.Create(new { chatId = telegramId, text = message })
         };
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", secret);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", relaySecret);
 
         using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-        if (response.StatusCode == HttpStatusCode.NoContent)
-            return;
+        if (response.StatusCode != HttpStatusCode.NoContent) throw new HttpRequestException("Не доставлено");
+    }
 
-        var statusCode = response.StatusCode switch
+    public async Task SendPaymentRemindersAsync()
+    {
+        var debtors = await userRepository.ListDebtorsAsync();
+        var errors = new List<Exception>();
+        foreach (var debtor in debtors)
         {
-            HttpStatusCode.UnprocessableEntity or HttpStatusCode.TooManyRequests or HttpStatusCode.GatewayTimeout
-                => response.StatusCode,
-            HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.ServiceUnavailable
-                => HttpStatusCode.ServiceUnavailable,
-            _ => HttpStatusCode.BadGateway
-        };
-        var telegramResult = response.Headers.TryGetValues("X-EventSync-Telegram-Result", out var values)
-            ? values.FirstOrDefault()
-            : null;
-        throw new TelegramRelayException(statusCode, response.StatusCode, telegramResult);
+            var lines = debtor.Value.Select(debt =>
+                $"У вас долг по событию {debt.EventTitle}: {debt.Amount} ₽");
+            try
+            {
+                foreach (var batch in lines.Chunk(10))
+                {
+                    await SendMessageAsync(debtor.Key, string.Join("\n", batch));
+                }
+            }
+            catch (Exception error) when (error is HttpRequestException or TaskCanceledException)
+            {
+                errors.Add(new HttpRequestException(
+                    $"Не удалось отправить напоминание пользователю Telegram {debtor.Key}."));
+            }
+        }
+
+        if (errors.Count > 0)
+            throw new AggregateException("При отправке напоминаний в Telegram произошли ошибки.", errors);
     }
 }

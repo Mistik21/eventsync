@@ -6,6 +6,7 @@ namespace EventSync.UnitTests.TestSupport;
 internal sealed class InMemoryUserRepository(params User[] users) : IUserRepository
 {
     public List<User> Users { get; } = [.. users];
+    public Dictionary<long, List<(string EventTitle, int Amount)>> DebtsByTelegramId { get; init; } = [];
     public int SaveCount { get; private set; }
 
     public Task<User> GetByIdAsync(Guid id) =>
@@ -13,6 +14,9 @@ internal sealed class InMemoryUserRepository(params User[] users) : IUserReposit
 
     public Task<User> GetByTelegramIdAsync(long telegramId) =>
         Task.FromResult(Users.SingleOrDefault(user => user.TelegramID == telegramId) ?? throw new KeyNotFoundException());
+
+    public Task<Dictionary<long, List<(string EventTitle, int Amount)>>> ListDebtorsAsync() =>
+        Task.FromResult(DebtsByTelegramId);
 
     public void Add(User user) => Users.Add(user);
 
