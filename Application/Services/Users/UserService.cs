@@ -1,8 +1,8 @@
-using eventsynс.Application.Interfaces.Services;
+using eventsynс.Application.Interfaces.Users;
 using eventsynс.Domain.Entities;
-using eventsynс.Domain.Repositories;
+using eventsynс.Domain.Repositories.Interfaces;
 
-namespace eventsynс.Application.Services;
+namespace eventsynс.Application.Services.Users;
 
 public class UserService: IUserService
 {

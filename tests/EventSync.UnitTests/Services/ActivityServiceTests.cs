@@ -1,5 +1,5 @@
 using eventsynс.Application.Models.Activity;
-using eventsynс.Application.Services;
+using eventsynс.Application.Services.Events;
 using eventsynс.Domain.Entities;
 using EventSync.UnitTests.TestSupport;
 using Xunit;

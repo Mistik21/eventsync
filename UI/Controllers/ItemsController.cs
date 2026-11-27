@@ -1,4 +1,4 @@
-using eventsynс.Application.Interfaces.Services;
+using eventsynс.Application.Interfaces.Events;
 using eventsynс.UI.Auth;
 using eventsynс.Application.Models.Item;
 using eventsynс.UI.DTOs.Requests.Items;

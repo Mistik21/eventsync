@@ -3,7 +3,7 @@ using eventsynс.Application.Models.Event;
 using eventsynс.Domain;
 using eventsynс.Domain.Entities;
 
-namespace eventsynс.Application.Interfaces.Services;
+namespace eventsynс.Application.Interfaces.Events;
 
 public interface IEventService
 {

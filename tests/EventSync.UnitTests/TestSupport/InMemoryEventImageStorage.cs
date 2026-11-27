@@ -1,4 +1,4 @@
-using eventsynс.Application.Interfaces.Services;
+using eventsynс.Application.Interfaces.Storage;
 
 namespace EventSync.UnitTests.TestSupport;
 

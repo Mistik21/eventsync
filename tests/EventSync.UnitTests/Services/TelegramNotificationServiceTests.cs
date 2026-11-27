@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text.Json;
-using eventsynс.Application.Services;
+using eventsynс.Application.Services.Notifications;
 using EventSync.UnitTests.TestSupport;
 using Microsoft.Extensions.Configuration;
 using Xunit;

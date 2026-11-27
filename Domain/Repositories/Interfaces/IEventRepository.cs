@@ -1,6 +1,6 @@
 using eventsynс.Domain.Entities;
 
-namespace eventsynс.Domain.Repositories;
+namespace eventsynс.Domain.Repositories.Interfaces;
 
 public interface IEventRepository
 {

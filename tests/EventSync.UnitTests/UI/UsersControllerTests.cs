@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using eventsynс.Application.Services;
+using eventsynс.Application.Services.Users;
 using eventsynс.UI.Controllers;
 using eventsynс.UI.DTOs.Responses;
 using EventSync.UnitTests.TestSupport;

@@ -1,9 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
 using eventsynс.Application.Interfaces.Notifications;
-using eventsynс.Domain.Repositories;
+using eventsynс.Domain.Repositories.Interfaces;
 
-namespace eventsynс.Application.Services;
+namespace eventsynс.Application.Services.Notifications;
 
 public class TelegramNotificationService : ITelegramNotificationService
 {

@@ -1,11 +1,11 @@
 using System.Diagnostics;
 using eventsynс.Application.Access;
-using eventsynс.Application.Interfaces.Services;
+using eventsynс.Application.Interfaces.Events;
 using eventsynс.Application.Models.Activity;
-using eventsynс.Domain.Repositories;
+using eventsynс.Domain.Repositories.Interfaces;
 using Activity = eventsynс.Domain.Entities.Activity;
 
-namespace eventsynс.Application.Services;
+namespace eventsynс.Application.Services.Events;
 
 public class ActivityService : IActivityService
 {

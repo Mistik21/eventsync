@@ -1,9 +1,9 @@
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
-using eventsynс.Application.Interfaces.Services;
+using eventsynс.Application.Interfaces.Storage;
 
-namespace eventsynс.Application.Services;
+namespace eventsynс.Application.Services.Storage;
 
 public class EventImageStorage : IEventImageStorage
 {

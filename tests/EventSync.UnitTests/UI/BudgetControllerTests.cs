@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using eventsynс.Application.Services;
+using eventsynс.Application.Services.Events;
 using eventsynс.Domain.Entities;
 using eventsynс.UI.Controllers;
 using eventsynс.UI.DTOs.Requests;

@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using eventsynс.Application.Interfaces.Auth;
 using eventsynс.Domain.Entities;
-using eventsynс.Domain.Repositories;
+using eventsynс.Domain.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 

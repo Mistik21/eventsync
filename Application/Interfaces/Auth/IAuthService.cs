@@ -1,7 +1,7 @@
 using eventsynс.Domain;
 using eventsynс.Domain.Entities;
 
-namespace eventsynс.Application.Interfaces.Services;
+namespace eventsynс.Application.Interfaces.Auth;
 
 public interface IAuthService
 {

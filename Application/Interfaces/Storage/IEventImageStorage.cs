@@ -1,4 +1,4 @@
-namespace eventsynс.Application.Interfaces.Services;
+namespace eventsynс.Application.Interfaces.Storage;
 
 public interface IEventImageStorage
 {

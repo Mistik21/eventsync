@@ -1,4 +1,5 @@
 using eventsynс.Domain.Entities;
+using eventsynс.Domain.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace eventsynс.Domain.Repositories;

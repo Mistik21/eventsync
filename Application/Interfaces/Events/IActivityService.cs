@@ -3,7 +3,7 @@ using eventsynс.Application.Models;
 using eventsynс.Application.Models.Activity;
 using Activity = eventsynс.Domain.Entities.Activity;
 
-namespace eventsynс.Application.Interfaces.Services;
+namespace eventsynс.Application.Interfaces.Events;
 
 public interface IActivityService
 {

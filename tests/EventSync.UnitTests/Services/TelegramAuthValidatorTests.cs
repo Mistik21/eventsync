@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Text;
-using eventsynс.Application.Services;
+using eventsynс.Application.Services.Auth;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 

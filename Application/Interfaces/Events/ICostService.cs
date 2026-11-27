@@ -1,7 +1,7 @@
 using eventsynс.Application.Models;
 using eventsynс.Application.Models.Cost;
 
-namespace eventsynс.Application.Interfaces.Services;
+namespace eventsynс.Application.Interfaces.Events;
 
 public interface ICostService
 {

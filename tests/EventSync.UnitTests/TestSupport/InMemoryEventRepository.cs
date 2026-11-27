@@ -1,5 +1,5 @@
 using eventsynс.Domain.Entities;
-using eventsynс.Domain.Repositories;
+using eventsynс.Domain.Repositories.Interfaces;
 
 namespace EventSync.UnitTests.TestSupport;
 

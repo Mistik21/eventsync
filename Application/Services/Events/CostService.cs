@@ -1,12 +1,12 @@
 using eventsynс.Application.Access;
-using eventsynс.Application.Interfaces.Services;
+using eventsynс.Application.Interfaces.Events;
 using eventsynс.Application.Models;
 using eventsynс.Application.Models.Cost;
 using eventsynс.Domain;
 using eventsynс.Domain.Entities;
-using eventsynс.Domain.Repositories;
+using eventsynс.Domain.Repositories.Interfaces;
 
-namespace eventsynс.Application.Services;
+namespace eventsynс.Application.Services.Events;
 
 public class CostService : ICostService
 {

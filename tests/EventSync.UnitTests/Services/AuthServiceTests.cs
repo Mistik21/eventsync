@@ -1,6 +1,6 @@
 using System.Security.Authentication;
 using eventsynс.Application.Models.Auth;
-using eventsynс.Application.Services;
+using eventsynс.Application.Services.Auth;
 using EventSync.UnitTests.TestSupport;
 using Xunit;
 

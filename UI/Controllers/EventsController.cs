@@ -1,4 +1,5 @@
-using eventsynс.Application.Interfaces.Services;
+using eventsynс.Application.Interfaces.Events;
+using eventsynс.Application.Interfaces.Storage;
 using eventsynс.UI.Auth;
 using eventsynс.Application.Models.Event;
 using eventsynс.Domain.Entities;

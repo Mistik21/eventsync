@@ -1,4 +1,4 @@
-using eventsynс.Application.Interfaces.Services;
+using eventsynс.Application.Interfaces.Users;
 using eventsynс.UI.Auth;
 using eventsynс.UI.DTOs.Responses;
 using Microsoft.AspNetCore.Authorization;

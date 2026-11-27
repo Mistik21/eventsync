@@ -8,7 +8,7 @@ using eventsynс.Application.Interfaces.Auth;
 using eventsynс.Application.Models.Auth;
 using Microsoft.AspNetCore.WebUtilities;
 
-namespace eventsynс.Application.Services;
+namespace eventsynс.Application.Services.Auth;
 
 public class TelegramAuthValidatorService : ITelegramAuthValidator
 {
