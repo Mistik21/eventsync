@@ -9,15 +9,24 @@ using Microsoft.Extensions.Options;
 
 namespace eventsynс.UI.Auth;
 
-public class TelegramSessionHandler(
-    IOptionsMonitor<AuthenticationSchemeOptions> options,
-    ILoggerFactory logger,
-    UrlEncoder encoder,
-    ITelegramAuthValidator validator,
-    IUserRepository users) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+public class TelegramSessionHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
     public const string SchemeName = "TelegramSession";
     public const string HeaderName = "X-EventSync-Telegram-Init-Data";
+
+    private readonly ITelegramAuthValidator validator;
+    private readonly IUserRepository users;
+
+    public TelegramSessionHandler(
+        IOptionsMonitor<AuthenticationSchemeOptions> options, 
+        ILoggerFactory logger,
+        UrlEncoder encoder, 
+        ITelegramAuthValidator validator, 
+        IUserRepository users) : base(options, logger, encoder)
+    {
+        this.validator = validator;
+        this.users = users;
+    }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
@@ -31,13 +40,9 @@ public class TelegramSessionHandler(
             var telegramUser = validator.Validate(initData);
             user = await users.GetByTelegramIdAsync(telegramUser.TelegramId);
         }
-        catch (InvalidCredentialException)
+        catch (Exception error) when (error is InvalidCredentialException or KeyNotFoundException)
         {
-            return AuthenticateResult.Fail("Не удалось проверить данные Telegram.");
-        }
-        catch (KeyNotFoundException)
-        {
-            return AuthenticateResult.Fail("Пользователь Telegram не найден.");
+            return AuthenticateResult.Fail(error);
         }
 
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())], Scheme.Name);

@@ -6,7 +6,6 @@ internal static class ItemAccess
 {
     public static void RequireResponsible(Item item, Guid currentUserId)
     {
-        if (!item.IsResponsible(currentUserId))
-            throw new UnauthorizedAccessException();
+        if (!item.IsResponsible(currentUserId)) throw new UnauthorizedAccessException();
     }
 }

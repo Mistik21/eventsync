@@ -23,8 +23,8 @@ public class TelegramController : ControllerBase
     [HttpPost("payment-reminders")]
     public async Task<IActionResult> SendPaymentReminders()
     {
-        var secret = configuration["Telegram:ReminderSecret"]?.Trim();
-        if (string.IsNullOrEmpty(secret) || Request.Headers["X-EventSync-Reminder-Secret"] is not [string providedSecret] ||
+        var secret = configuration["Telegram:ReminderSecret"]?.Trim() ?? string.Empty;
+        if (Request.Headers["X-EventSync-Reminder-Secret"] is not [{ Length: > 0 } providedSecret] ||
             !CryptographicOperations.FixedTimeEquals(
                 Encoding.UTF8.GetBytes(secret), Encoding.UTF8.GetBytes(providedSecret)))
             return Unauthorized();

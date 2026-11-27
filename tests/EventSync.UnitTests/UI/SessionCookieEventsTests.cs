@@ -27,4 +27,21 @@ public class SessionCookieEventsTests
 
         Assert.Same(accepted ? principal : null, context.Principal);
     }
+
+    [Theory]
+    [InlineData(false, StatusCodes.Status401Unauthorized)]
+    [InlineData(true, StatusCodes.Status403Forbidden)]
+    public async Task RedirectEvents_ReturnStatusWithoutRedirect(bool accessDenied, int expectedStatus)
+    {
+        var scheme = new AuthenticationScheme(CookieAuthenticationDefaults.AuthenticationScheme, null,
+            typeof(CookieAuthenticationHandler));
+        var context = new RedirectContext<CookieAuthenticationOptions>(new DefaultHttpContext(), scheme,
+            new CookieAuthenticationOptions(), new AuthenticationProperties(), "/login");
+        var events = new SessionCookieEvents();
+
+        await (accessDenied ? events.RedirectToAccessDenied(context) : events.RedirectToLogin(context));
+
+        Assert.Equal(expectedStatus, context.Response.StatusCode);
+        Assert.False(context.Response.Headers.ContainsKey("Location"));
+    }
 }

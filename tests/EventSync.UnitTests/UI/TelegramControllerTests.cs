@@ -25,6 +25,7 @@ public class TelegramControllerTests
     [InlineData("reminder-secret", "wrong-secret")]
     [InlineData("reminder-secret", "Bearer reminder-secret")]
     [InlineData(null, "reminder-secret")]
+    [InlineData(null, "")]
     public async Task SendPaymentReminders_RejectsUnauthorizedRequests(string? secret, string? providedSecret)
     {
         var notifications = new RecordingNotifications();

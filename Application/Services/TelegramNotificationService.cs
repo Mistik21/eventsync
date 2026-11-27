@@ -30,7 +30,7 @@ public class TelegramNotificationService : ITelegramNotificationService
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", relaySecret);
 
         using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-        if (response.StatusCode != HttpStatusCode.NoContent) throw new HttpRequestException("Не доставлено");
+        if (response.StatusCode != HttpStatusCode.NoContent) throw new HttpRequestException();
     }
 
     public async Task SendPaymentRemindersAsync()
@@ -50,12 +50,11 @@ public class TelegramNotificationService : ITelegramNotificationService
             }
             catch (Exception error) when (error is HttpRequestException or TaskCanceledException)
             {
-                errors.Add(new HttpRequestException(
-                    $"Не удалось отправить напоминание пользователю Telegram {debtor.Key}."));
+                errors.Add(new HttpRequestException());
             }
         }
 
         if (errors.Count > 0)
-            throw new AggregateException("При отправке напоминаний в Telegram произошли ошибки.", errors);
+            throw new AggregateException(errors);
     }
 }

@@ -17,9 +17,6 @@ public class TelegramAuthValidatorService : ITelegramAuthValidator
     public TelegramAuthValidatorService(IConfiguration configuration)
     {
         var botToken = configuration["Telegram:BotToken"];
-        if (string.IsNullOrWhiteSpace(botToken))
-            throw new InvalidOperationException("Не настроен Telegram:BotToken.");
-
         secretKey = HMACSHA256.HashData("WebAppData"u8, Encoding.UTF8.GetBytes(botToken));
     }
 
