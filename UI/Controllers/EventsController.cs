@@ -16,10 +16,12 @@ namespace eventsynс.UI.Controllers;
 public class EventsController : ControllerBase
 {
     private readonly IEventService eventService;
+    private readonly IEventImageStorage imageStorage;
 
-    public EventsController(IEventService eventService)
+    public EventsController(IEventService eventService, IEventImageStorage imageStorage)
     {
         this.eventService = eventService;
+        this.imageStorage = imageStorage;
     }
 
     [HttpGet]
@@ -32,7 +34,7 @@ public class EventsController : ControllerBase
             e.Id,
             e.Title,
             e.Description,
-            e.MainImageUrl,
+            imageStorage.GetCoverUrl(e.Id, e.MainImageUrl),
             e.EventStartTime,
             new LocationResponse(e.EventLocation.Address, e.EventLocation.Coordinates),
             e.IsOrganizer(currentUserId))).ToList());
@@ -48,7 +50,7 @@ public class EventsController : ControllerBase
             result.Id,
             result.Title,
             result.Description,
-            result.MainImageUrl,
+            imageStorage.GetCoverUrl(result.Id, result.MainImageUrl),
             result.EventStartTime,
             new LocationResponse(result.EventLocation.Address, result.EventLocation.Coordinates),
             result.Budget,
@@ -116,7 +118,7 @@ public class EventsController : ControllerBase
         {
             eventDetails.Id,
             eventDetails.Title,
-            eventDetails.MainImageUrl,
+            MainImageUrl = imageStorage.GetCoverUrl(eventDetails.Id, eventDetails.MainImageUrl),
             eventDetails.EventStartTime,
             EventLocation = new LocationResponse(eventDetails.EventLocation.Address, eventDetails.EventLocation.Coordinates),
             OrganizerName = organizerName,

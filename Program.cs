@@ -9,6 +9,7 @@ using eventsynс.UI.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using Amazon.S3;
 
 const string authenticationScheme = "EventSync";
 const string reactAssetsPath = "/react/assets";
@@ -31,6 +32,22 @@ builder.Services.AddScoped<ITelegramAuthValidator, TelegramAuthValidatorService>
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddSingleton<IAmazonS3>(services =>
+{
+    var configuration = services.GetRequiredService<IConfiguration>();
+
+    return new AmazonS3Client(
+        configuration["ObjectStorage:AccessKeyId"],
+        configuration["ObjectStorage:SecretAccessKey"],
+        new AmazonS3Config
+        {
+            ServiceURL = "https://s3.yandexcloud.net",
+            AuthenticationRegion = "ru-central1",
+            ForcePathStyle = true
+        });
+});
+builder.Services.AddSingleton(services => new Lazy<IAmazonS3>(services.GetRequiredService<IAmazonS3>));
+builder.Services.AddSingleton<IEventImageStorage, EventImageStorage>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 

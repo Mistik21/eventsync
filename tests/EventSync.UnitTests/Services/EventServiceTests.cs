@@ -8,16 +8,20 @@ namespace EventSync.UnitTests.Services;
 
 public class EventServiceTests
 {
+    private const string CoverDataUrl = "data:image/jpeg;base64,/9j/2Q==";
     private readonly User organizer = TestData.CreateUser(1, "Organizer");
     private readonly User attendee = TestData.CreateUser(2, "Attendee");
     private readonly InMemoryEventRepository events = new();
+    private readonly InMemoryEventImageStorage imageStorage = new();
 
-    [Fact]
-    public async Task CreateEvent_RegistersOrganizerAsParticipantAndSaves()
+    [Theory]
+    [InlineData(null)]
+    [InlineData(CoverDataUrl)]
+    public async Task CreateEvent_RegistersOrganizerAsParticipantAndSaves(string? cover)
     {
         var service = CreateService();
         var location = new Location("Park", "56.84,60.61");
-        var data = new EventCreationModel("Picnic", "Bring food", TestData.EventStart, location, 120, null);
+        var data = new EventCreationModel("Picnic", "Bring food", TestData.EventStart, location, 120, cover);
 
         await service.CreateEventAsync(data, organizer.Id);
 
@@ -31,6 +35,30 @@ public class EventServiceTests
         Assert.Same(location, meetup.EventLocation);
         Assert.Equal(data.Budget, meetup.Budget);
         Assert.Equal(1, events.SaveCount);
+        if (cover is null)
+        {
+            Assert.Equal(string.Empty, meetup.MainImageUrl);
+            Assert.Empty(imageStorage.Covers);
+        }
+        else
+        {
+            var uploaded = Assert.Single(imageStorage.Covers);
+            Assert.Equal(uploaded.Key, meetup.MainImageUrl);
+            Assert.StartsWith($"events/{meetup.Id}/covers/", uploaded.Key);
+            Assert.Equal(cover, uploaded.Value);
+        }
+    }
+
+    [Fact]
+    public async Task CreateEvent_RejectsNegativeBudgetWithoutSaving()
+    {
+        var data = new EventCreationModel("Picnic", "Bring food", TestData.EventStart,
+            new Location("Park", "56.84,60.61"), -1, CoverDataUrl);
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => CreateService().CreateEventAsync(data, organizer.Id));
+
+        Assert.Empty(events.Events);
+        Assert.Equal(0, events.SaveCount);
     }
 
     [Fact]
@@ -71,11 +99,13 @@ public class EventServiceTests
 
     [Theory]
     [InlineData(null)]
-    [InlineData("https://example.test/new-cover.png")]
-    public async Task UpdateEvent_UpdatesDetailsAndKeepsCoverWhenOmitted(string? imageUrl)
+    [InlineData("")]
+    [InlineData(CoverDataUrl)]
+    public async Task UpdateEvent_UpdatesDetailsAndAppliesCoverChange(string? imageUrl)
     {
         var meetup = AddEvent();
-        var oldCover = meetup.MainImageUrl;
+        var oldCover = await imageStorage.UploadCoverAsync(meetup.Id, CoverDataUrl);
+        meetup.ChangeMainImage(oldCover);
         var location = new Location("Lake", "55.1,61.1");
         var data = new EventUpdateModel("Updated title", "Updated description", TestData.EventStart.AddDays(2),
             location, 150, imageUrl);
@@ -85,10 +115,24 @@ public class EventServiceTests
         Assert.Equal(data.Title, meetup.Title);
         Assert.Equal(data.Description, meetup.Description);
         Assert.Equal(data.EventStartTime, meetup.EventStartTime);
-        Assert.Equal(imageUrl ?? oldCover, meetup.MainImageUrl);
         Assert.Same(location, meetup.EventLocation);
         Assert.Equal(data.Budget, meetup.Budget);
         Assert.Equal(1, events.SaveCount);
+        if (imageUrl is null)
+        {
+            Assert.Equal(oldCover, meetup.MainImageUrl);
+            Assert.Single(imageStorage.Covers);
+        }
+        else if (imageUrl.Length == 0)
+        {
+            Assert.Equal(string.Empty, meetup.MainImageUrl);
+            Assert.Empty(imageStorage.Covers);
+        }
+        else
+        {
+            Assert.NotEqual(oldCover, meetup.MainImageUrl);
+            Assert.Equal(meetup.MainImageUrl, Assert.Single(imageStorage.Covers).Key);
+        }
     }
 
     [Fact]
@@ -97,13 +141,14 @@ public class EventServiceTests
         var meetup = AddEvent(attendee);
         var service = CreateService();
         var originalTitle = meetup.Title;
-        var data = new EventUpdateModel("Another title", "", TestData.EventStart, meetup.EventLocation, 0, null);
+        var data = new EventUpdateModel("Another title", "", TestData.EventStart, meetup.EventLocation, 0, CoverDataUrl);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.UpdateEventAsync(meetup.Id, data, attendee.Id));
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.DeleteEventAsync(meetup.Id, attendee.Id));
 
         Assert.Equal(originalTitle, meetup.Title);
         Assert.Same(meetup, Assert.Single(events.Events));
+        Assert.Empty(imageStorage.Covers);
         Assert.Equal(0, events.SaveCount);
     }
 
@@ -111,11 +156,13 @@ public class EventServiceTests
     public async Task DeleteEvent_OrganizerCanRemoveEvent()
     {
         var meetup = AddEvent();
+        meetup.ChangeMainImage(await imageStorage.UploadCoverAsync(meetup.Id, CoverDataUrl));
 
         var deleted = await CreateService().DeleteEventAsync(meetup.Id, organizer.Id);
 
         Assert.True(deleted);
         Assert.Empty(events.Events);
+        Assert.Empty(imageStorage.Covers);
         Assert.Equal(1, events.SaveCount);
     }
 
@@ -264,7 +311,7 @@ public class EventServiceTests
         return meetup;
     }
 
-    private EventService CreateService() => new(new InMemoryUserRepository(organizer, attendee), events);
+    private EventService CreateService() => new(new InMemoryUserRepository(organizer, attendee), events, imageStorage);
 
     private Event AddEvent(params User[] participants)
     {

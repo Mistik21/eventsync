@@ -125,9 +125,12 @@ jobs:
           revision-env: |
             ASPNETCORE_ENVIRONMENT=Production
             ${{ vars.TELEGRAM_RELAY_URL && format('Telegram__RelayUrl={0}', vars.TELEGRAM_RELAY_URL) || '' }}
+            ObjectStorage__Bucket=${{ vars.OBJECT_STORAGE_BUCKET }}
           revision-secrets: |
             ConnectionStrings__DefaultConnection=e6q5g00uaq06cn37ojug/e6qo494pb2964cb94cfq/db-connection-string
             Telegram__BotToken=e6q5g00uaq06cn37ojug/e6qo494pb2964cb94cfq/telegram-bot-token
             ${{ vars.TELEGRAM_RELAY_LOCKBOX_REFERENCE && format('Telegram__RelaySecret={0}', vars.TELEGRAM_RELAY_LOCKBOX_REFERENCE) || '' }}
             ${{ vars.TELEGRAM_REMINDER_LOCKBOX_REFERENCE && format('Telegram__ReminderSecret={0}', vars.TELEGRAM_REMINDER_LOCKBOX_REFERENCE) || '' }}
+            ObjectStorage__AccessKeyId=${{ vars.OBJECT_STORAGE_LOCKBOX_REFERENCE }}/access-key-id
+            ObjectStorage__SecretAccessKey=${{ vars.OBJECT_STORAGE_LOCKBOX_REFERENCE }}/secret-access-key
 

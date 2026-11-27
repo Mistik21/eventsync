@@ -10,11 +10,13 @@ public class EventService : IEventService
 {
     private readonly IUserRepository userRepository;
     private readonly IEventRepository eventRepository;
+    private readonly IEventImageStorage imageStorage;
 
-    public EventService(IUserRepository userRepository, IEventRepository eventRepository)
+    public EventService(IUserRepository userRepository, IEventRepository eventRepository, IEventImageStorage imageStorage)
     {
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
+        this.imageStorage = imageStorage;
     }
 
     public async Task<List<Event>> GetMyEventsAsync(Guid currentUserId)
@@ -31,24 +33,29 @@ public class EventService : IEventService
 
     public async Task CreateEventAsync(EventCreationModel data, Guid currentUserId)
     {
+        var eventId = Guid.NewGuid();
+        var user = await userRepository.GetByIdAsync(currentUserId);
         var eventNew = new Event(
-            Guid.NewGuid(),
+            eventId,
             data.Title,
             data.Description,
-            data.MainImageUrl,
+            "",
             data.EventStartTime,
             data.EventLocation,
             data.Budget,
             currentUserId);
-        var user = await userRepository.GetByIdAsync(currentUserId);
+        eventNew.ChangeMainImage(
+            string.IsNullOrEmpty(data.MainImageUrl)
+                ? string.Empty : await imageStorage.UploadCoverAsync(eventId, data.MainImageUrl));
         eventNew.AddParticipant(user);
         eventRepository.AddEvent(eventNew);
         await eventRepository.SavedAsync();
     }
 
-    public Task UpdateEventAsync(Guid eventId, EventUpdateModel data, Guid currentUserId)
+    public async Task UpdateEventAsync(Guid eventId, EventUpdateModel data, Guid currentUserId)
     {
-        return eventRepository.SaveEventChangesAsync(eventId, eventDetails =>
+        string? previousCover = null;
+        await eventRepository.SaveEventChangesAsync(eventId, async eventDetails =>
         {
             EventAccess.RequireOrganizer(eventDetails, currentUserId);
             eventDetails.ChangeTitle(data.Title);
@@ -56,9 +63,17 @@ public class EventService : IEventService
             eventDetails.ChangeBudget(data.Budget);
             eventDetails.ChangeStartTime(data.EventStartTime);
             eventDetails.ChangeLocation(data.EventLocation);
-            if (data.MainImageUrl != null) eventDetails.ChangeMainImage(data.MainImageUrl);
-            return Task.CompletedTask;
+
+            var cover = data.MainImageUrl;
+            if (cover == null) return;
+            previousCover = eventDetails.MainImageUrl;
+            eventDetails.ChangeMainImage(
+                cover.Length == 0
+                    ? string.Empty
+                    : await imageStorage.UploadCoverAsync(eventId, cover));
         });
+
+        await imageStorage.DeleteCoverAsync(eventId, previousCover);
     }
 
     public async Task<bool> DeleteEventAsync(Guid eventId, Guid currentUserId)
@@ -67,6 +82,7 @@ public class EventService : IEventService
         EventAccess.RequireOrganizer(eventDetails, currentUserId);
         eventRepository.RemoveEvent(eventDetails);
         await eventRepository.SavedAsync();
+        await imageStorage.DeleteCoverAsync(eventId, eventDetails.MainImageUrl);
         return true;
     }
 

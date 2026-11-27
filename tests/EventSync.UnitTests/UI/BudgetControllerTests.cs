@@ -123,11 +123,14 @@ public class BudgetControllerTests
         ControllerContext = ContextFor(userId)
     };
 
-    private EventsController EventsControllerFor(Guid userId) =>
-        new(new EventService(new InMemoryUserRepository(organizer, attendee), events))
+    private EventsController EventsControllerFor(Guid userId)
+    {
+        var imageStorage = new InMemoryEventImageStorage();
+        return new EventsController(new EventService(new InMemoryUserRepository(organizer, attendee), events, imageStorage), imageStorage)
         {
             ControllerContext = ContextFor(userId)
         };
+    }
 
     private static ControllerContext ContextFor(Guid userId) => new()
     {
