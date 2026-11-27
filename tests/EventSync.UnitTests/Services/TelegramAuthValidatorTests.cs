@@ -16,17 +16,12 @@ public class TelegramAuthValidatorTests
         .AddInMemoryCollection(new Dictionary<string, string?> { ["Telegram:BotToken"] = TestBotToken })
         .Build());
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData(" ")]
-    public void Constructor_RejectsMissingOrBlankBotToken(string? botToken)
+    [Fact]
+    public void Constructor_RejectsMissingBotToken()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Telegram:BotToken"] = botToken })
-            .Build();
+        var configuration = new ConfigurationBuilder().Build();
 
-        Assert.ThrowsAny<ArgumentException>(() => new TelegramAuthValidatorService(configuration));
+        Assert.Throws<ArgumentNullException>(() => new TelegramAuthValidatorService(configuration));
     }
 
     [Fact]

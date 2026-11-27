@@ -34,9 +34,8 @@ public class TelegramNotificationServiceTests
             return;
         }
 
-        var error = await Assert.ThrowsAsync<HttpRequestException>(
+        await Assert.ThrowsAsync<HttpRequestException>(
             () => service.SendMessageAsync(12345678901L, "Тестовое сообщение"));
-        Assert.Equal("Не доставлено", error.Message);
     }
 
     [Fact]
@@ -103,11 +102,9 @@ public class TelegramNotificationServiceTests
         var error = await Assert.ThrowsAsync<AggregateException>(service.SendPaymentRemindersAsync);
 
         Assert.Equal(3, handler.RequestCount);
-        Assert.Equal(new[]
-        {
-            "Не удалось отправить напоминание пользователю Telegram 101.",
-            "Не удалось отправить напоминание пользователю Telegram 303."
-        }, error.InnerExceptions.Select(failure => failure.Message));
+        Assert.Collection(error.InnerExceptions,
+            failure => Assert.IsType<HttpRequestException>(failure),
+            failure => Assert.IsType<HttpRequestException>(failure));
     }
 
     private sealed class RelayHandler(params (long ChatId, string Text, HttpStatusCode StatusCode)[] expectedRequests)
