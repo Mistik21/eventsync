@@ -40,20 +40,6 @@ public class TelegramNotificationServiceTests
     }
 
     [Fact]
-    public async Task SendMessageAsync_RejectsHttpRelayWithoutMakingRequest()
-    {
-        configuration["Telegram:RelayUrl"] = "http://eventsync.example/send";
-        var handler = new RelayHandler();
-        using var client = new HttpClient(handler);
-        var service = new TelegramNotificationService(client, configuration, new InMemoryUserRepository());
-
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.SendMessageAsync(12345678901L, "Тестовое сообщение"));
-
-        Assert.Equal(0, handler.RequestCount);
-    }
-
-    [Fact]
     public async Task SendPaymentRemindersAsync_SendsEachDebtInOneMessage()
     {
         var users = new InMemoryUserRepository

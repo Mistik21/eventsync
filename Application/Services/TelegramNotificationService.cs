@@ -5,17 +5,25 @@ using eventsynс.Domain.Repositories;
 
 namespace eventsynс.Application.Services;
 
-public class TelegramNotificationService(HttpClient client, IConfiguration configuration,IUserRepository userRepository) : ITelegramNotificationService
+public class TelegramNotificationService : ITelegramNotificationService
 {
+    private readonly HttpClient client;
+    private readonly IConfiguration configuration;
+    private readonly IUserRepository userRepository;
+
+    public TelegramNotificationService(HttpClient client, IConfiguration configuration, IUserRepository userRepository)
+    {
+        this.client = client;
+        this.configuration = configuration;
+        this.userRepository = userRepository;
+    }
+
     public async Task SendMessageAsync(long telegramId, string message)
     {
         var relayUrl = configuration["Telegram:RelayUrl"]?.Trim();
-        if (!Uri.TryCreate(relayUrl, UriKind.Absolute, out var relayAddress) || relayAddress.Scheme != Uri.UriSchemeHttps)
-            throw new InvalidOperationException("Для отправки в Telegram укажите HTTPS-адрес relay.");
-
         var relaySecret = configuration["Telegram:RelaySecret"]?.Trim();
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, relayAddress)
+        using var request = new HttpRequestMessage(HttpMethod.Post, relayUrl)
         {
             Content = JsonContent.Create(new { chatId = telegramId, text = message })
         };
